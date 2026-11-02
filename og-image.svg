@@ -1,0 +1,13 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1200" height="630" viewBox="0 0 1200 630" role="img" aria-labelledby="title desc">
+<title id="title">The Red Sparrow — Unity Game Development</title>
+<desc id="desc">Independent game development studio focused on Unity, 3D integration, game UI and mobile games.</desc>
+<defs><radialGradient id="glow" cx="78%" cy="48%" r="58%"><stop offset="0" stop-color="#ed4b45" stop-opacity=".24"/><stop offset="1" stop-color="#101116" stop-opacity="0"/></radialGradient><linearGradient id="bg" x2="1" y2="1"><stop stop-color="#101116"/><stop offset="1" stop-color="#191a22"/></linearGradient></defs>
+<rect width="1200" height="630" fill="url(#bg)"/><rect width="1200" height="630" fill="url(#glow)"/>
+<g fill="none" stroke="#ed4b45" stroke-opacity=".22"><circle cx="930" cy="315" r="245" stroke-width="2"/><circle cx="930" cy="315" r="178"/><circle cx="930" cy="315" r="110"/></g>
+<g transform="translate(104 135)"><rect width="68" height="68" rx="19" fill="#ed4b45"/><path d="M17 43c8-2 12-10 15-20 2 7 7 11 15 12-5 4-7 9-7 16-5-5-10-7-17-5 2-4 2-7 1-10-2 3-4 5-7 7Z" fill="#fff"/><circle cx="43" cy="24" r="2.5" fill="#101116"/></g>
+<text x="194" y="181" fill="#f4f2ee" font-family="Arial, sans-serif" font-size="23" font-weight="700" letter-spacing="5">THE RED <tspan fill="#ed4b45">SPARROW</tspan></text>
+<text x="104" y="330" fill="#f4f2ee" font-family="Arial, sans-serif" font-size="76" font-weight="700" letter-spacing="-3">Ideas into</text>
+<text x="104" y="418" fill="#ed4b45" font-family="Arial, sans-serif" font-size="76" font-weight="700" letter-spacing="-3">interactive worlds.</text>
+<text x="108" y="484" fill="#a4a5ad" font-family="Arial, sans-serif" font-size="23">Unity development · 3D integration · Game UI/UX · Mobile games</text>
+<path d="M104 535h84" stroke="#ed4b45" stroke-width="3"/><text x="207" y="543" fill="#777983" font-family="Arial, sans-serif" font-size="15" letter-spacing="3">BUILT WITH CURIOSITY. MADE TO BE PLAYED.</text>
+</svg>
