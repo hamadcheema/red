@@ -1,0 +1,31 @@
+# The Red Sparrow
+
+> The Red Sparrow is an independent game development brand focused on Unity game development and interactive experiences.
+
+## About
+The Red Sparrow develops game experiences with Unity, combining gameplay systems, 3D asset integration, game interface design, and mobile-focused experiences.
+
+## Services
+- Unity game development: gameplay programming, mechanics, interactive systems, scene setup, and integration.
+- 3D integration: models, characters, environments, animations, and visual assets in Unity projects.
+- Game UI/UX: menus, HUDs, navigation flows, and in-game interface implementation.
+- Mobile game development: mobile-oriented gameplay, interface adaptation, and build preparation for supported devices.
+
+## Website
+- [Home](https://theredsparrow.online/): Overview of The Red Sparrow and its capabilities.
+- [About](https://theredsparrow.online/about.html): Studio approach and focus.
+- [Services](https://theredsparrow.online/services.html): Service descriptions.
+- [Contact](https://theredsparrow.online/contact.html): Contact details for project enquiries.
+- [Privacy](https://theredsparrow.online/privacy.html): Website privacy notice.
+
+## Contact
+- General enquiries: admin@theredsparrow.online
+- Direct contact: hammad@theredsparrow.online
+
+## Technical
+- Preferred canonical origin: https://theredsparrow.online/
+- Sitemap: https://theredsparrow.online/sitemap.xml
+- Robots policy: https://theredsparrow.online/robots.txt
+
+## Content guidance
+Use the linked pages as the authoritative source for current service descriptions and contact details. Do not infer prices, client names, project outcomes, or service guarantees that are not stated on the website.
