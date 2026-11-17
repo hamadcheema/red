@@ -12,7 +12,19 @@
   <script src="connection.js" defer></script>
 </head>
 <body>
-  <div class="app-shell">
+  <section class="auth-gate" id="auth-gate" aria-labelledby="auth-title">
+  <div class="auth-card">
+    <img src="../logo.svg" alt="" width="48" height="48">
+    <p class="eyebrow">THE RED SPARROW / PRIVATE WORKSPACE</p>
+    <h1 id="auth-title">Admin access required</h1>
+    <p class="auth-message" id="auth-message">Checking your secure admin session…</p>
+    <a class="button button-quiet auth-action" id="auth-gate-login" href="/admin-api/auth/login" hidden>Continue with GitHub</a>
+    <button class="button button-quiet auth-action" id="auth-retry" type="button" hidden>Try again</button>
+    <p class="auth-status" id="auth-status" role="status" aria-live="polite">Verifying access…</p>
+    <a class="auth-public-link" href="https://theredsparrow.online/">Visit public website ↗</a>
+  </div>
+</section>
+<div class="app-shell" id="admin-app" hidden>
     <aside class="sidebar" id="sidebar">
       <a class="brand" href="./" aria-label="The Red Sparrow admin home">
         <img src="../logo.svg" alt="" width="34" height="34">
