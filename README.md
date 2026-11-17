@@ -16,7 +16,7 @@ Official website for The Red Sparrow, a Unity-focused game development brand.
 ## Services presented
 - Unity game development
 - 3D asset and animation integration
-- Game UI/UX
+- Game UI implementation from approved designs
 - Mobile game development
 
 ## Contact
