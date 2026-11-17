@@ -8,6 +8,7 @@
     overview: "A clear view of your website and its content.",
     pages: "Review the pages that make up your public website.",
     media: "Manage images and other website assets.",
+    showcase: "Manage game projects, social previews and brand assets shown on the homepage.",
     seo: "Review search and social-sharing metadata.",
     settings: "Manage the admin workspace and publishing connection.",
     audit: "Review recent changes made through the admin workspace."
