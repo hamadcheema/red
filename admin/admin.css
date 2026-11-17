@@ -203,3 +203,18 @@ h2{font:700 16px 'Manrope',sans-serif;margin-bottom:3px;letter-spacing:-.25px}
 .auth-public-link{display:inline-block;margin-top:22px;color:var(--muted);font-size:11px}
 .auth-public-link:hover{color:var(--text)}
 @media(max-width:480px){.auth-card{padding:28px 22px}.auth-card h1{font-size:24px}}
+
+.field-help{font-size:10px;color:var(--muted);margin-top:-3px}
+.audit-list{padding:0 18px}
+.audit-table{display:grid}
+.audit-row{display:grid;grid-template-columns:minmax(110px,.8fr) minmax(120px,1fr) minmax(180px,1.2fr);gap:14px;align-items:center;padding:13px 0;border-top:1px solid var(--line)}
+.audit-row strong{font-size:11px;text-transform:capitalize}
+.audit-row span{font-size:11px;color:#d0d1d6;overflow-wrap:anywhere}
+.audit-row small{font-size:10px;color:var(--muted);text-align:right}
+.settings-panel{margin-top:14px}
+.settings-list{margin:0;display:grid}
+.settings-list>div{display:flex;justify-content:space-between;gap:18px;padding:12px 0;border-top:1px solid var(--line)}
+.settings-list dt{font-size:11px;color:var(--muted)}
+.settings-list dd{margin:0;font-size:11px;text-align:right;overflow-wrap:anywhere}
+.settings-list code{color:#f18b83}
+@media(max-width:650px){.audit-row{grid-template-columns:1fr;gap:4px}.audit-row small{text-align:left}.settings-list>div{align-items:flex-start;flex-direction:column;gap:4px}.settings-list dd{text-align:left}}
