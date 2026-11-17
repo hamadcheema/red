@@ -56,6 +56,7 @@
   $("media-library-refresh")?.addEventListener("click",loadMedia);
   $("clear-page-image")?.addEventListener("click",()=>{const picker=$("edit-image");if(picker){picker.value="";picker.dispatchEvent(new Event("change",{bubbles:true}))}});
   $("edit-image")?.addEventListener("change",()=>{const url=$("edit-image").value,wrap=$("selected-image-preview"),img=$("selected-image");if(wrap)wrap.hidden=!url;if(img){img.src=url;img.hidden=!url}});
+  $("edit-image")?.addEventListener("input",()=>{const url=$("edit-image").value,wrap=$("selected-image-preview"),img=$("selected-image");if(wrap)wrap.hidden=!url;if(img){img.src=url;img.hidden=!url}});
   $("audit-refresh")?.addEventListener("click",loadAudit);
   $("settings-refresh")?.addEventListener("click",loadSettings);
   window.addEventListener("trs:media-updated",loadMedia);
