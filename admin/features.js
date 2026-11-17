@@ -53,6 +53,23 @@
     }catch(e){$("settings-connection").textContent="Unavailable · "+e.message}
     finally{if(button){button.disabled=false;button.textContent="Refresh settings"}}
   }
+  const collectionKinds=["projects","social","brands"];
+  const collections={projects:[],social:[],brands:[]};
+  const collectionStatus=(kind,message,bad=false)=>{const el=$(kind+"-status");if(el){el.textContent=message;el.style.color=bad?"#f18b83":""}};
+  const renderCollection=kind=>{
+    const list=$(kind+"-items"),count=$(kind+"-count");if(!list)return;list.replaceChildren();if(count)count.textContent=collections[kind].length+" ITEMS";
+    if(!collections[kind].length){const empty=document.createElement("p");empty.className="editor-footnote";empty.textContent="Nothing added yet. Add your first item above.";list.append(empty);return}
+    collections[kind].forEach((item,index)=>{const row=document.createElement("article");row.className="collection-item";const img=document.createElement("img");img.src=item.image;img.alt="";img.loading="lazy";const info=document.createElement("div");info.className="collection-item-info";const title=document.createElement("strong");title.textContent=item.title;const desc=document.createElement("small");desc.textContent=item.description;info.append(title,desc);const remove=document.createElement("button");remove.type="button";remove.className="text-button";remove.textContent="Remove";remove.addEventListener("click",()=>{collections[kind].splice(index,1);renderCollection(kind);collectionStatus(kind,"Item removed from the draft. Publish to update the website.")});row.append(img,info,remove);list.append(row)});
+  };
+  const loadCollection=async kind=>{try{const data=await request("/content?kind="+kind);collections[kind]=Array.isArray(data.items)?data.items:[];renderCollection(kind);collectionStatus(kind,"Loaded "+collections[kind].length+" item(s).")}catch(e){collectionStatus(kind,"Could not load items: "+e.message,true)}};
+  collectionKinds.forEach(kind=>{
+    const form=$(kind+"-form");if(!form)return;
+    form.addEventListener("submit",event=>{event.preventDefault();const item={title:$(kind+"-title").value.trim(),description:$(kind+"-description").value.trim(),image:$(kind+"-image").value,url:$(kind+"-url").value.trim()};if(!item.title||!item.description||!item.image){collectionStatus(kind,"Complete the title, description and image fields.",true);return}collections[kind].push(item);form.reset();renderCollection(kind);collectionStatus(kind,"Item added to draft. Publish to make it visible on the website.")});
+    const publish=document.querySelector('[data-publish="'+kind+'"]');publish?.addEventListener("click",async()=>{publish.disabled=true;publish.textContent="Publishing…";try{await request("/content",{method:"POST",body:JSON.stringify({kind,items:collections[kind]})});const result=await request("/publish/content",{method:"POST",body:JSON.stringify({kind})});collectionStatus(kind,collections[kind].length?"Published "+collections[kind].length+" item(s). Commit "+(result.commit||"created").slice(0,7)+". Wait for Pages deployment.":"Published empty collection. The homepage section is now hidden.");}catch(e){collectionStatus(kind,"Could not publish: "+e.message,true)}finally{publish.disabled=false;publish.textContent="Publish "+(kind==="projects"?"projects":kind==="social"?"social previews":"brand assets")}});
+    loadCollection(kind);
+  });
+  const populateCollectionImages=async()=>{try{const data=await request("/media/list");for(const kind of collectionKinds){const select=$(kind+"-image");if(!select)continue;const chosen=select.value;select.replaceChildren(new Option("Choose from Media Library",""));data.items.forEach(item=>select.add(new Option(item.name,item.siteUrl||item.url)));select.value=chosen}}catch(e){collectionKinds.forEach(kind=>collectionStatus(kind,"Media library unavailable: "+e.message,true))}};
+  populateCollectionImages();window.addEventListener("trs:media-updated",populateCollectionImages);document.querySelector('[data-view="showcase"]')?.addEventListener("click",()=>{collectionKinds.forEach(loadCollection);populateCollectionImages()});
   $("media-library-refresh")?.addEventListener("click",loadMedia);
   $("clear-page-image")?.addEventListener("click",()=>{const picker=$("edit-image");if(picker){picker.value="";picker.dispatchEvent(new Event("change",{bubbles:true}))}});
   $("edit-image")?.addEventListener("change",()=>{const url=$("edit-image").value,wrap=$("selected-image-preview"),img=$("selected-image");if(wrap)wrap.hidden=!url;if(img){img.src=url;img.hidden=!url}});
