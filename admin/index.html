@@ -9,6 +9,7 @@
   <link rel="icon" href="../favicon.svg" type="image/svg+xml">
   <link rel="stylesheet" href="admin.css">
   <script src="admin.js" defer></script>
+  <script src="features.js" defer></script>
   <script src="connection.js" defer></script>
 </head>
 <body>
@@ -35,6 +36,7 @@
         <button class="nav-link active" data-view="overview"><span class="nav-icon">◫</span> Overview</button>
         <button class="nav-link" data-view="pages"><span class="nav-icon">▤</span> Website pages</button>
         <button class="nav-link" data-view="media"><span class="nav-icon">▧</span> Media library</button>
+        <button class="nav-link" data-view="audit"><span class="nav-icon">≡</span> Audit log</button>
         <button class="nav-link" data-view="seo"><span class="nav-icon">⌕</span> SEO settings</button>
         <button class="nav-link" data-view="settings"><span class="nav-icon">⚙</span> Settings</button>
       </nav>
@@ -113,7 +115,7 @@
                 </select>
                 <label for="edit-title">Browser title</label><input id="edit-title" name="title" maxlength="70" required>
                 <label for="edit-description">Search description</label><textarea id="edit-description" name="description" rows="3" maxlength="180" required></textarea>
-                <label for="edit-heading">Main heading</label><input id="edit-heading" name="heading" maxlength="100" required>
+                <label for="edit-heading">Main heading</label><textarea id="edit-heading" name="heading" rows="3" maxlength="100" required aria-describedby="heading-help"></textarea><small id="heading-help" class="field-help">Use a new line for a line break, *italic* for emphasis, or **bold** for strong emphasis.</small>
                 <label for="edit-intro">Introductory text</label><textarea id="edit-intro" name="intro" rows="4" maxlength="500" required></textarea>
                 <div class="editor-actions"><button class="primary-button" type="submit">Save draft</button><button class="secondary-button" id="reset-draft" type="button">Reset page</button></div>
                 <p class="editor-status" id="editor-status" role="status" aria-live="polite">No local changes saved.</p>
@@ -141,6 +143,7 @@
       <article class="asset-card"><div class="asset-art og-art"><img src="https://theredsparrow.online/og-image.png" alt="The Red Sparrow social sharing image" loading="lazy"></div><div class="asset-info"><strong>og-image.png</strong><small>Social preview · PNG · 1200 × 630 expected</small><a href="https://github.com/hamadcheema/red/blob/main/og-image.png" target="_blank" rel="noopener">View in GitHub ↗</a></div></article>
     </div>
   </div>
+  <div class="panel asset-panel"><div class="panel-heading"><div><h2>Uploaded images</h2><p>Images committed to assets/uploads/.</p></div><button class="secondary-button" id="media-library-refresh" type="button">Refresh library</button></div><div class="asset-grid" id="media-library-grid"><p class="editor-footnote">Loading uploaded images…</p></div></div>
   <div class="panel upload-panel">
     <div class="panel-heading"><div><h2>Local image queue</h2><p>Choose images to upload to the website repository.</p></div></div>
     <input id="media-file-input" class="visually-hidden" type="file" accept="image/png,image/jpeg,image/webp,image/gif" multiple>
@@ -180,8 +183,9 @@
   <p class="editor-footnote">SEO drafts are stored in Cloudflare KV. Publishing updates page metadata in GitHub; search engines independently decide when to recrawl and how to display snippets.</p>
 </section>
         </section>
+        <section class="view" id="view-audit"><div class="section-heading"><div><h2>Audit log</h2><p>Recent admin actions recorded by the secure Worker.</p></div><button class="secondary-button" id="audit-refresh" type="button">Refresh events</button></div><div class="panel table-panel"><div class="audit-list" id="audit-list" aria-live="polite"><p class="editor-footnote">Loading audit events…</p></div></div></section>
         <section class="view" id="view-settings">
-          <div class="empty-panel"><span class="empty-icon">⚙</span><h2>Workspace settings</h2><p>Authentication uses GitHub OAuth. Only the GitHub account hamadcheema is authorized. The API uses a server-side session and Cloudflare Worker secrets.</p></div>
+          <div class="section-heading"><div><h2>Workspace settings</h2><p>Live connection information and session controls.</p></div><button class="secondary-button" id="settings-refresh" type="button">Refresh settings</button></div><div class="stats-grid settings-stats"><article class="stat-card"><span class="stat-label">ADMIN ACCOUNT</span><strong class="stat-word" id="settings-admin">—</strong><span class="stat-foot">Authorized GitHub login</span></article><article class="stat-card"><span class="stat-label">REPOSITORY</span><strong class="stat-word" id="settings-repo">—</strong><span class="stat-foot">Connected GitHub repository</span></article><article class="stat-card"><span class="stat-label">BRANCH</span><strong class="stat-word" id="settings-branch">—</strong><span class="stat-foot">Publishing target</span></article></div><div class="panel settings-panel"><div class="panel-heading"><div><h2>Security & session</h2><p>Credentials remain server-side and are not exposed in this dashboard.</p></div></div><dl class="settings-list"><div><dt>Authentication</dt><dd>GitHub OAuth</dd></div><div><dt>Session storage</dt><dd>Cloudflare KV · HttpOnly · Secure</dd></div><div><dt>Session expiry</dt><dd id="settings-session">—</dd></div><div><dt>Repository connection</dt><dd id="settings-connection">Checking…</dd></div><div><dt>API endpoint</dt><dd><code>/admin-api</code></dd></div></dl><p class="editor-footnote">Only the authorized GitHub account can access admin APIs. Use Log out in the top bar to end this session.</p></div>
         </section>
         <footer class="footer"><span>THE RED SPARROW</span><span>Admin workspace · Protected API</span></footer>
       </section>
