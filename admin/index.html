@@ -8,9 +8,9 @@
   <title>Admin · The Red Sparrow</title>
   <link rel="icon" href="../favicon.svg" type="image/svg+xml">
   <link rel="stylesheet" href="admin.css">
-  <script src="admin.js" defer></script>
-  <script src="features.js" defer></script>
-  <script src="connection.js" defer></script>
+  <script src="admin.js?v=20261117-2" defer></script>
+  <script src="features.js?v=20261117-2" defer></script>
+  <script src="connection.js?v=20261117-2" defer></script>
 </head>
 <body>
   <section class="auth-gate" id="auth-gate" aria-labelledby="auth-title">
@@ -147,7 +147,7 @@
   </div>
   <div class="panel asset-panel"><div class="panel-heading"><div><h2>Uploaded images</h2><p>Images committed to assets/uploads/.</p></div><button class="secondary-button" id="media-library-refresh" type="button">Refresh library</button></div><div class="asset-grid" id="media-library-grid"><p class="editor-footnote">Loading uploaded images…</p></div></div>
   <div class="panel upload-panel">
-    <div class="panel-heading"><div><h2>Upload images</h2><p>Choose images, rename each file, then upload them to the website repository.</p></div></div>
+    <div class="panel-heading"><div><h2>Upload images</h2><p>Choose images, then upload them to the website repository. Filenames and extensions are generated automatically.</p></div></div>
     <input id="media-file-input" class="visually-hidden" type="file" accept="image/png,image/jpeg,image/webp,image/gif" multiple>
     <div class="drop-zone" id="media-drop-zone" tabindex="0" role="button" aria-controls="media-file-input" aria-label="Choose image files or drop them here">
       <span class="upload-symbol">↑</span><strong>Drop images here</strong><span>or choose files from your device</span><small>PNG, JPG, WebP or GIF · up to 5 MB per image · 20 MB total</small>
