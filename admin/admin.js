@@ -60,7 +60,7 @@
     const loadPage = () => {
       const saved = readDrafts()[fields.page.value] || {};
       const data = {...pageDefaults[fields.page.value], ...saved};
-      if (fields.page.value === "home" && data.heading === "Ideas into interactive worlds.") data.heading = "Ideas into\\n*interactive worlds.*";
+      if (fields.page.value === "home" && data.heading === "Ideas into interactive worlds.") data.heading = "Ideas into\n*interactive worlds.*";
       ["title","description","heading","intro"].forEach(key => fields[key].value = data[key]);
       status.textContent = saved.title ? "Saved local draft loaded." : "Showing original page copy. No draft saved.";
       updatePreview();
