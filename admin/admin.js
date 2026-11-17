@@ -92,6 +92,97 @@
     loadPage();
   }
 
+  const seoDefaults = {
+    home: {title:"The Red Sparrow — Unity Game Development",description:"The Red Sparrow develops Unity gameplay systems, integrates supplied 3D assets and prepares mobile-focused game builds.",canonical:"https://theredsparrow.online/",ogTitle:"The Red Sparrow — Unity Game Development",ogDescription:"Unity gameplay development, 3D asset integration, game UI implementation and mobile build preparation.",ogImage:"https://theredsparrow.online/og-image.png"},
+    about: {title:"About — The Red Sparrow",description:"Learn about The Red Sparrow, an independent game-development brand focused on Unity and interactive experiences.",canonical:"https://theredsparrow.online/about.html",ogTitle:"About — The Red Sparrow",ogDescription:"An independent game-development brand focused on Unity.",ogImage:"https://theredsparrow.online/og-image.png"},
+    services: {title:"Services — The Red Sparrow",description:"Explore The Red Sparrow's services: Unity gameplay development, 3D asset integration, game UI implementation and mobile build preparation.",canonical:"https://theredsparrow.online/services.html",ogTitle:"Services — The Red Sparrow",ogDescription:"Unity gameplay development, 3D asset integration, game UI implementation and mobile build preparation.",ogImage:"https://theredsparrow.online/og-image.png"},
+    contact: {title:"Contact — The Red Sparrow",description:"Contact The Red Sparrow about Unity game development, 3D asset integration, game UI implementation and mobile game projects.",canonical:"https://theredsparrow.online/contact.html",ogTitle:"Contact — The Red Sparrow",ogDescription:"Tell us about the game or interactive experience you have in mind.",ogImage:"https://theredsparrow.online/og-image.png"},
+    privacy: {title:"Privacy Policy — The Red Sparrow",description:"Privacy information for visitors to The Red Sparrow, including contact enquiries, website hosting and advertising technologies.",canonical:"https://theredsparrow.online/privacy.html",ogTitle:"Privacy Policy — The Red Sparrow",ogDescription:"How The Red Sparrow handles information shared through its website and advertising services.",ogImage:"https://theredsparrow.online/og-image.png"},
+    terms: {title:"Terms of Use — The Red Sparrow",description:"Terms governing access to and use of The Red Sparrow website.",canonical:"https://theredsparrow.online/terms.html",ogTitle:"Terms of Use — The Red Sparrow",ogDescription:"Terms governing use of The Red Sparrow website.",ogImage:"https://theredsparrow.online/og-image.png"}
+  };
+  const seoForm = document.getElementById("seo-editor");
+  if (seoForm) {
+    const seoFields = {
+      page: document.getElementById("seo-page"),
+      title: document.getElementById("seo-title"),
+      description: document.getElementById("seo-description"),
+      canonical: document.getElementById("seo-canonical"),
+      ogTitle: document.getElementById("seo-og-title"),
+      ogDescription: document.getElementById("seo-og-description"),
+      ogImage: document.getElementById("seo-og-image")
+    };
+    const seoKey = "trs-admin-local-seo-drafts-v1";
+    const seoStatus = document.getElementById("seo-status");
+    const validation = document.getElementById("seo-validation");
+    const readSeoDrafts = () => {
+      try { return JSON.parse(localStorage.getItem(seoKey) || "{}"); }
+      catch { return {}; }
+    };
+    const counters = {
+      title: document.getElementById("seo-title-count"),
+      description: document.getElementById("seo-description-count"),
+      ogTitle: document.getElementById("seo-og-title-count"),
+      ogDescription: document.getElementById("seo-og-description-count")
+    };
+    const updateSeoPreview = () => {
+      document.getElementById("snippet-url").textContent = seoFields.canonical.value;
+      document.getElementById("snippet-title").textContent = seoFields.title.value;
+      document.getElementById("snippet-description").textContent = seoFields.description.value;
+      document.getElementById("social-title-preview").textContent = seoFields.ogTitle.value;
+      document.getElementById("social-description-preview").textContent = seoFields.ogDescription.value;
+      const image = document.getElementById("social-image-preview");
+      try {
+        const parsed = new URL(seoFields.ogImage.value);
+        if (parsed.protocol === "https:" && parsed.hostname === "theredsparrow.online") image.src = parsed.href;
+      } catch {}
+      counters.title.textContent = seoFields.title.value.length + " / 70";
+      counters.description.textContent = seoFields.description.value.length + " / 180";
+      counters.ogTitle.textContent = seoFields.ogTitle.value.length + " / 70";
+      counters.ogDescription.textContent = seoFields.ogDescription.value.length + " / 200";
+    };
+    const loadSeoPage = () => {
+      const saved = readSeoDrafts()[seoFields.page.value] || {};
+      const data = {...seoDefaults[seoFields.page.value], ...saved};
+      ["title","description","canonical","ogTitle","ogDescription","ogImage"].forEach(key => seoFields[key].value = data[key]);
+      seoStatus.textContent = saved.title ? "Saved local SEO draft loaded." : "Showing current website metadata.";
+      validation.textContent = "Canonical and image URLs must use HTTPS and the theredsparrow.online domain.";
+      updateSeoPreview();
+    };
+    const validSiteUrl = value => {
+      try {
+        const parsed = new URL(value);
+        return parsed.protocol === "https:" && parsed.hostname === "theredsparrow.online" && !parsed.username && !parsed.password;
+      } catch { return false; }
+    };
+    seoFields.page.addEventListener("change", loadSeoPage);
+    ["title","description","canonical","ogTitle","ogDescription","ogImage"].forEach(key => seoFields[key].addEventListener("input", updateSeoPreview));
+    seoForm.addEventListener("submit", event => {
+      event.preventDefault();
+      if (!validSiteUrl(seoFields.canonical.value) || !validSiteUrl(seoFields.ogImage.value)) {
+        validation.textContent = "Please use valid HTTPS URLs on theredsparrow.online for both fields.";
+        return;
+      }
+      const drafts = readSeoDrafts();
+      drafts[seoFields.page.value] = {};
+      ["title","description","canonical","ogTitle","ogDescription","ogImage"].forEach(key => drafts[seoFields.page.value][key] = seoFields[key].value.trim());
+      try {
+        localStorage.setItem(seoKey, JSON.stringify(drafts));
+        seoStatus.textContent = "SEO draft saved in this browser. Nothing was published.";
+        validation.textContent = "URL checks passed. These metadata changes are still local only.";
+      } catch {
+        seoStatus.textContent = "This browser could not save the draft. Check local storage settings.";
+      }
+    });
+    document.getElementById("seo-reset").addEventListener("click", () => {
+      const drafts = readSeoDrafts();
+      delete drafts[seoFields.page.value];
+      try { localStorage.setItem(seoKey, JSON.stringify(drafts)); } catch {}
+      loadSeoPage();
+      seoStatus.textContent = "SEO draft cleared. Current website metadata restored.";
+    });
+    loadSeoPage();
+  }
+
   links.forEach(link => link.addEventListener("click", () => showView(link.dataset.view)));
   document.querySelectorAll("[data-go]").forEach(button => button.addEventListener("click", () => showView(button.dataset.go)));
   const sidebar = document.getElementById("sidebar");
