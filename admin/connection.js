@@ -96,7 +96,7 @@
 
   const pageFiles={home:"index.html",about:"about.html",services:"services.html",contact:"contact.html"};
   async function loadRemoteDraft(kind,slug,fields,status){
-    try{const d=await call("/draft?key="+encodeURIComponent(kind+":"+slug));if(!d.draft)return;for(const [key,id] of Object.entries(fields))if($(id)&&d.draft[key]!==undefined){let value=d.draft[key];if(key==="heading"&&slug==="home"&&value==="Ideas into interactive worlds.")value="Ideas into\n*interactive worlds.*";$(id).value=value;$(id).dispatchEvent(new Event("input",{bubbles:true}))}say(status,"Remote draft restored from Cloudflare KV.");}
+    try{const d=await call("/draft?key="+encodeURIComponent(kind+":"+slug));if(!d.draft)return;for(const [key,id] of Object.entries(fields))if($(id)&&d.draft[key]!==undefined){let value=d.draft[key];if(key==="heading"){const legacy={home:["Ideas into interactive worlds.","Ideas into\n*interactive worlds.*"],about:["Built around the joy of play.","Built around\nthe joy of play."],services:["Our services.","Our *services.*"],contact:["Let’s start a conversation.","Let’s start\n*a conversation.*"]}[slug];if(legacy&&value===legacy[0])value=legacy[1]}$(id).value=value;$(id).dispatchEvent(new Event("input",{bubbles:true}))}say(status,"Remote draft restored from Cloudflare KV.");}
     catch(e){say(status,"Could not load remote draft: "+e.message,true)}
   }
   if($("edit-page"))$("edit-page").addEventListener("change",()=>loadRemoteDraft("page",$("edit-page").value,{title:"edit-title",description:"edit-description",heading:"edit-heading",intro:"edit-intro"},ps));
