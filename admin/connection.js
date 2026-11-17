@@ -63,6 +63,8 @@
   const input=$("media-file-input"),actions=$("media-clear")?.parentElement,dropZone=$("media-drop-zone"),queue=$("media-queue");
   const acceptedMediaTypes=new Set(["image/png","image/jpeg","image/webp","image/gif"]);
   const safeFilename=value=>String(value||"").trim().replace(/[^\w.-]+/g,"-").replace(/-+/g,"-").replace(/^[-.]+|[-.]+$/g,"");
+  const mediaExtension=type=>({"image/png":".png","image/jpeg":".jpg","image/webp":".webp","image/gif":".gif"}[type]||"");
+  const uploadFilename=item=>{const ext=mediaExtension(item.file.type);let name=safeFilename(item.name);if(!ext)return name;name=name.replace(/\.(png|jpe?g|webp|gif)$/i,"");return safeFilename(name)+ext};
   const rememberFiles=files=>{
     let total=selectedFiles.reduce((sum,item)=>sum+item.file.size,0);
     const rejected=[];
@@ -85,7 +87,7 @@
       const card=document.createElement("article");card.className="queued-file";
       const preview=document.createElement("img");preview.alt="Preview of "+item.name;preview.src=URL.createObjectURL(item.file);
       const meta=document.createElement("div");meta.className="queued-meta";
-      const label=document.createElement("label");label.textContent="File name";label.htmlFor="queued-file-name-"+index;
+      const label=document.createElement("label");label.textContent="File name (extension added automatically)";label.htmlFor="queued-file-name-"+index;
       const name=document.createElement("input");name.id=label.htmlFor;name.type="text";name.value=item.name;name.maxLength=120;name.autocomplete="off";name.spellcheck=false;name.setAttribute("aria-label","Rename "+item.file.name);
       name.addEventListener("input",()=>{item.name=name.value});
       const detail=document.createElement("span");detail.textContent=item.file.type.replace("image/","").toUpperCase()+" · "+formatMediaSize(item.file.size);
@@ -112,9 +114,8 @@
     const button=document.createElement("button");button.type="button";button.className="primary-button";button.textContent="Upload to website";actions.prepend(button);
     button.addEventListener("click",async()=>{
       if(!selectedFiles.length){say($("media-status"),"Choose images first.",true);return}
-      const invalid=selectedFiles.find(item=>!safeFilename(item.name)||!/(\.png|\.jpe?g|\.webp|\.gif)$/i.test(item.name));
-      if(invalid){say($("media-status"),"Enter a valid image filename with its extension for every queued image.",true);return}
-      const names=selectedFiles.map(item=>safeFilename(item.name).toLowerCase());
+      const names=selectedFiles.map(item=>uploadFilename(item).toLowerCase());
+      if(names.some(name=>name.startsWith("."))){say($("media-status"),"Please enter a name for each image.",true);return}
       if(new Set(names).size!==names.length){say($("media-status"),"Each uploaded image must have a unique filename. Rename one of the files first.",true);return}
       button.disabled=true;button.textContent="Uploading…";
       try{
@@ -122,7 +123,7 @@
         while(selectedFiles.length){
           const item=selectedFiles[0],file=item.file;
           const data=await new Promise((resolve,reject)=>{const reader=new FileReader();reader.onload=()=>resolve(reader.result);reader.onerror=reject;reader.readAsDataURL(file)});
-          const out=await call("/media/upload",{method:"POST",body:JSON.stringify({name:safeFilename(item.name),type:file.type,base64:data})});
+          const finalName=uploadFilename(item);const out=await call("/media/upload",{method:"POST",body:JSON.stringify({name:finalName,type:file.type,base64:data})});
           urls.push(out.url);selectedFiles.shift();renderUploadQueue();
         }
         say($("media-status"),"Upload complete. "+urls.length+" image(s) added to Uploaded images.");
