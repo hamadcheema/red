@@ -3,7 +3,31 @@
   let selectedFiles=[];
   const say=(el,text,bad=false)=>{if(el){el.textContent=text;el.style.color=bad?"#f18b83":""}};
   async function call(path,options={}){const r=await fetch(API+path,{credentials:"include",...options,headers:{"content-type":"application/json",...(options.headers||{})}});const d=await r.json().catch(()=>({}));if(!r.ok)throw Error(d.error||"Request failed ("+r.status+")");return d}
-  async function connect(){const n=document.querySelector(".notice");try{const s=await call("/status");if(n){n.querySelector("strong").textContent=s.githubConnected?"Secure publishing connection ready":"Sign-in protected · GitHub setup pending";n.querySelector("p").textContent=s.githubConnected?"Access verified. Drafts and publishing are connected to the repository.":s.githubMessage+" Drafts can be saved, but publishing requires the GitHub token secret."}const e=document.querySelector(".environment small");if(e)e.textContent=s.githubConnected?"Connected to GitHub":"GitHub setup pending";const p=document.querySelector(".draft-pill");if(p)p.textContent=s.githubConnected?"CONNECTED":"DRAFT";const stat=document.querySelector("#view-overview .stats-grid .stat-card:nth-child(3) .stat-word");if(stat)stat.textContent=s.githubConnected?"Ready":"Pending"}catch(e){if(n){n.querySelector("strong").textContent="Admin sign-in required";n.querySelector("p").textContent="Sign in using the authorized GitHub account to use the admin tools.";let b=n.querySelector("#github-login");if(!b){b=document.createElement("a");b.id="github-login";b.className="primary-button";b.href=API+"/auth/login";b.textContent="Continue with GitHub";n.append(b)}}}}
+  async function connect(){
+    const n=document.querySelector(".notice"),login=$("github-login"),logout=$("admin-logout"),pill=$("connection-pill");
+    try{
+      const s=await call("/status");
+      if(login)login.hidden=true;
+      if(logout)logout.hidden=false;
+      if(n){
+        n.querySelector("strong").textContent=s.githubConnected?"Secure publishing connection ready":"GitHub repository connection pending";
+        n.querySelector("p").textContent=s.githubConnected?"Access verified. Drafts and publishing are connected to the repository.":s.githubMessage+" Drafts can be saved, but publishing requires the GitHub token secret.";
+      }
+      const e=document.querySelector(".environment small");
+      if(e)e.textContent=s.githubConnected?"Connected to GitHub":"GitHub setup pending";
+      if(pill)pill.textContent=s.githubConnected?"CONNECTED":"DRAFT";
+      const stat=document.querySelector("#view-overview .stats-grid .stat-card:nth-child(3) .stat-word");
+      if(stat)stat.textContent=s.githubConnected?"Ready":"Pending";
+    }catch(e){
+      if(login)login.hidden=false;
+      if(logout)logout.hidden=true;
+      if(pill)pill.textContent="SIGNED OUT";
+      if(n){
+        n.querySelector("strong").textContent="Admin sign-in required";
+        n.querySelector("p").textContent="Sign in using the authorized GitHub account to use the admin tools.";
+      }
+    }
+  }
   const pf=$("page-editor"),ps=$("editor-status");
   if(pf){pf.addEventListener("submit",async()=>{try{await call("/draft",{method:"POST",body:JSON.stringify({key:"page:"+$("edit-page").value,value:{title:$("edit-title").value,description:$("edit-description").value,heading:$("edit-heading").value,intro:$("edit-intro").value}})});say(ps,"Draft saved securely to Cloudflare KV.")}catch(e){say(ps,"Local draft saved; remote save failed: "+e.message,true)}});
     const b=document.createElement("button");b.type="button";b.className="primary-button";b.textContent="Publish to website";pf.querySelector(".editor-actions").append(b);b.addEventListener("click",async()=>{if(!confirm("Publish these changes to the live website? A GitHub commit will be created."))return;b.disabled=true;b.textContent="Publishing…";try{const d=await call("/publish/page",{method:"POST",body:JSON.stringify({slug:$("edit-page").value,title:$("edit-title").value,description:$("edit-description").value,heading:$("edit-heading").value,intro:$("edit-intro").value})});say(ps,"Published in GitHub ("+(d.commit||"commit created").slice(0,7)+"). Wait for Pages to deploy.")}catch(e){say(ps,e.message,true)}finally{b.disabled=false;b.textContent="Publish to website"}})}
@@ -70,5 +94,20 @@
   });
   if($("edit-page"))loadRemoteDraft("page",$("edit-page").value,{title:"edit-title",description:"edit-description",heading:"edit-heading",intro:"edit-intro"},ps);
   if($("seo-page"))loadRemoteDraft("seo",$("seo-page").value,{title:"seo-title",description:"seo-description",canonical:"seo-canonical",ogTitle:"seo-og-title",ogDescription:"seo-og-description",ogImage:"seo-og-image"},ss);
+  const logout=$("admin-logout");
+  if(logout)logout.addEventListener("click",async()=>{
+    logout.disabled=true;
+    logout.textContent="Logging out…";
+    try{
+      await call("/auth/logout",{method:"POST",body:JSON.stringify({})});
+      window.location.replace("/admin/");
+    }catch(e){
+      const n=document.querySelector(".notice");
+      if(n)n.querySelector("p").textContent="Could not log out: "+e.message;
+      logout.disabled=false;
+      logout.textContent="Log out";
+    }
+  });
+
   connect();
 })();
