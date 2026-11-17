@@ -1,0 +1,14 @@
+name = "the-red-sparrow-preview-admin-api"
+main = "worker.js"
+compatibility_date = "2026-11-17"
+workers_dev = false
+
+[[kv_namespaces]]
+binding = "DRAFTS"
+id = "17ac718a2d304550aac3e029954c96c5"
+
+[vars]
+ALLOWED_GITHUB_LOGIN = "hamadcheema"
+GITHUB_OWNER = "hamadcheema"
+GITHUB_REPO = "red"
+GITHUB_BRANCH = "cloudflare-preview"
