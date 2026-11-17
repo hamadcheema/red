@@ -8,7 +8,7 @@ binding = "DRAFTS"
 id = "17ac718a2d304550aac3e029954c96c5"
 
 [vars]
-ALLOWED_GITHUB_LOGIN = "hamadcheema"
+ALLOWED_ADMIN_EMAIL = "thatsmehammad@gmail.com"
 GITHUB_OWNER = "hamadcheema"
 GITHUB_REPO = "red"
 GITHUB_BRANCH = "cloudflare-preview"
