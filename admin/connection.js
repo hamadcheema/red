@@ -149,7 +149,7 @@
     catch(e){say(status,"Could not load remote draft: "+e.message,true)}
   }
   if($("edit-page"))$("edit-page").addEventListener("change",()=>loadRemoteDraft("page",$("edit-page").value,{title:"edit-title",description:"edit-description",heading:"edit-heading",intro:"edit-intro",image:"edit-image",imageAlt:"edit-image-alt"},ps));
-  if($("seo-page"))$("seo-page").addEventListener("change",()=>loadRemoteDraft("seo",$("seo-page").value,{title:"seo-title",description:"seo-description",canonical:"seo-canonical",ogTitle:"seo-og-title",ogDescription:"seo-og-description",ogImage:"seo-og-image"},ss));
+  if($("seo-page"))$("seo-page").addEventListener("change",()=>loadRemoteDraft("seo",$("seo-page").value,{title:"seo-title",description:"seo-description",canonical:"seo-canonical",ogTitle:"seo-og-title",ogDescription:"seo-og-description",ogImage:"seo-og-image",ogImageAlt:"seo-og-image-alt"},ss));
   const historyButton=$("load-history"),historyList=$("history-list");
   if(historyButton&&historyList)historyButton.addEventListener("click",async()=>{
     const slug=$("edit-page").value,path=pageFiles[slug];historyButton.disabled=true;historyButton.textContent="Loading…";
