@@ -9,6 +9,7 @@
   <link rel="icon" href="../favicon.svg" type="image/svg+xml">
   <link rel="stylesheet" href="admin.css">
   <script src="admin.js" defer></script>
+  <script src="connection.js" defer></script>
 </head>
 <body>
   <div class="app-shell">
@@ -46,7 +47,7 @@
 
         <div class="notice" role="status">
           <span class="notice-icon">!</span>
-          <div><strong>Development preview — not connected yet</strong><p>This admin panel is being built in a separate Git branch. Sign-in protection and the secure publishing API must be configured before it can be deployed or used to change the live website.</p></div>
+          <div><strong>Admin workspace connection</strong><p>Sign in with the authorized GitHub account. Drafts, publishing, media uploads and version history run through a server-side Worker; repository credentials are never stored in browser code.</p></div>
         </div>
 
         <section class="view active" id="view-overview">
@@ -54,7 +55,7 @@
           <div class="stats-grid">
             <article class="stat-card"><span class="stat-label">PUBLIC PAGES</span><strong>6</strong><span class="stat-foot">Main website pages</span></article>
             <article class="stat-card"><span class="stat-label">CONTENT STATUS</span><strong class="stat-word">Live</strong><span class="stat-foot">Served from the main branch</span></article>
-            <article class="stat-card"><span class="stat-label">ADMIN STATUS</span><strong class="stat-word">Draft</strong><span class="stat-foot">Secure connection pending</span></article>
+            <article class="stat-card"><span class="stat-label">ADMIN STATUS</span><strong class="stat-word">Draft</strong><span class="stat-foot">GitHub sign-in required</span></article>
           </div>
           <div class="dashboard-grid">
             <article class="panel">
@@ -67,12 +68,12 @@
               </div>
             </article>
             <article class="panel">
-              <div class="panel-heading"><div><h2>Next steps</h2><p>Before the first live edit</p></div></div>
+              <div class="panel-heading"><div><h2>Next steps</h2><p>Admin setup and publishing safeguards</p></div></div>
               <ol class="steps">
-                <li class="step-done"><span>✓</span><div><strong>Admin workspace created</strong><small>Separate development branch</small></div></li>
-                <li><span>2</span><div><strong>Confirm an eligible no-card sign-in option</strong><small>Do not deploy the dashboard before access is protected</small></div></li>
-                <li><span>3</span><div><strong>Build a server-side publishing connection</strong><small>Never expose repository credentials in browser code</small></div></li>
-                <li><span>4</span><div><strong>Test previews and publishing safeguards</strong><small>Review changes before anything reaches the live site</small></div></li>
+                <li class="step-done"><span>✓</span><div><strong>Admin workspace created</strong><small>Available at /admin/</small></div></li>
+                <li><span>2</span><div><strong>Sign in with the authorized GitHub account</strong><small>Only the allow-listed account can access admin APIs</small></div></li>
+                <li><span>3</span><div><strong>Verify the GitHub repository connection</strong><small>Credentials remain in Cloudflare Worker secrets</small></div></li>
+                <li><span>4</span><div><strong>Review and test drafts, publishing and rollback</strong><small>Publishing creates a GitHub commit on main</small></div></li>
               </ol>
             </article>
           </div>
@@ -91,7 +92,7 @@
           </div>
 
           <section class="editor-layout" aria-labelledby="editor-title">
-            <div class="editor-heading"><div><p class="eyebrow">LOCAL CONTENT WORKSPACE</p><h2 id="editor-title">Page editor</h2><p>Prepare copy changes and preview them before any publishing connection exists.</p></div><span class="local-badge">LOCAL DRAFT ONLY</span></div>
+            <div class="editor-heading"><div><p class="eyebrow">SECURE CONTENT WORKSPACE</p><h2 id="editor-title">Page editor</h2><p>Edit page copy, save a private draft, preview it, then publish when ready.</p></div><span class="local-badge">REMOTE DRAFT</span></div>
             <div class="editor-grid">
               <form class="panel editor-form" id="page-editor">
                 <label for="edit-page">Select page</label>
@@ -102,18 +103,19 @@
                 <label for="edit-description">Search description</label><textarea id="edit-description" name="description" rows="3" maxlength="180" required></textarea>
                 <label for="edit-heading">Main heading</label><input id="edit-heading" name="heading" maxlength="100" required>
                 <label for="edit-intro">Introductory text</label><textarea id="edit-intro" name="intro" rows="4" maxlength="500" required></textarea>
-                <div class="editor-actions"><button class="primary-button" type="submit">Save local draft</button><button class="secondary-button" id="reset-draft" type="button">Reset page</button></div>
+                <div class="editor-actions"><button class="primary-button" type="submit">Save draft</button><button class="secondary-button" id="reset-draft" type="button">Reset page</button></div>
                 <p class="editor-status" id="editor-status" role="status" aria-live="polite">No local changes saved.</p>
               </form>
               <div class="panel preview-panel"><div class="preview-top"><strong>Live text preview</strong><span>Preview only</span></div><div class="preview-canvas"><p class="preview-brand">THE RED SPARROW</p><p class="preview-kicker">PAGE PREVIEW</p><h3 id="preview-heading">Ideas into interactive worlds.</h3><p id="preview-intro">Your page introduction will appear here.</p><div class="preview-rule"></div><p class="preview-meta" id="preview-title"></p><p class="preview-meta" id="preview-description"></p></div></div>
             </div>
-            <p class="editor-footnote">This editor stores draft text in this browser only. It does not edit GitHub files, publish changes, or update the live website. Avoid entering private or confidential information.</p>
+            <section class="panel" style="margin-top:14px" aria-labelledby="history-heading"><div class="panel-heading"><div><h2 id="history-heading">Version history</h2><p>Review recent GitHub versions and restore a previous page version.</p></div><button class="secondary-button" type="button" id="load-history">Load history</button></div><div id="history-list" aria-live="polite"><p class="editor-footnote">Load history to see recent commits.</p></div></section>
+            <p class="editor-footnote">Drafts are stored in Cloudflare KV after sign-in. Publishing writes a commit to the GitHub main branch and updates the live site after GitHub Pages deploys.</p>
           </section>
         </section>
 
         <section class="view" id="view-media">
           <section class="media-workspace" aria-labelledby="media-library-title">
-  <div class="section-heading"><div><h2 id="media-library-title">Media library</h2><p>Inspect existing brand assets and prepare local image replacements.</p></div><span class="local-badge">LOCAL PREVIEW ONLY</span></div>
+  <div class="section-heading"><div><h2 id="media-library-title">Media library</h2><p>Inspect existing brand assets and upload approved image files to the repository.</p></div><span class="local-badge">SECURE UPLOAD</span></div>
   <div class="media-stats">
     <article class="stat-card"><span class="stat-label">REPOSITORY ASSETS</span><strong>3</strong><span class="stat-foot">Brand image references</span></article>
     <article class="stat-card"><span class="stat-label">LOCAL FILE QUEUE</span><strong id="media-file-count">0</strong><span class="stat-foot">Selected in this browser</span></article>
@@ -128,23 +130,23 @@
     </div>
   </div>
   <div class="panel upload-panel">
-    <div class="panel-heading"><div><h2>Local image queue</h2><p>Choose images to preview before preparing a replacement.</p></div></div>
+    <div class="panel-heading"><div><h2>Local image queue</h2><p>Choose images to upload to the website repository.</p></div></div>
     <input id="media-file-input" class="visually-hidden" type="file" accept="image/png,image/jpeg,image/webp,image/gif" multiple>
     <div class="drop-zone" id="media-drop-zone" tabindex="0" role="button" aria-controls="media-file-input" aria-label="Choose image files or drop them here">
       <span class="upload-symbol">↑</span><strong>Drop images here</strong><span>or choose files from your device</span><small>PNG, JPG, WebP or GIF · up to 5 MB per image · 20 MB total</small>
       <button class="primary-button" type="button" id="media-choose">Choose images</button>
     </div>
-    <p class="media-status" id="media-status" role="status" aria-live="polite">No files selected. Files stay on this device and are not uploaded.</p>
+    <p class="media-status" id="media-status" role="status" aria-live="polite">No files selected. Files are uploaded to the repository only after you select Upload to website.</p>
     <div class="media-queue" id="media-queue" aria-live="polite"></div>
     <div class="media-actions"><button class="secondary-button" type="button" id="media-clear" disabled>Clear queue</button></div>
   </div>
-  <p class="editor-footnote">Privacy and safety: image files are previewed locally in your browser. Nothing is sent to GitHub or uploaded to a server. The queue is cleared when this page is reloaded. No repository files or live website assets are changed.</p>
+  <p class="editor-footnote">Uploads require an authenticated admin session. Supported image files are validated by the Worker and committed to assets/uploads/.</p>
 </section>
         </section>
         <section class="view" id="view-seo">
           <div class="section-heading"><div><h2>SEO settings</h2><p>Search metadata and social-sharing previews for your website.</p></div></div>
           <section class="seo-workspace" aria-labelledby="seo-editor-title">
-  <div class="editor-heading"><div><p class="eyebrow">LOCAL SEO WORKSPACE</p><h2 id="seo-editor-title">Search & social metadata</h2><p>Edit metadata for each public page and inspect how it may appear when shared.</p></div><span class="local-badge">LOCAL DRAFT ONLY</span></div>
+  <div class="editor-heading"><div><p class="eyebrow">SECURE SEO WORKSPACE</p><h2 id="seo-editor-title">Search & social metadata</h2><p>Edit metadata for each public page and inspect how it may appear when shared.</p></div><span class="local-badge">REMOTE DRAFT</span></div>
   <form class="panel seo-form" id="seo-editor">
     <div class="seo-fields">
       <div class="seo-field full"><label for="seo-page">Select page</label><select id="seo-page"><option value="home">Home</option><option value="about">About</option><option value="services">Services</option><option value="contact">Contact</option><option value="privacy">Privacy policy</option><option value="terms">Terms of use</option></select></div>
@@ -163,13 +165,13 @@
     <article class="panel snippet-card"><div class="preview-top"><strong>Google-style search preview</strong><span>Illustrative only</span></div><div class="snippet-body"><p class="snippet-url" id="snippet-url">https://theredsparrow.online/</p><h3 id="snippet-title">The Red Sparrow — Unity Game Development</h3><p id="snippet-description">The Red Sparrow develops Unity gameplay systems, integrates supplied 3D assets and prepares mobile-focused game builds.</p></div></article>
     <article class="panel social-card"><div class="preview-top"><strong>Social sharing preview</strong><span>Open Graph</span></div><div class="social-image-wrap"><img id="social-image-preview" alt="Social sharing image preview" src="https://theredsparrow.online/og-image.png" loading="lazy"></div><div class="social-copy"><h3 id="social-title-preview">The Red Sparrow — Unity Game Development</h3><p id="social-description-preview">Unity gameplay development, 3D asset integration, game UI implementation and mobile build preparation.</p><small>THEREDSPARROW.ONLINE</small></div></article>
   </div>
-  <p class="editor-footnote">SEO drafts are stored in this browser only. This tool does not change HTML files, request indexing, or publish metadata. Search engines choose their own snippets and display formats.</p>
+  <p class="editor-footnote">SEO drafts are stored in Cloudflare KV. Publishing updates page metadata in GitHub; search engines independently decide when to recrawl and how to display snippets.</p>
 </section>
         </section>
         <section class="view" id="view-settings">
-          <div class="empty-panel"><span class="empty-icon">⚙</span><h2>Workspace settings</h2><p>Authentication, allowed account, repository connection and publishing controls will appear here after security setup.</p></div>
+          <div class="empty-panel"><span class="empty-icon">⚙</span><h2>Workspace settings</h2><p>Authentication uses GitHub OAuth. Only the GitHub account hamadcheema is authorized. The API uses a server-side session and Cloudflare Worker secrets.</p></div>
         </section>
-        <footer class="footer"><span>THE RED SPARROW</span><span>Admin workspace · Development preview</span></footer>
+        <footer class="footer"><span>THE RED SPARROW</span><span>Admin workspace · Protected API</span></footer>
       </section>
     </main>
   </div>
