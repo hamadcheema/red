@@ -9,7 +9,8 @@
     pages: "Review the pages that make up your public website.",
     media: "Manage images and other website assets.",
     seo: "Review search and social-sharing metadata.",
-    settings: "Manage the admin workspace and publishing connection."
+    settings: "Manage the admin workspace and publishing connection.",
+    audit: "Review recent changes made through the admin workspace."
   };
 
   function showView(name) {
@@ -24,7 +25,7 @@
   }
 
   const pageDefaults = {
-    home: {title:"The Red Sparrow — Unity Game Development",description:"The Red Sparrow develops Unity gameplay systems, integrates supplied 3D assets and prepares mobile-focused game builds.",heading:"Ideas into interactive worlds.",intro:"We develop gameplay experiences with Unity, integrate supplied 3D assets and prepare builds for agreed platforms."},
+    home: {title:"The Red Sparrow — Unity Game Development",description:"The Red Sparrow develops Unity gameplay systems, integrates supplied 3D assets and prepares mobile-focused game builds.",heading:"Ideas into\n*interactive worlds.*",intro:"We develop gameplay experiences with Unity, integrate supplied 3D assets and prepare builds for agreed platforms."},
     about: {title:"About — The Red Sparrow",description:"Learn about The Red Sparrow, an independent game-development brand focused on Unity and interactive experiences.",heading:"Built around the joy of play.",intro:"The Red Sparrow is an independent creative brand focused on developing games and interactive experiences with Unity."},
     services: {title:"Services — The Red Sparrow",description:"Explore The Red Sparrow's services: Unity gameplay development, 3D asset integration, game UI implementation and mobile build preparation.",heading:"Our services.",intro:"Practical creative and technical support for bringing interactive ideas to life."},
     contact: {title:"Contact — The Red Sparrow",description:"Contact The Red Sparrow about Unity game development, 3D asset integration, game UI implementation and mobile game projects.",heading:"Let’s start a conversation.",intro:"Have a project, a question or an idea you’d like to explore? Send us an email."}
@@ -53,7 +54,7 @@
     const updatePreview = () => {
       preview.title.textContent = fields.title.value;
       preview.description.textContent = fields.description.value;
-      preview.heading.textContent = fields.heading.value;
+      preview.heading.innerHTML = fields.heading.value.replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;").replace(/\*\*(.+?)\*\*/g,"<strong>$1</strong>").replace(/\*(.+?)\*/g,"<em>$1</em>").replace(/\r?\n/g,"<br>");
       preview.intro.textContent = fields.intro.value;
     };
     const loadPage = () => {
