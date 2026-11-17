@@ -37,5 +37,7 @@
     }catch(e){historyList.textContent=e.message}
     finally{historyButton.disabled=false;historyButton.textContent="Load history"}
   });
+  if($("edit-page"))loadRemoteDraft("page",$("edit-page").value,{title:"edit-title",description:"edit-description",heading:"edit-heading",intro:"edit-intro"},ps);
+  if($("seo-page"))loadRemoteDraft("seo",$("seo-page").value,{title:"seo-title",description:"seo-description",canonical:"seo-canonical",ogTitle:"seo-og-title",ogDescription:"seo-og-description",ogImage:"seo-og-image"},ss);
   connect();
 })();
