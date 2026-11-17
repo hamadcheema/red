@@ -46,7 +46,7 @@
       $("settings-repo").textContent=data.repository||"—";
       $("settings-branch").textContent=data.branch||"—";
       $("settings-connection").textContent=data.githubConnected?"Connected · "+data.githubMessage:"Not connected · "+(data.githubMessage||"Check Worker configuration");
-      $("settings-session").textContent=data.sessionCreated?new Date(data.sessionCreated).toLocaleString():"Active session";
+      $("settings-session").textContent=data.sessionExpires?new Date(data.sessionExpires).toLocaleString():"Active session";
     }catch(e){$("settings-connection").textContent="Unavailable · "+e.message}
     finally{if(button){button.disabled=false;button.textContent="Refresh settings"}}
   }
