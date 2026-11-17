@@ -10,6 +10,7 @@ Official website for The Red Sparrow, a Unity-focused game development brand.
 - Services — `services.html`
 - Contact — `contact.html`
 - Privacy Policy — `privacy.html`
+- Website Terms of Use — `terms.html`
 - Custom not-found page — `404.html`
 
 ## Services presented
