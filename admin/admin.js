@@ -1,0 +1,269 @@
+(() => {
+  const links = [...document.querySelectorAll("[data-view]")];
+  const views = [...document.querySelectorAll(".view")];
+  const title = document.getElementById("view-title");
+  const description = document.getElementById("view-description");
+  const breadcrumb = document.getElementById("breadcrumb-current");
+  const descriptions = {
+    overview: "A clear view of your website and its content.",
+    pages: "Review the pages that make up your public website.",
+    media: "Manage images and other website assets.",
+    seo: "Review search and social-sharing metadata.",
+    settings: "Manage the admin workspace and publishing connection."
+  };
+
+  function showView(name) {
+    const selected = descriptions[name] ? name : "overview";
+    views.forEach(view => view.classList.toggle("active", view.id === "view-" + selected));
+    links.forEach(link => link.classList.toggle("active", link.dataset.view === selected));
+    const label = links.find(link => link.dataset.view === selected)?.textContent.trim() || "Overview";
+    title.textContent = label;
+    breadcrumb.textContent = label;
+    description.textContent = descriptions[selected];
+    document.getElementById("sidebar").classList.remove("open");
+  }
+
+  const pageDefaults = {
+    home: {title:"The Red Sparrow — Unity Game Development",description:"The Red Sparrow develops Unity gameplay systems, integrates supplied 3D assets and prepares mobile-focused game builds.",heading:"Ideas into interactive worlds.",intro:"We develop gameplay experiences with Unity, integrate supplied 3D assets and prepare builds for agreed platforms."},
+    about: {title:"About — The Red Sparrow",description:"Learn about The Red Sparrow, an independent game-development brand focused on Unity and interactive experiences.",heading:"Built around the joy of play.",intro:"The Red Sparrow is an independent creative brand focused on developing games and interactive experiences with Unity."},
+    services: {title:"Services — The Red Sparrow",description:"Explore The Red Sparrow's services: Unity gameplay development, 3D asset integration, game UI implementation and mobile build preparation.",heading:"Our services.",intro:"Practical creative and technical support for bringing interactive ideas to life."},
+    contact: {title:"Contact — The Red Sparrow",description:"Contact The Red Sparrow about Unity game development, 3D asset integration, game UI implementation and mobile game projects.",heading:"Let’s start a conversation.",intro:"Have a project, a question or an idea you’d like to explore? Send us an email."}
+  };
+  const editor = document.getElementById("page-editor");
+  if (editor) {
+    const fields = {
+      page: document.getElementById("edit-page"),
+      title: document.getElementById("edit-title"),
+      description: document.getElementById("edit-description"),
+      heading: document.getElementById("edit-heading"),
+      intro: document.getElementById("edit-intro")
+    };
+    const status = document.getElementById("editor-status");
+    const storageKey = "trs-admin-local-page-drafts-v1";
+    const preview = {
+      title: document.getElementById("preview-title"),
+      description: document.getElementById("preview-description"),
+      heading: document.getElementById("preview-heading"),
+      intro: document.getElementById("preview-intro")
+    };
+    const readDrafts = () => {
+      try { return JSON.parse(localStorage.getItem(storageKey) || "{}"); }
+      catch { return {}; }
+    };
+    const updatePreview = () => {
+      preview.title.textContent = fields.title.value;
+      preview.description.textContent = fields.description.value;
+      preview.heading.textContent = fields.heading.value;
+      preview.intro.textContent = fields.intro.value;
+    };
+    const loadPage = () => {
+      const saved = readDrafts()[fields.page.value] || {};
+      const data = {...pageDefaults[fields.page.value], ...saved};
+      ["title","description","heading","intro"].forEach(key => fields[key].value = data[key]);
+      status.textContent = saved.title ? "Saved local draft loaded." : "Showing original page copy. No draft saved.";
+      updatePreview();
+    };
+    fields.page.addEventListener("change", loadPage);
+    ["title","description","heading","intro"].forEach(key => fields[key].addEventListener("input", updatePreview));
+    editor.addEventListener("submit", event => {
+      event.preventDefault();
+      const drafts = readDrafts();
+      drafts[fields.page.value] = {
+        title: fields.title.value.trim(),
+        description: fields.description.value.trim(),
+        heading: fields.heading.value.trim(),
+        intro: fields.intro.value.trim()
+      };
+      try {
+        localStorage.setItem(storageKey, JSON.stringify(drafts));
+        status.textContent = "Local draft saved in this browser. Nothing was published.";
+      } catch {
+        status.textContent = "This browser could not save the draft. Check local storage settings.";
+      }
+    });
+    document.getElementById("reset-draft").addEventListener("click", () => {
+      const drafts = readDrafts();
+      delete drafts[fields.page.value];
+      try { localStorage.setItem(storageKey, JSON.stringify(drafts)); }
+      catch {}
+      loadPage();
+      status.textContent = "Draft cleared. Original page copy restored.";
+    });
+    loadPage();
+  }
+
+  const seoDefaults = {
+    home: {title:"The Red Sparrow — Unity Game Development",description:"The Red Sparrow develops Unity gameplay systems, integrates supplied 3D assets and prepares mobile-focused game builds.",canonical:"https://theredsparrow.online/",ogTitle:"The Red Sparrow — Unity Game Development",ogDescription:"Unity gameplay development, 3D asset integration, game UI implementation and mobile build preparation.",ogImage:"https://theredsparrow.online/og-image.png"},
+    about: {title:"About — The Red Sparrow",description:"Learn about The Red Sparrow, an independent game-development brand focused on Unity and interactive experiences.",canonical:"https://theredsparrow.online/about.html",ogTitle:"About — The Red Sparrow",ogDescription:"An independent game-development brand focused on Unity.",ogImage:"https://theredsparrow.online/og-image.png"},
+    services: {title:"Services — The Red Sparrow",description:"Explore The Red Sparrow's services: Unity gameplay development, 3D asset integration, game UI implementation and mobile build preparation.",canonical:"https://theredsparrow.online/services.html",ogTitle:"Services — The Red Sparrow",ogDescription:"Unity gameplay development, 3D asset integration, game UI implementation and mobile build preparation.",ogImage:"https://theredsparrow.online/og-image.png"},
+    contact: {title:"Contact — The Red Sparrow",description:"Contact The Red Sparrow about Unity game development, 3D asset integration, game UI implementation and mobile game projects.",canonical:"https://theredsparrow.online/contact.html",ogTitle:"Contact — The Red Sparrow",ogDescription:"Tell us about the game or interactive experience you have in mind.",ogImage:"https://theredsparrow.online/og-image.png"},
+    privacy: {title:"Privacy Policy — The Red Sparrow",description:"Privacy information for visitors to The Red Sparrow, including contact enquiries, website hosting and advertising technologies.",canonical:"https://theredsparrow.online/privacy.html",ogTitle:"Privacy Policy — The Red Sparrow",ogDescription:"How The Red Sparrow handles information shared through its website and advertising services.",ogImage:"https://theredsparrow.online/og-image.png"},
+    terms: {title:"Terms of Use — The Red Sparrow",description:"Terms governing access to and use of The Red Sparrow website.",canonical:"https://theredsparrow.online/terms.html",ogTitle:"Terms of Use — The Red Sparrow",ogDescription:"Terms governing use of The Red Sparrow website.",ogImage:"https://theredsparrow.online/og-image.png"}
+  };
+  const seoForm = document.getElementById("seo-editor");
+  if (seoForm) {
+    const seoFields = {
+      page: document.getElementById("seo-page"),
+      title: document.getElementById("seo-title"),
+      description: document.getElementById("seo-description"),
+      canonical: document.getElementById("seo-canonical"),
+      ogTitle: document.getElementById("seo-og-title"),
+      ogDescription: document.getElementById("seo-og-description"),
+      ogImage: document.getElementById("seo-og-image")
+    };
+    const seoKey = "trs-admin-local-seo-drafts-v1";
+    const seoStatus = document.getElementById("seo-status");
+    const validation = document.getElementById("seo-validation");
+    const readSeoDrafts = () => {
+      try { return JSON.parse(localStorage.getItem(seoKey) || "{}"); }
+      catch { return {}; }
+    };
+    const counters = {
+      title: document.getElementById("seo-title-count"),
+      description: document.getElementById("seo-description-count"),
+      ogTitle: document.getElementById("seo-og-title-count"),
+      ogDescription: document.getElementById("seo-og-description-count")
+    };
+    const updateSeoPreview = () => {
+      document.getElementById("snippet-url").textContent = seoFields.canonical.value;
+      document.getElementById("snippet-title").textContent = seoFields.title.value;
+      document.getElementById("snippet-description").textContent = seoFields.description.value;
+      document.getElementById("social-title-preview").textContent = seoFields.ogTitle.value;
+      document.getElementById("social-description-preview").textContent = seoFields.ogDescription.value;
+      const image = document.getElementById("social-image-preview");
+      try {
+        const parsed = new URL(seoFields.ogImage.value);
+        if (parsed.protocol === "https:" && parsed.hostname === "theredsparrow.online") image.src = parsed.href;
+      } catch {}
+      counters.title.textContent = seoFields.title.value.length + " / 70";
+      counters.description.textContent = seoFields.description.value.length + " / 180";
+      counters.ogTitle.textContent = seoFields.ogTitle.value.length + " / 70";
+      counters.ogDescription.textContent = seoFields.ogDescription.value.length + " / 200";
+    };
+    const loadSeoPage = () => {
+      const saved = readSeoDrafts()[seoFields.page.value] || {};
+      const data = {...seoDefaults[seoFields.page.value], ...saved};
+      ["title","description","canonical","ogTitle","ogDescription","ogImage"].forEach(key => seoFields[key].value = data[key]);
+      seoStatus.textContent = saved.title ? "Saved local SEO draft loaded." : "Showing current website metadata.";
+      validation.textContent = "Canonical and image URLs must use HTTPS and the theredsparrow.online domain.";
+      updateSeoPreview();
+    };
+    const validSiteUrl = value => {
+      try {
+        const parsed = new URL(value);
+        return parsed.protocol === "https:" && parsed.hostname === "theredsparrow.online" && !parsed.username && !parsed.password;
+      } catch { return false; }
+    };
+    seoFields.page.addEventListener("change", loadSeoPage);
+    ["title","description","canonical","ogTitle","ogDescription","ogImage"].forEach(key => seoFields[key].addEventListener("input", updateSeoPreview));
+    seoForm.addEventListener("submit", event => {
+      event.preventDefault();
+      if (!validSiteUrl(seoFields.canonical.value) || !validSiteUrl(seoFields.ogImage.value)) {
+        validation.textContent = "Please use valid HTTPS URLs on theredsparrow.online for both fields.";
+        return;
+      }
+      const drafts = readSeoDrafts();
+      drafts[seoFields.page.value] = {};
+      ["title","description","canonical","ogTitle","ogDescription","ogImage"].forEach(key => drafts[seoFields.page.value][key] = seoFields[key].value.trim());
+      try {
+        localStorage.setItem(seoKey, JSON.stringify(drafts));
+        seoStatus.textContent = "SEO draft saved in this browser. Nothing was published.";
+        validation.textContent = "URL checks passed. These metadata changes are still local only.";
+      } catch {
+        seoStatus.textContent = "This browser could not save the draft. Check local storage settings.";
+      }
+    });
+    document.getElementById("seo-reset").addEventListener("click", () => {
+      const drafts = readSeoDrafts();
+      delete drafts[seoFields.page.value];
+      try { localStorage.setItem(seoKey, JSON.stringify(drafts)); } catch {}
+      loadSeoPage();
+      seoStatus.textContent = "SEO draft cleared. Current website metadata restored.";
+    });
+    loadSeoPage();
+  }
+
+  const mediaInput = document.getElementById("media-file-input");
+  const mediaZone = document.getElementById("media-drop-zone");
+  if (mediaInput && mediaZone) {
+    const queue = [];
+    const maxFileSize = 5 * 1024 * 1024;
+    const maxTotalSize = 20 * 1024 * 1024;
+    const allowedTypes = new Set(["image/png","image/jpeg","image/webp","image/gif"]);
+    const queueElement = document.getElementById("media-queue");
+    const mediaStatus = document.getElementById("media-status");
+    const clearButton = document.getElementById("media-clear");
+    const countElement = document.getElementById("media-file-count");
+    const sizeElement = document.getElementById("media-total-size");
+    const formatSize = bytes => bytes < 1024 * 1024 ? Math.max(1,Math.round(bytes/1024))+" KB" : (bytes/1024/1024).toFixed(2)+" MB";
+    const renderQueue = () => {
+      queueElement.replaceChildren();
+      queue.forEach(item => {
+        const card = document.createElement("article");
+        card.className = "queued-file";
+        const image = document.createElement("img");
+        image.src = item.url;
+        image.alt = "Preview of "+item.file.name;
+        const meta = document.createElement("div");
+        meta.className = "queued-meta";
+        const name = document.createElement("strong");
+        name.textContent = item.file.name;
+        const detail = document.createElement("span");
+        detail.textContent = item.file.type.replace("image/","").toUpperCase()+" · "+formatSize(item.file.size);
+        meta.append(name,detail);
+        card.append(image,meta);
+        queueElement.append(card);
+      });
+      const total = queue.reduce((sum,item)=>sum+item.file.size,0);
+      countElement.textContent = String(queue.length);
+      sizeElement.textContent = total ? formatSize(total) : "0 MB";
+      clearButton.disabled = queue.length===0;
+    };
+    const addFiles = files => {
+      const rejected = [];
+      for (const file of files) {
+        if (!allowedTypes.has(file.type)) { rejected.push(file.name+": unsupported file type"); continue; }
+        if (file.size > maxFileSize) { rejected.push(file.name+": larger than 5 MB"); continue; }
+        const total = queue.reduce((sum,item)=>sum+item.file.size,0);
+        if (total + file.size > maxTotalSize) { rejected.push(file.name+": queue would exceed 20 MB"); continue; }
+        if (queue.some(item=>item.file.name===file.name && item.file.size===file.size)) { rejected.push(file.name+": already selected"); continue; }
+        queue.push({file,url:URL.createObjectURL(file)});
+      }
+      renderQueue();
+      mediaStatus.textContent = rejected.length ? queue.length+" image(s) ready. Skipped: "+rejected.join("; ") : queue.length+" image(s) ready for local preview. Nothing was uploaded.";
+    };
+    document.getElementById("media-choose").addEventListener("click",()=>mediaInput.click());
+    mediaZone.addEventListener("click",event=>{if(event.target===mediaZone||event.target.closest("strong,span,small"))mediaInput.click();});
+    mediaZone.addEventListener("keydown",event=>{if(event.key==="Enter"||event.key===" "){event.preventDefault();mediaInput.click();}});
+    mediaInput.addEventListener("change",()=>{addFiles([...mediaInput.files]);mediaInput.value="";});
+    ["dragenter","dragover"].forEach(type=>mediaZone.addEventListener(type,event=>{event.preventDefault();mediaZone.classList.add("drag-over");}));
+    ["dragleave","drop"].forEach(type=>mediaZone.addEventListener(type,event=>{event.preventDefault();mediaZone.classList.remove("drag-over");}));
+    mediaZone.addEventListener("drop",event=>addFiles([...event.dataTransfer.files]));
+    clearButton.addEventListener("click",()=>{
+      queue.forEach(item=>URL.revokeObjectURL(item.url));
+      queue.length=0;
+      renderQueue();
+      mediaStatus.textContent="Local image queue cleared. No website files were changed.";
+    });
+    window.addEventListener("beforeunload",()=>queue.forEach(item=>URL.revokeObjectURL(item.url)));
+    renderQueue();
+  }
+
+  links.forEach(link => link.addEventListener("click", () => showView(link.dataset.view)));
+  document.querySelectorAll("[data-go]").forEach(button => button.addEventListener("click", () => showView(button.dataset.go)));
+  const sidebar = document.getElementById("sidebar");
+  const menuToggle = document.getElementById("menu-toggle");
+
+  menuToggle.addEventListener("click", () => {
+    const isOpen = sidebar.classList.toggle("open");
+    menuToggle.setAttribute("aria-expanded", String(isOpen));
+  });
+
+  document.addEventListener("keydown", event => {
+    if (event.key === "Escape" && sidebar.classList.contains("open")) {
+      sidebar.classList.remove("open");
+      menuToggle.setAttribute("aria-expanded", "false");
+      menuToggle.focus();
+    }
+  });
+})();
