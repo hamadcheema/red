@@ -26,10 +26,10 @@
   }
 
   const pageDefaults = {
-    home: {image:"",title:"The Red Sparrow — Unity Game Development",description:"The Red Sparrow develops Unity gameplay systems, integrates supplied 3D assets and prepares mobile-focused game builds.",heading:"Ideas into\n*interactive worlds.*",intro:"We develop gameplay experiences with Unity, integrate supplied 3D assets and prepare builds for agreed platforms."},
-    about: {image:"",title:"About — The Red Sparrow",description:"Learn about The Red Sparrow, an independent game-development brand focused on Unity and interactive experiences.",heading:"Built around\nthe joy of play.",intro:"The Red Sparrow is an independent creative brand focused on developing games and interactive experiences with Unity."},
-    services: {image:"",title:"Services — The Red Sparrow",description:"Explore The Red Sparrow's services: Unity gameplay development, 3D asset integration, game UI implementation and mobile build preparation.",heading:"Our *services.*",intro:"Practical creative and technical support for bringing interactive ideas to life."},
-    contact: {image:"",title:"Contact — The Red Sparrow",description:"Contact The Red Sparrow about Unity game development, 3D asset integration, game UI implementation and mobile game projects.",heading:"Let’s start\n*a conversation.*",intro:"Have a project, a question or an idea you’d like to explore? Send us an email."}
+    home: {image:"",imageAlt:"",title:"The Red Sparrow — Unity Game Development",description:"The Red Sparrow develops Unity gameplay systems, integrates supplied 3D assets and prepares mobile-focused game builds.",heading:"Ideas into\n*interactive worlds.*",intro:"We develop gameplay experiences with Unity, integrate supplied 3D assets and prepare builds for agreed platforms."},
+    about: {image:"",imageAlt:"",title:"About — The Red Sparrow",description:"Learn about The Red Sparrow, an independent game-development brand focused on Unity and interactive experiences.",heading:"Built around\nthe joy of play.",intro:"The Red Sparrow is an independent creative brand focused on developing games and interactive experiences with Unity."},
+    services: {image:"",imageAlt:"",title:"Services — The Red Sparrow",description:"Explore The Red Sparrow's services: Unity gameplay development, 3D asset integration, game UI implementation and mobile build preparation.",heading:"Our *services.*",intro:"Practical creative and technical support for bringing interactive ideas to life."},
+    contact: {image:"",imageAlt:"",title:"Contact — The Red Sparrow",description:"Contact The Red Sparrow about Unity game development, 3D asset integration, game UI implementation and mobile game projects.",heading:"Let’s start\n*a conversation.*",intro:"Have a project, a question or an idea you’d like to explore? Send us an email."}
   };
   const editor = document.getElementById("page-editor");
   if (editor) {
@@ -38,7 +38,8 @@
       title: document.getElementById("edit-title"),
       description: document.getElementById("edit-description"),
       heading: document.getElementById("edit-heading"),
-      intro: document.getElementById("edit-intro")
+      intro: document.getElementById("edit-intro"),
+      imageAlt: document.getElementById("edit-image-alt")
     };
     const status = document.getElementById("editor-status");
     const storageKey = "trs-admin-local-page-drafts-v1";
@@ -60,7 +61,7 @@
       preview.intro.textContent = fields.intro.value;
       const imagePicker = document.getElementById("edit-image");
       const imageUrl = imagePicker?.selectedOptions[0]?.dataset.previewUrl || imagePicker?.value || "";
-      if (preview.image) { preview.image.src = imageUrl; preview.image.hidden = !imageUrl; }
+      if (preview.image) { preview.image.src = imageUrl; preview.image.hidden = !imageUrl; preview.image.alt = fields.imageAlt?.value.trim() || ""; }
     };
     const loadPage = () => {
       const saved = readDrafts()[fields.page.value] || {};
@@ -68,13 +69,13 @@
       const formattedHeadings = {home:["Ideas into interactive worlds.","Ideas into\n*interactive worlds.*"],about:["Built around the joy of play.","Built around\nthe joy of play."],services:["Our services.","Our *services.*"],contact:["Let’s start a conversation.","Let’s start\n*a conversation.*"]};
       const legacyHeading = formattedHeadings[fields.page.value];
       if (legacyHeading && data.heading === legacyHeading[0]) data.heading = legacyHeading[1];
-      ["title","description","heading","intro"].forEach(key => fields[key].value = data[key]);
+      ["title","description","heading","intro","imageAlt"].forEach(key => { if (fields[key]) fields[key].value = data[key] || ""; });
       const imageField = document.getElementById("edit-image"); if (imageField) imageField.value = data.image || "";
       status.textContent = saved.title ? "Saved local draft loaded." : "Showing original page copy. No draft saved.";
       updatePreview();
     };
     fields.page.addEventListener("change", loadPage);
-    ["title","description","heading","intro"].forEach(key => fields[key].addEventListener("input", updatePreview));
+    ["title","description","heading","intro","imageAlt"].forEach(key => fields[key]?.addEventListener("input", updatePreview));
     document.getElementById("edit-image")?.addEventListener("change", updatePreview);
     editor.addEventListener("submit", event => {
       event.preventDefault();
@@ -84,7 +85,8 @@
         description: fields.description.value.trim(),
         heading: fields.heading.value.trim(),
         intro: fields.intro.value.trim(),
-        image: document.getElementById("edit-image")?.value || ""
+        image: document.getElementById("edit-image")?.value || "",
+        imageAlt: fields.imageAlt?.value.trim() || ""
       };
       try {
         localStorage.setItem(storageKey, JSON.stringify(drafts));
