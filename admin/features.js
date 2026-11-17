@@ -7,7 +7,10 @@
     const grid=$("media-library-grid");if(!grid)return;
     grid.replaceChildren();const loading=document.createElement("p");loading.className="editor-footnote";loading.textContent="Loading uploaded images…";grid.append(loading);
     try{
-      const data=await request("/media/list");grid.replaceChildren();
+      const data=await request("/media/list");
+      const picker=$("edit-image");
+      if(picker){const selected=picker.value;picker.replaceChildren(new Option("No image selected",""));for(const item of data.items){picker.add(new Option(item.name,item.siteUrl||item.url))}picker.value=[...picker.options].some(o=>o.value===selected)?selected:"";picker.dispatchEvent(new Event("change",{bubbles:true}));}
+      grid.replaceChildren();
       if(!data.items.length){const empty=document.createElement("p");empty.className="editor-footnote";empty.textContent="No uploaded images yet. Upload an image above to add it here.";grid.append(empty);return}
       for(const item of data.items){
         const card=document.createElement("article");card.className="asset-card";
@@ -51,6 +54,8 @@
     finally{if(button){button.disabled=false;button.textContent="Refresh settings"}}
   }
   $("media-library-refresh")?.addEventListener("click",loadMedia);
+  $("clear-page-image")?.addEventListener("click",()=>{const picker=$("edit-image");if(picker){picker.value="";picker.dispatchEvent(new Event("change",{bubbles:true}))}});
+  $("edit-image")?.addEventListener("change",()=>{const url=$("edit-image").value,wrap=$("selected-image-preview"),img=$("selected-image");if(wrap)wrap.hidden=!url;if(img){img.src=url;img.hidden=!url}});
   $("audit-refresh")?.addEventListener("click",loadAudit);
   $("settings-refresh")?.addEventListener("click",loadSettings);
   window.addEventListener("trs:media-updated",loadMedia);
