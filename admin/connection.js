@@ -2,7 +2,7 @@
   const API="/admin-api", $=id=>document.getElementById(id);
   let selectedFiles=[];
   const say=(el,text,bad=false)=>{if(el){el.textContent=text;el.style.color=bad?"#f18b83":""}};
-  async function call(path,options={}){const r=await fetch(API+path,{credentials:"include",...options,headers:{"content-type":"application/json",...(options.headers||{})}});const d=await r.json().catch(()=>({}));if(!r.ok)throw Error(d.error||"Request failed ("+r.status+")");return d}
+  async function call(path,options={}){const r=await fetch(API+path,{credentials:"include",...options,headers:{"content-type":"application/json",...(options.headers||{})}});const d=await r.json().catch(()=>({}));if(!r.ok){const error=new Error(d.error||"Request failed ("+r.status+")");error.status=r.status;throw error}return d}
   async function connect(){
     const n=document.querySelector(".notice"),login=$("github-login"),logout=$("admin-logout"),pill=$("connection-pill");
     try{
@@ -19,12 +19,21 @@
       const stat=document.querySelector("#view-overview .stats-grid .stat-card:nth-child(3) .stat-word");
       if(stat)stat.textContent=s.githubConnected?"Ready":"Pending";
     }catch(e){
-      if(login)login.hidden=false;
       if(logout)logout.hidden=true;
-      if(pill)pill.textContent="SIGNED OUT";
-      if(n){
-        n.querySelector("strong").textContent="Admin sign-in required";
-        n.querySelector("p").textContent="Sign in using the authorized GitHub account to use the admin tools.";
+      if(e.status===401){
+        if(login)login.hidden=false;
+        if(pill)pill.textContent="SIGNED OUT";
+        if(n){
+          n.querySelector("strong").textContent="Admin sign-in required";
+          n.querySelector("p").textContent="Sign in using the authorized GitHub account to use the admin tools.";
+        }
+      }else{
+        if(login)login.hidden=true;
+        if(pill)pill.textContent="CHECK FAILED";
+        if(n){
+          n.querySelector("strong").textContent="Could not verify admin session";
+          n.querySelector("p").textContent="The admin API could not verify your session. Refresh the page and try again. Your login status has not been assumed to be signed out.";
+        }
       }
     }
   }
