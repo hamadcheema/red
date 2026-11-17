@@ -1,0 +1,14 @@
+name = "the-red-sparrow-admin-api"
+main = "worker.js"
+compatibility_date = "2026-11-17"
+workers_dev = false
+
+[[kv_namespaces]]
+binding = "DRAFTS"
+id = "ae7faeac32db4092b196ad63784d911b"
+
+[vars]
+ADMIN_EMAIL = "thatsmehammad@gmail.com"
+GITHUB_OWNER = "hamadcheema"
+GITHUB_REPO = "red"
+GITHUB_BRANCH = "main"
