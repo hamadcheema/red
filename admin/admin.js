@@ -58,7 +58,8 @@
       preview.description.textContent = fields.description.value;
       preview.heading.innerHTML = fields.heading.value.replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;").replace(/\*\*(.+?)\*\*/g,"<strong>$1</strong>").replace(/\*(.+?)\*/g,"<em>$1</em>").replace(/\r?\n/g,"<br>");
       preview.intro.textContent = fields.intro.value;
-      const imageUrl = document.getElementById("edit-image")?.value || "";
+      const imagePicker = document.getElementById("edit-image");
+      const imageUrl = imagePicker?.selectedOptions[0]?.dataset.previewUrl || imagePicker?.value || "";
       if (preview.image) { preview.image.src = imageUrl; preview.image.hidden = !imageUrl; }
     };
     const loadPage = () => {
