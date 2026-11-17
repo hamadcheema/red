@@ -1,0 +1,33 @@
+name: Repository quality checks
+
+on:
+  push:
+    branches:
+      - main
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  validate:
+    name: Validate website and admin Worker
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v4
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - name: Check JavaScript syntax
+        run: |
+          node --check admin/admin.js
+          node --check admin/connection.js
+          node --check admin/features.js
+          node --check admin/worker.js
+          node --check admin/tests/worker.test.mjs
+      - name: Run Worker regression tests
+        run: node --test admin/tests/worker.test.mjs
+      - name: Validate HTML, links, assets, metadata and sitemap
+        run: python scripts/validate_site.py
