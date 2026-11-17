@@ -40,7 +40,7 @@
       if(pill)pill.textContent=s.githubConnected?"CONNECTED":"DRAFT";
       const stat=document.querySelector("#view-overview .stats-grid .stat-card:nth-child(3) .stat-word");
       if(stat)stat.textContent=s.githubConnected?"Ready":"Pending";
-      if($("edit-page"))await loadRemoteDraft("page",$("edit-page").value,{title:"edit-title",description:"edit-description",heading:"edit-heading",intro:"edit-intro",image:"edit-image"},ps);
+      if($("edit-page"))await loadRemoteDraft("page",$("edit-page").value,{title:"edit-title",description:"edit-description",heading:"edit-heading",intro:"edit-intro",image:"edit-image",imageAlt:"edit-image-alt"},ps);
       if($("seo-page"))await loadRemoteDraft("seo",$("seo-page").value,{title:"seo-title",description:"seo-description",canonical:"seo-canonical",ogTitle:"seo-og-title",ogDescription:"seo-og-description",ogImage:"seo-og-image"},ss);
     }catch(e){
       if(logout)logout.hidden=true;
@@ -55,11 +55,22 @@
   }
   $("auth-retry")?.addEventListener("click",connect);
   const pf=$("page-editor"),ps=$("editor-status");
-  if(pf){pf.addEventListener("submit",async()=>{try{await call("/draft",{method:"POST",body:JSON.stringify({key:"page:"+$("edit-page").value,value:{title:$("edit-title").value,description:$("edit-description").value,heading:$("edit-heading").value,intro:$("edit-intro").value,image:$("edit-image")?.value||""}})});say(ps,"Draft saved securely to Cloudflare KV.")}catch(e){say(ps,"Local draft saved; remote save failed: "+e.message,true)}});
-    const b=document.createElement("button");b.type="button";b.className="primary-button";b.textContent="Publish to website";pf.querySelector(".editor-actions").append(b);b.addEventListener("click",async()=>{if(!confirm("Publish these changes to the live website? A GitHub commit will be created."))return;b.disabled=true;b.textContent="Publishing…";try{const d=await call("/publish/page",{method:"POST",body:JSON.stringify({slug:$("edit-page").value,title:$("edit-title").value,description:$("edit-description").value,heading:$("edit-heading").value,intro:$("edit-intro").value,imageUrl:$("edit-image")?.value||""})});say(ps,"Published in GitHub ("+(d.commit||"commit created").slice(0,7)+"). Wait for Pages to deploy.")}catch(e){say(ps,e.message,true)}finally{b.disabled=false;b.textContent="Publish to website"}})}
+  const pageValue=()=>({title:$("edit-title").value,description:$("edit-description").value,heading:$("edit-heading").value,intro:$("edit-intro").value,image:$("edit-image")?.value||"",imageAlt:$("edit-image-alt")?.value.trim()||""});
+  const seoValue=()=>({title:$("seo-title").value,description:$("seo-description").value,canonical:$("seo-canonical").value,ogTitle:$("seo-og-title").value,ogDescription:$("seo-og-description").value,ogImage:$("seo-og-image").value});
+  const saveRemoteDraft=async(key,value)=>call("/draft",{method:"POST",body:JSON.stringify({key,value})});
+  if(pf){
+    pf.addEventListener("submit",async event=>{event.preventDefault();try{await saveRemoteDraft("page:"+$("edit-page").value,pageValue());say(ps,"Draft saved securely to Cloudflare KV.")}catch(e){say(ps,"Local draft saved; remote save failed: "+e.message,true)}});
+    const b=document.createElement("button");b.type="button";b.className="primary-button";b.textContent="Publish to website";pf.querySelector(".editor-actions").append(b);
+    b.addEventListener("click",async()=>{if(!confirm("Publish these changes to the live website? A GitHub commit will be created."))return;b.disabled=true;b.textContent="Publishing…";try{const slug=$("edit-page").value,value=pageValue();await saveRemoteDraft("page:"+slug,value);const d=await call("/publish/page",{method:"POST",body:JSON.stringify({...value,slug,imageUrl:value.image})});say(ps,"Published in GitHub ("+(d.commit||"commit created").slice(0,7)+"). Draft synchronized. Wait for Pages to deploy.")}catch(e){say(ps,"Could not complete publishing: "+e.message,true)}finally{b.disabled=false;b.textContent="Publish to website"}});
+  }
   const sf=$("seo-editor"),ss=$("seo-status");
-  if(sf){sf.addEventListener("submit",async()=>{const value={title:$("seo-title").value,description:$("seo-description").value,canonical:$("seo-canonical").value,ogTitle:$("seo-og-title").value,ogDescription:$("seo-og-description").value,ogImage:$("seo-og-image").value};try{await call("/draft",{method:"POST",body:JSON.stringify({key:"seo:"+$("seo-page").value,value})});say(ss,"SEO draft saved securely to Cloudflare KV.")}catch(e){say(ss,"Local draft saved; remote save failed: "+e.message,true)}});
-    const b=document.createElement("button");b.type="button";b.className="primary-button";b.textContent="Publish SEO";sf.querySelector(".seo-actions").append(b);b.addEventListener("click",async()=>{if(!confirm("Publish these SEO changes to the live website?"))return;b.disabled=true;b.textContent="Publishing…";try{const d=await call("/publish/seo",{method:"POST",body:JSON.stringify({slug:$("seo-page").value,title:$("seo-title").value,description:$("seo-description").value,canonical:$("seo-canonical").value,ogTitle:$("seo-og-title").value,ogDescription:$("seo-og-description").value,ogImage:$("seo-og-image").value})});say(ss,"SEO published in GitHub ("+(d.commit||"commit created").slice(0,7)+").")}catch(e){say(ss,e.message,true)}finally{b.disabled=false;b.textContent="Publish SEO"}})}
+  if(sf){
+    sf.addEventListener("submit",async event=>{event.preventDefault();try{await saveRemoteDraft("seo:"+$("seo-page").value,seoValue());say(ss,"SEO draft saved securely to Cloudflare KV.")}catch(e){say(ss,"Local draft saved; remote save failed: "+e.message,true)}});
+    const b=document.createElement("button");b.type="button";b.className="primary-button";b.textContent="Publish SEO";sf.querySelector(".seo-actions").append(b);
+    b.addEventListener("click",async()=>{if(!confirm("Publish these SEO changes to the live website?"))return;b.disabled=true;b.textContent="Publishing…";try{const slug=$("seo-page").value,value=seoValue();await saveRemoteDraft("seo:"+slug,value);const d=await call("/publish/seo",{method:"POST",body:JSON.stringify({...value,slug})});say(ss,"SEO published in GitHub ("+(d.commit||"commit created").slice(0,7)+"). Draft synchronized.")}catch(e){say(ss,"Could not complete SEO publishing: "+e.message,true)}finally{b.disabled=false;b.textContent="Publish SEO"}});
+  }
+  $("reset-draft")?.addEventListener("click",async()=>{try{await call("/draft?key=page:"+encodeURIComponent($("edit-page").value),{method:"DELETE"});say(ps,"Local and remote page drafts cleared.")}catch(e){say(ps,"Local draft cleared, but remote reset failed: "+e.message,true)}});
+  $("seo-reset")?.addEventListener("click",async()=>{try{await call("/draft?key=seo:"+encodeURIComponent($("seo-page").value),{method:"DELETE"});say(ss,"Local and remote SEO drafts cleared.")}catch(e){say(ss,"Local SEO draft cleared, but remote reset failed: "+e.message,true)}});
   const input=$("media-file-input"),actions=$("media-clear")?.parentElement,dropZone=$("media-drop-zone"),queue=$("media-queue");
   const acceptedMediaTypes=new Set(["image/png","image/jpeg","image/webp","image/gif"]);
   const safeFilename=value=>String(value||"").trim().replace(/[^\w.-]+/g,"-").replace(/-+/g,"-").replace(/^[-.]+|[-.]+$/g,"");
@@ -137,7 +148,7 @@
     try{const d=await call("/draft?key="+encodeURIComponent(kind+":"+slug));if(!d.draft)return;for(const [key,id] of Object.entries(fields))if($(id)&&d.draft[key]!==undefined){let value=d.draft[key];if(key==="heading"){const legacy={home:["Ideas into interactive worlds.","Ideas into\n*interactive worlds.*"],about:["Built around the joy of play.","Built around\nthe joy of play."],services:["Our services.","Our *services.*"],contact:["Let’s start a conversation.","Let’s start\n*a conversation.*"]}[slug];if(legacy&&value===legacy[0])value=legacy[1]}$(id).value=value;$(id).dispatchEvent(new Event("input",{bubbles:true}))}say(status,"Remote draft restored from Cloudflare KV.");}
     catch(e){say(status,"Could not load remote draft: "+e.message,true)}
   }
-  if($("edit-page"))$("edit-page").addEventListener("change",()=>loadRemoteDraft("page",$("edit-page").value,{title:"edit-title",description:"edit-description",heading:"edit-heading",intro:"edit-intro",image:"edit-image"},ps));
+  if($("edit-page"))$("edit-page").addEventListener("change",()=>loadRemoteDraft("page",$("edit-page").value,{title:"edit-title",description:"edit-description",heading:"edit-heading",intro:"edit-intro",image:"edit-image",imageAlt:"edit-image-alt"},ps));
   if($("seo-page"))$("seo-page").addEventListener("change",()=>loadRemoteDraft("seo",$("seo-page").value,{title:"seo-title",description:"seo-description",canonical:"seo-canonical",ogTitle:"seo-og-title",ogDescription:"seo-og-description",ogImage:"seo-og-image"},ss));
   const historyButton=$("load-history"),historyList=$("history-list");
   if(historyButton&&historyList)historyButton.addEventListener("click",async()=>{
