@@ -25,7 +25,19 @@
 
   links.forEach(link => link.addEventListener("click", () => showView(link.dataset.view)));
   document.querySelectorAll("[data-go]").forEach(button => button.addEventListener("click", () => showView(button.dataset.go)));
-  document.getElementById("menu-toggle").addEventListener("click", () => {
-    document.getElementById("sidebar").classList.toggle("open");
+  const sidebar = document.getElementById("sidebar");
+  const menuToggle = document.getElementById("menu-toggle");
+
+  menuToggle.addEventListener("click", () => {
+    const isOpen = sidebar.classList.toggle("open");
+    menuToggle.setAttribute("aria-expanded", String(isOpen));
+  });
+
+  document.addEventListener("keydown", event => {
+    if (event.key === "Escape" && sidebar.classList.contains("open")) {
+      sidebar.classList.remove("open");
+      menuToggle.setAttribute("aria-expanded", "false");
+      menuToggle.focus();
+    }
   });
 })();
