@@ -12,6 +12,7 @@ For project enquiries, contact admin@theredsparrow.online or hammad@theredsparro
 - [About](https://theredsparrow.online/about.html): Studio approach and focus.
 - [Services](https://theredsparrow.online/services.html): Current service descriptions.
 - [Contact](https://theredsparrow.online/contact.html): Contact details for project enquiries.
+- [Privacy](https://theredsparrow.online/privacy.html): Website privacy information.
 - [Terms](https://theredsparrow.online/terms.html): Website terms of use.
 
 ## Contact
@@ -26,5 +27,3 @@ For project enquiries, contact admin@theredsparrow.online or hammad@theredsparro
 
 ## Optional
 
-- [Privacy notice](https://theredsparrow.online/privacy.html): Website privacy information.
-- [Terms of use](https://theredsparrow.online/terms.html): Terms governing use of this website.
