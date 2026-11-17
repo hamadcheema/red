@@ -9,6 +9,7 @@
   <link rel="icon" href="../favicon.svg" type="image/svg+xml">
   <link rel="stylesheet" href="admin.css">
   <script src="admin.js" defer></script>
+  <script src="connection.js" defer></script>
 </head>
 <body>
   <div class="app-shell">
@@ -46,7 +47,7 @@
 
         <div class="notice" role="status">
           <span class="notice-icon">!</span>
-          <div><strong>Development preview — not connected yet</strong><p>This admin panel is being built in a separate Git branch. Sign-in protection and the secure publishing API must be configured before it can be deployed or used to change the live website.</p></div>
+          <div><strong>Admin workspace connection</strong><p>This dashboard requires Cloudflare Access sign-in. Publishing runs through a server-side Worker; repository credentials are never stored in browser code.</p></div>
         </div>
 
         <section class="view active" id="view-overview">
@@ -102,7 +103,7 @@
                 <label for="edit-description">Search description</label><textarea id="edit-description" name="description" rows="3" maxlength="180" required></textarea>
                 <label for="edit-heading">Main heading</label><input id="edit-heading" name="heading" maxlength="100" required>
                 <label for="edit-intro">Introductory text</label><textarea id="edit-intro" name="intro" rows="4" maxlength="500" required></textarea>
-                <div class="editor-actions"><button class="primary-button" type="submit">Save local draft</button><button class="secondary-button" id="reset-draft" type="button">Reset page</button></div>
+                <div class="editor-actions"><button class="primary-button" type="submit">Save draft</button><button class="secondary-button" id="reset-draft" type="button">Reset page</button></div>
                 <p class="editor-status" id="editor-status" role="status" aria-live="polite">No local changes saved.</p>
               </form>
               <div class="panel preview-panel"><div class="preview-top"><strong>Live text preview</strong><span>Preview only</span></div><div class="preview-canvas"><p class="preview-brand">THE RED SPARROW</p><p class="preview-kicker">PAGE PREVIEW</p><h3 id="preview-heading">Ideas into interactive worlds.</h3><p id="preview-intro">Your page introduction will appear here.</p><div class="preview-rule"></div><p class="preview-meta" id="preview-title"></p><p class="preview-meta" id="preview-description"></p></div></div>
