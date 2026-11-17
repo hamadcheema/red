@@ -33,7 +33,7 @@
 
     <main class="main">
       <header class="topbar">
-        <button class="menu-toggle" id="menu-toggle" aria-label="Toggle navigation">☰</button>
+        <button class="menu-toggle" id="menu-toggle" aria-label="Toggle navigation" aria-expanded="false" aria-controls="sidebar">☰</button>
         <div class="breadcrumb">Workspace <span>/</span> <strong id="breadcrumb-current">Overview</strong></div>
         <div class="topbar-right"><span class="draft-pill">DRAFT</span><span class="avatar" aria-label="Admin account">A</span></div>
       </header>
@@ -70,9 +70,9 @@
               <div class="panel-heading"><div><h2>Next steps</h2><p>Before the first live edit</p></div></div>
               <ol class="steps">
                 <li class="step-done"><span>✓</span><div><strong>Admin workspace created</strong><small>Separate development branch</small></div></li>
-                <li><span>2</span><div><strong>Enable Cloudflare Access</strong><small>Protect the admin and API</small></div></li>
-                <li><span>3</span><div><strong>Connect secure GitHub API</strong><small>Keep credentials server-side</small></div></li>
-                <li><span>4</span><div><strong>Test preview and publishing</strong><small>Review changes before deployment</small></div></li>
+                <li><span>2</span><div><strong>Confirm an eligible no-card sign-in option</strong><small>Do not deploy the dashboard before access is protected</small></div></li>
+                <li><span>3</span><div><strong>Build a server-side publishing connection</strong><small>Never expose repository credentials in browser code</small></div></li>
+                <li><span>4</span><div><strong>Test previews and publishing safeguards</strong><small>Review changes before anything reaches the live site</small></div></li>
               </ol>
             </article>
           </div>
@@ -82,12 +82,12 @@
           <div class="section-heading"><div><h2>Website pages</h2><p>Choose a page to prepare its content for editing.</p></div></div>
           <div class="panel table-panel">
             <div class="table-head"><span>PAGE</span><span>FILE</span><span>STATUS</span><span>ACTION</span></div>
-            <div class="table-row"><strong>Home</strong><code>index.html</code><span class="page-state">Published</span><button class="small-button" disabled>Editor pending</button></div>
-            <div class="table-row"><strong>About</strong><code>about.html</code><span class="page-state">Published</span><button class="small-button" disabled>Editor pending</button></div>
-            <div class="table-row"><strong>Services</strong><code>services.html</code><span class="page-state">Published</span><button class="small-button" disabled>Editor pending</button></div>
-            <div class="table-row"><strong>Contact</strong><code>contact.html</code><span class="page-state">Published</span><button class="small-button" disabled>Editor pending</button></div>
-            <div class="table-row"><strong>Privacy policy</strong><code>privacy.html</code><span class="page-state">Published</span><button class="small-button" disabled>Editor pending</button></div>
-            <div class="table-row"><strong>Terms</strong><code>terms.html</code><span class="page-state">Published</span><button class="small-button" disabled>Editor pending</button></div>
+            <div class="table-row"><strong>Home</strong><code>index.html</code><span class="page-state">Published</span><a class="small-button" href="https://github.com/hamadcheema/red/blob/main/index.html" target="_blank" rel="noopener">View source ↗</a></div>
+            <div class="table-row"><strong>About</strong><code>about.html</code><span class="page-state">Published</span><a class="small-button" href="https://github.com/hamadcheema/red/blob/main/about.html" target="_blank" rel="noopener">View source ↗</a></div>
+            <div class="table-row"><strong>Services</strong><code>services.html</code><span class="page-state">Published</span><a class="small-button" href="https://github.com/hamadcheema/red/blob/main/services.html" target="_blank" rel="noopener">View source ↗</a></div>
+            <div class="table-row"><strong>Contact</strong><code>contact.html</code><span class="page-state">Published</span><a class="small-button" href="https://github.com/hamadcheema/red/blob/main/contact.html" target="_blank" rel="noopener">View source ↗</a></div>
+            <div class="table-row"><strong>Privacy policy</strong><code>privacy.html</code><span class="page-state">Published</span><a class="small-button" href="https://github.com/hamadcheema/red/blob/main/privacy.html" target="_blank" rel="noopener">View source ↗</a></div>
+            <div class="table-row"><strong>Terms</strong><code>terms.html</code><span class="page-state">Published</span><a class="small-button" href="https://github.com/hamadcheema/red/blob/main/terms.html" target="_blank" rel="noopener">View source ↗</a></div>
           </div>
         </section>
 
