@@ -138,3 +138,31 @@ test("page publishing writes descriptive alt text for the selected image", async
   assert.match(publishedHtml, /alt="Red Sparrow brand emblem"/);
   assert.match(publishedHtml, /loading="lazy" decoding="async"/);
 });
+
+test("SEO publishing updates Open Graph and Twitter image descriptions", async () => {
+  const github = installGitHubMock({
+    pages: {
+      "privacy.html": '<html><head><title>Old</title><meta property="og:image:alt" content="Old image"><meta name="twitter:image" content="https://theredsparrow.online/og-image.png"></head><body></body></html>'
+    }
+  });
+  const env = makeEnv();
+  const response = await call("/publish/seo", {
+    method: "POST",
+    body: {
+      slug: "privacy",
+      title: "Privacy Policy — The Red Sparrow",
+      description: "Privacy information for visitors to The Red Sparrow website.",
+      canonical: ORIGIN + "/privacy.html",
+      ogTitle: "Privacy Policy — The Red Sparrow",
+      ogDescription: "Privacy information about this website.",
+      ogImage: ORIGIN + "/og-image.png",
+      ogImageAlt: "The Red Sparrow brand emblem on a dark background"
+    }
+  }, env);
+  assert.equal(response.status, 200);
+  const update = github.updated.find(item => item.path === "privacy.html");
+  assert.ok(update);
+  const publishedHtml = Buffer.from(update.body.content, "base64").toString("utf8");
+  assert.match(publishedHtml, /property="og:image:alt" content="The Red Sparrow brand emblem on a dark background"/);
+  assert.match(publishedHtml, /name="twitter:image:alt" content="The Red Sparrow brand emblem on a dark background"/);
+});
