@@ -11,20 +11,20 @@ function seoPatch(html,v){for(const [x,max,label] of [[v.title,70,"title"],[v.de
 function headingMarkup(value){return String(value).split(/\r?\n/).map(line=>esc(line).replace(/\*\*(.+?)\*\*/g,"<strong>$1</strong>").replace(/\*(.+?)\*/g,"<em>$1</em>")).join("<br>")}
 function pagePatch(html,v){
 for(const [x,max] of [[v.title,70],[v.description,180],[v.heading,100],[v.intro,500]])if(!x||String(x).length>max)throw Error("Complete all fields within their character limits.");
-html=html.replace(/<title>[\\s\\S]*?<\\/title>/i,"<title>"+esc(v.title)+"</title>");
+html=html.replace(/<title>[\s\S]*?<\/title>/i,"<title>"+esc(v.title)+"</title>");
 html=meta(html,"name","description",v.description);
-html=html.replace(/(<h1\\b[^>]*>)[\\s\\S]*?(<\\/h1>)/i,"$1"+headingMarkup(v.heading)+"$2");
-html=html.replace(/(<p\\s+class="hero-copy"[^>]*>)[\\s\\S]*?(<\\/p>)/i,"$1"+esc(v.intro)+"$2");
-const marker=/<figure class="admin-page-image">[\\s\\S]*?<\\/figure>/i;
+html=html.replace(/(<h1\b[^>]*>)[\s\S]*?(<\/h1>)/i,"$1"+headingMarkup(v.heading)+"$2");
+html=html.replace(/(<p\s+class="hero-copy"[^>]*>)[\s\S]*?(<\/p>)/i,"$1"+esc(v.intro)+"$2");
+const marker=/<figure class="admin-page-image">[\s\S]*?<\/figure>/i;
 const image=String(v.imageUrl||"").trim();
 let markup="";
 if(image){
 let parsed;try{parsed=new URL(image)}catch{throw Error("Choose an image from the media library.")}
-if(parsed.origin!==ORIGIN||!parsed.pathname.startsWith("/assets/uploads/")||! /\\.(png|jpe?g|webp|gif)$/i.test(parsed.pathname))throw Error("Only uploaded Media Library images can be inserted.");
+if(parsed.origin!==ORIGIN||!parsed.pathname.startsWith("/assets/uploads/")||! /\.(png|jpe?g|webp|gif)$/i.test(parsed.pathname))throw Error("Only uploaded Media Library images can be inserted.");
 markup='<figure class="admin-page-image"><img src="'+esc(parsed.pathname)+'" alt=""></figure>';
 }
 html=html.replace(marker,"");
-html=html.replace(/<\\/h1>/i,"</h1>"+markup);
+html=html.replace(/<\/h1>/i,"</h1>"+markup);
 return html
 }
 async function gh(env,path,init={}){if(!env.GITHUB_TOKEN)throw Error("GitHub token not configured.");const r=await fetch("https://api.github.com"+path,{...init,headers:{authorization:"Bearer "+env.GITHUB_TOKEN,accept:"application/vnd.github+json","x-github-api-version":"2022-11-28","user-agent":"The-Red-Sparrow-Admin",...(init.headers||{})}});const t=await r.text();if(!r.ok)throw Error("GitHub API "+r.status+": "+t.slice(0,250));return t?JSON.parse(t):null}
