@@ -64,7 +64,7 @@
   const acceptedMediaTypes=new Set(["image/png","image/jpeg","image/webp","image/gif"]);
   const safeFilename=value=>String(value||"").trim().replace(/[^\w.-]+/g,"-").replace(/-+/g,"-").replace(/^[-.]+|[-.]+$/g,"");
   const mediaExtension=type=>({"image/png":".png","image/jpeg":".jpg","image/webp":".webp","image/gif":".gif"}[type]||"");
-  const uploadFilename=item=>{const ext=mediaExtension(item.file.type);let name=safeFilename(item.name);if(!ext)return name;name=name.replace(/\.(png|jpe?g|webp|gif)$/i,"");return safeFilename(name)+ext};
+  const uploadFilename=item=>{const ext=mediaExtension(item.file.type);let name=safeFilename(item.file.name);if(!ext)return name;name=name.replace(/\.(png|jpe?g|jfif|webp|gif)$/i,"");return safeFilename(name)+ext};
   const rememberFiles=files=>{
     let total=selectedFiles.reduce((sum,item)=>sum+item.file.size,0);
     const rejected=[];
@@ -77,7 +77,7 @@
     }
     renderUploadQueue();
     if(rejected.length)say($("media-status"),selectedFiles.length+" image(s) ready. Skipped: "+rejected.join("; "),true);
-    else say($("media-status"),selectedFiles.length+" image(s) ready. You can rename files below before uploading.");
+    else say($("media-status"),selectedFiles.length+" image(s) ready. Filenames and extensions are added automatically.");
   };
   const formatMediaSize=bytes=>bytes<1048576?Math.max(1,Math.round(bytes/1024))+" KB":(bytes/1048576).toFixed(2)+" MB";
   function renderUploadQueue(){
@@ -87,11 +87,9 @@
       const card=document.createElement("article");card.className="queued-file";
       const preview=document.createElement("img");preview.alt="Preview of "+item.name;preview.src=URL.createObjectURL(item.file);
       const meta=document.createElement("div");meta.className="queued-meta";
-      const label=document.createElement("label");label.textContent="File name (extension added automatically)";label.htmlFor="queued-file-name-"+index;
-      const name=document.createElement("input");name.id=label.htmlFor;name.type="text";name.value=item.name;name.maxLength=120;name.autocomplete="off";name.spellcheck=false;name.setAttribute("aria-label","Rename "+item.file.name);
-      name.addEventListener("input",()=>{item.name=name.value});
+      const filename=document.createElement("strong");filename.textContent=uploadFilename(item);filename.title=filename.textContent;
       const detail=document.createElement("span");detail.textContent=item.file.type.replace("image/","").toUpperCase()+" · "+formatMediaSize(item.file.size);
-      meta.append(label,name,detail);card.append(preview,meta);queue.append(card);
+      meta.append(filename,detail);card.append(preview,meta);queue.append(card);
     });
     const total=selectedFiles.reduce((sum,item)=>sum+item.file.size,0);
     const count=$("media-file-count"),size=$("media-total-size"),clear=$("media-clear");
