@@ -2,11 +2,33 @@
   const API="/admin-api", $=id=>document.getElementById(id);
   let selectedFiles=[];
   const say=(el,text,bad=false)=>{if(el){el.textContent=text;el.style.color=bad?"#f18b83":""}};
-  async function call(path,options={}){const r=await fetch(API+path,{credentials:"include",...options,headers:{"content-type":"application/json",...(options.headers||{})}});const d=await r.json().catch(()=>({}));if(!r.ok){const error=new Error(d.error||"Request failed ("+r.status+")");error.status=r.status;throw error}return d}
+  async function call(path,options={}){const r=await fetch(API+path,{credentials:"include",...options,headers:{"content-type":"application/json",...(options.headers||{})}});const d=await r.json().catch(()=>({}));if(!r.ok){const error=new Error(d.error||"Request failed ("+r.status+")");error.status=r.status;if(r.status===401)showGate("signed-out");throw error}return d}
+  function showGate(state,message){
+    const app=$("admin-app"),gate=$("auth-gate"),login=$("auth-gate-login"),retry=$("auth-retry"),msg=$("auth-message"),status=$("auth-status");
+    if(app)app.hidden=true;
+    if(gate)gate.hidden=false;
+    if(login)login.hidden=state!=="signed-out";
+    if(retry)retry.hidden=state!=="error";
+    if(msg)msg.textContent=message||(
+      state==="checking"?"Checking your secure admin session…":
+      state==="signed-out"?"You are signed out. Sign in with the authorized GitHub account to open the admin workspace.":
+      "The admin service could not verify your session. Check your connection and try again."
+    );
+    if(status)status.textContent=state==="checking"?"Verifying access…":state==="signed-out"?"Authentication required.":"Access check failed.";
+    const topLogin=$("github-login"),logout=$("admin-logout");
+    if(topLogin)topLogin.hidden=true;
+    if(logout)logout.hidden=true;
+  }
   async function connect(){
     const n=document.querySelector(".notice"),login=$("github-login"),logout=$("admin-logout"),pill=$("connection-pill");
+    showGate("checking");
+    if(pill)pill.textContent="CHECKING";
     try{
       const s=await call("/status");
+      if(!s.ok||s.admin!=="hamadcheema")throw new Error("The server returned an unexpected admin identity.");
+      const app=$("admin-app"),gate=$("auth-gate");
+      if(app)app.hidden=false;
+      if(gate)gate.hidden=true;
       if(login)login.hidden=true;
       if(logout)logout.hidden=false;
       if(n){
@@ -18,25 +40,20 @@
       if(pill)pill.textContent=s.githubConnected?"CONNECTED":"DRAFT";
       const stat=document.querySelector("#view-overview .stats-grid .stat-card:nth-child(3) .stat-word");
       if(stat)stat.textContent=s.githubConnected?"Ready":"Pending";
+      if($("edit-page"))await loadRemoteDraft("page",$("edit-page").value,{title:"edit-title",description:"edit-description",heading:"edit-heading",intro:"edit-intro"},ps);
+      if($("seo-page"))await loadRemoteDraft("seo",$("seo-page").value,{title:"seo-title",description:"seo-description",canonical:"seo-canonical",ogTitle:"seo-og-title",ogDescription:"seo-og-description",ogImage:"seo-og-image"},ss);
     }catch(e){
       if(logout)logout.hidden=true;
       if(e.status===401){
-        if(login)login.hidden=false;
+        showGate("signed-out");
         if(pill)pill.textContent="SIGNED OUT";
-        if(n){
-          n.querySelector("strong").textContent="Admin sign-in required";
-          n.querySelector("p").textContent="Sign in using the authorized GitHub account to use the admin tools.";
-        }
       }else{
-        if(login)login.hidden=true;
+        showGate("error");
         if(pill)pill.textContent="CHECK FAILED";
-        if(n){
-          n.querySelector("strong").textContent="Could not verify admin session";
-          n.querySelector("p").textContent="The admin API could not verify your session. Refresh the page and try again. Your login status has not been assumed to be signed out.";
-        }
       }
     }
   }
+  $("auth-retry")?.addEventListener("click",connect);
   const pf=$("page-editor"),ps=$("editor-status");
   if(pf){pf.addEventListener("submit",async()=>{try{await call("/draft",{method:"POST",body:JSON.stringify({key:"page:"+$("edit-page").value,value:{title:$("edit-title").value,description:$("edit-description").value,heading:$("edit-heading").value,intro:$("edit-intro").value}})});say(ps,"Draft saved securely to Cloudflare KV.")}catch(e){say(ps,"Local draft saved; remote save failed: "+e.message,true)}});
     const b=document.createElement("button");b.type="button";b.className="primary-button";b.textContent="Publish to website";pf.querySelector(".editor-actions").append(b);b.addEventListener("click",async()=>{if(!confirm("Publish these changes to the live website? A GitHub commit will be created."))return;b.disabled=true;b.textContent="Publishing…";try{const d=await call("/publish/page",{method:"POST",body:JSON.stringify({slug:$("edit-page").value,title:$("edit-title").value,description:$("edit-description").value,heading:$("edit-heading").value,intro:$("edit-intro").value})});say(ps,"Published in GitHub ("+(d.commit||"commit created").slice(0,7)+"). Wait for Pages to deploy.")}catch(e){say(ps,e.message,true)}finally{b.disabled=false;b.textContent="Publish to website"}})}
@@ -101,8 +118,6 @@
     }catch(e){historyList.textContent=e.message}
     finally{historyButton.disabled=false;historyButton.textContent="Load history"}
   });
-  if($("edit-page"))loadRemoteDraft("page",$("edit-page").value,{title:"edit-title",description:"edit-description",heading:"edit-heading",intro:"edit-intro"},ps);
-  if($("seo-page"))loadRemoteDraft("seo",$("seo-page").value,{title:"seo-title",description:"seo-description",canonical:"seo-canonical",ogTitle:"seo-og-title",ogDescription:"seo-og-description",ogImage:"seo-og-image"},ss);
   const logout=$("admin-logout");
   if(logout)logout.addEventListener("click",async()=>{
     logout.disabled=true;
