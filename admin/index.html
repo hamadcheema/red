@@ -112,7 +112,34 @@
         </section>
 
         <section class="view" id="view-media">
-          <div class="empty-panel"><span class="empty-icon">▧</span><h2>Media library</h2><p>Image uploads and safe asset replacement will be added after the secure API is connected.</p></div>
+          <section class="media-workspace" aria-labelledby="media-library-title">
+  <div class="section-heading"><div><h2 id="media-library-title">Media library</h2><p>Inspect existing brand assets and prepare local image replacements.</p></div><span class="local-badge">LOCAL PREVIEW ONLY</span></div>
+  <div class="media-stats">
+    <article class="stat-card"><span class="stat-label">REPOSITORY ASSETS</span><strong>3</strong><span class="stat-foot">Brand image references</span></article>
+    <article class="stat-card"><span class="stat-label">LOCAL FILE QUEUE</span><strong id="media-file-count">0</strong><span class="stat-foot">Selected in this browser</span></article>
+    <article class="stat-card"><span class="stat-label">QUEUE SIZE</span><strong id="media-total-size">0 MB</strong><span class="stat-foot">20 MB maximum</span></article>
+  </div>
+  <div class="panel asset-panel">
+    <div class="panel-heading"><div><h2>Current brand assets</h2><p>Files referenced by the public website.</p></div></div>
+    <div class="asset-grid">
+      <article class="asset-card"><div class="asset-art icon-art"><img src="https://theredsparrow.online/favicon.svg" alt="The Red Sparrow favicon" loading="lazy"></div><div class="asset-info"><strong>favicon.svg</strong><small>Browser icon · SVG</small><a href="https://github.com/hamadcheema/red/blob/main/favicon.svg" target="_blank" rel="noopener">View in GitHub ↗</a></div></article>
+      <article class="asset-card"><div class="asset-art logo-art"><img src="https://theredsparrow.online/logo.svg" alt="The Red Sparrow logo" loading="lazy"></div><div class="asset-info"><strong>logo.svg</strong><small>Organization logo · SVG</small><a href="https://github.com/hamadcheema/red/blob/main/logo.svg" target="_blank" rel="noopener">View in GitHub ↗</a></div></article>
+      <article class="asset-card"><div class="asset-art og-art"><img src="https://theredsparrow.online/og-image.png" alt="The Red Sparrow social sharing image" loading="lazy"></div><div class="asset-info"><strong>og-image.png</strong><small>Social preview · PNG · 1200 × 630 expected</small><a href="https://github.com/hamadcheema/red/blob/main/og-image.png" target="_blank" rel="noopener">View in GitHub ↗</a></div></article>
+    </div>
+  </div>
+  <div class="panel upload-panel">
+    <div class="panel-heading"><div><h2>Local image queue</h2><p>Choose images to preview before preparing a replacement.</p></div></div>
+    <input id="media-file-input" class="visually-hidden" type="file" accept="image/png,image/jpeg,image/webp,image/gif" multiple>
+    <div class="drop-zone" id="media-drop-zone" tabindex="0" role="button" aria-controls="media-file-input" aria-label="Choose image files or drop them here">
+      <span class="upload-symbol">↑</span><strong>Drop images here</strong><span>or choose files from your device</span><small>PNG, JPG, WebP or GIF · up to 5 MB per image · 20 MB total</small>
+      <button class="primary-button" type="button" id="media-choose">Choose images</button>
+    </div>
+    <p class="media-status" id="media-status" role="status" aria-live="polite">No files selected. Files stay on this device and are not uploaded.</p>
+    <div class="media-queue" id="media-queue" aria-live="polite"></div>
+    <div class="media-actions"><button class="secondary-button" type="button" id="media-clear" disabled>Clear queue</button></div>
+  </div>
+  <p class="editor-footnote">Privacy and safety: image files are previewed locally in your browser. Nothing is sent to GitHub or uploaded to a server. The queue is cleared when this page is reloaded. No repository files or live website assets are changed.</p>
+</section>
         </section>
         <section class="view" id="view-seo">
           <div class="section-heading"><div><h2>SEO settings</h2><p>Search metadata and social-sharing previews for your website.</p></div></div>
