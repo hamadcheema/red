@@ -1,0 +1,108 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="robots" content="noindex, nofollow, noarchive">
+  <meta name="theme-color" content="#101116">
+  <title>Admin · The Red Sparrow</title>
+  <link rel="icon" href="../favicon.svg" type="image/svg+xml">
+  <link rel="stylesheet" href="admin.css">
+  <script src="admin.js" defer></script>
+</head>
+<body>
+  <div class="app-shell">
+    <aside class="sidebar" id="sidebar">
+      <a class="brand" href="./" aria-label="The Red Sparrow admin home">
+        <img src="../logo.svg" alt="" width="34" height="34">
+        <span><strong>The Red Sparrow</strong><small>CONTROL PANEL</small></span>
+      </a>
+      <div class="workspace-label">WORKSPACE</div>
+      <nav class="nav" aria-label="Admin navigation">
+        <button class="nav-link active" data-view="overview"><span class="nav-icon">◫</span> Overview</button>
+        <button class="nav-link" data-view="pages"><span class="nav-icon">▤</span> Website pages</button>
+        <button class="nav-link" data-view="media"><span class="nav-icon">▧</span> Media library</button>
+        <button class="nav-link" data-view="seo"><span class="nav-icon">⌕</span> SEO settings</button>
+        <button class="nav-link" data-view="settings"><span class="nav-icon">⚙</span> Settings</button>
+      </nav>
+      <div class="sidebar-bottom">
+        <div class="environment"><span class="status-dot"></span><span><strong>Draft workspace</strong><small>Not connected to live site</small></span></div>
+        <a class="site-link" href="https://theredsparrow.online/" target="_blank" rel="noopener">View public website ↗</a>
+      </div>
+    </aside>
+
+    <main class="main">
+      <header class="topbar">
+        <button class="menu-toggle" id="menu-toggle" aria-label="Toggle navigation">☰</button>
+        <div class="breadcrumb">Workspace <span>/</span> <strong id="breadcrumb-current">Overview</strong></div>
+        <div class="topbar-right"><span class="draft-pill">DRAFT</span><span class="avatar" aria-label="Admin account">A</span></div>
+      </header>
+
+      <section class="content">
+        <div class="page-heading">
+          <div><p class="eyebrow">THE RED SPARROW / ADMIN</p><h1 id="view-title">Overview</h1><p class="subheading" id="view-description">A clear view of your website and its content.</p></div>
+          <a class="button button-quiet" href="https://theredsparrow.online/" target="_blank" rel="noopener">Open website ↗</a>
+        </div>
+
+        <div class="notice" role="status">
+          <span class="notice-icon">!</span>
+          <div><strong>Development preview — not connected yet</strong><p>This admin panel is being built in a separate Git branch. Sign-in protection and the secure publishing API must be configured before it can be deployed or used to change the live website.</p></div>
+        </div>
+
+        <section class="view active" id="view-overview">
+          <div class="section-heading"><div><h2>Website snapshot</h2><p>Current public website structure</p></div><span class="muted-meta">Static site · GitHub Pages</span></div>
+          <div class="stats-grid">
+            <article class="stat-card"><span class="stat-label">PUBLIC PAGES</span><strong>6</strong><span class="stat-foot">Main website pages</span></article>
+            <article class="stat-card"><span class="stat-label">CONTENT STATUS</span><strong class="stat-word">Live</strong><span class="stat-foot">Served from the main branch</span></article>
+            <article class="stat-card"><span class="stat-label">ADMIN STATUS</span><strong class="stat-word">Draft</strong><span class="stat-foot">Secure connection pending</span></article>
+          </div>
+          <div class="dashboard-grid">
+            <article class="panel">
+              <div class="panel-heading"><div><h2>Website pages</h2><p>Content areas planned for editing</p></div><button class="text-button" data-go="pages">View all →</button></div>
+              <div class="page-list">
+                <div class="page-row"><span class="page-symbol">⌂</span><span><strong>Home</strong><small>index.html</small></span><span class="page-state">Published</span></div>
+                <div class="page-row"><span class="page-symbol">◎</span><span><strong>About</strong><small>about.html</small></span><span class="page-state">Published</span></div>
+                <div class="page-row"><span class="page-symbol">◇</span><span><strong>Services</strong><small>services.html</small></span><span class="page-state">Published</span></div>
+                <div class="page-row"><span class="page-symbol">✉</span><span><strong>Contact</strong><small>contact.html</small></span><span class="page-state">Published</span></div>
+              </div>
+            </article>
+            <article class="panel">
+              <div class="panel-heading"><div><h2>Next steps</h2><p>Before the first live edit</p></div></div>
+              <ol class="steps">
+                <li class="step-done"><span>✓</span><div><strong>Admin workspace created</strong><small>Separate development branch</small></div></li>
+                <li><span>2</span><div><strong>Enable Cloudflare Access</strong><small>Protect the admin and API</small></div></li>
+                <li><span>3</span><div><strong>Connect secure GitHub API</strong><small>Keep credentials server-side</small></div></li>
+                <li><span>4</span><div><strong>Test preview and publishing</strong><small>Review changes before deployment</small></div></li>
+              </ol>
+            </article>
+          </div>
+        </section>
+
+        <section class="view" id="view-pages">
+          <div class="section-heading"><div><h2>Website pages</h2><p>Choose a page to prepare its content for editing.</p></div></div>
+          <div class="panel table-panel">
+            <div class="table-head"><span>PAGE</span><span>FILE</span><span>STATUS</span><span>ACTION</span></div>
+            <div class="table-row"><strong>Home</strong><code>index.html</code><span class="page-state">Published</span><button class="small-button" disabled>Editor pending</button></div>
+            <div class="table-row"><strong>About</strong><code>about.html</code><span class="page-state">Published</span><button class="small-button" disabled>Editor pending</button></div>
+            <div class="table-row"><strong>Services</strong><code>services.html</code><span class="page-state">Published</span><button class="small-button" disabled>Editor pending</button></div>
+            <div class="table-row"><strong>Contact</strong><code>contact.html</code><span class="page-state">Published</span><button class="small-button" disabled>Editor pending</button></div>
+            <div class="table-row"><strong>Privacy policy</strong><code>privacy.html</code><span class="page-state">Published</span><button class="small-button" disabled>Editor pending</button></div>
+            <div class="table-row"><strong>Terms</strong><code>terms.html</code><span class="page-state">Published</span><button class="small-button" disabled>Editor pending</button></div>
+          </div>
+        </section>
+
+        <section class="view" id="view-media">
+          <div class="empty-panel"><span class="empty-icon">▧</span><h2>Media library</h2><p>Image uploads and safe asset replacement will be added after the secure API is connected.</p></div>
+        </section>
+        <section class="view" id="view-seo">
+          <div class="empty-panel"><span class="empty-icon">⌕</span><h2>SEO settings</h2><p>Manage page titles, descriptions, canonical URLs, Open Graph details and indexing settings in a later milestone.</p></div>
+        </section>
+        <section class="view" id="view-settings">
+          <div class="empty-panel"><span class="empty-icon">⚙</span><h2>Workspace settings</h2><p>Authentication, allowed account, repository connection and publishing controls will appear here after security setup.</p></div>
+        </section>
+        <footer class="footer"><span>THE RED SPARROW</span><span>Admin workspace · Development preview</span></footer>
+      </section>
+    </main>
+  </div>
+</body>
+</html>
