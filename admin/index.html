@@ -89,6 +89,26 @@
             <div class="table-row"><strong>Privacy policy</strong><code>privacy.html</code><span class="page-state">Published</span><a class="small-button" href="https://github.com/hamadcheema/red/blob/main/privacy.html" target="_blank" rel="noopener">View source ↗</a></div>
             <div class="table-row"><strong>Terms</strong><code>terms.html</code><span class="page-state">Published</span><a class="small-button" href="https://github.com/hamadcheema/red/blob/main/terms.html" target="_blank" rel="noopener">View source ↗</a></div>
           </div>
+
+          <section class="editor-layout" aria-labelledby="editor-title">
+            <div class="editor-heading"><div><p class="eyebrow">LOCAL CONTENT WORKSPACE</p><h2 id="editor-title">Page editor</h2><p>Prepare copy changes and preview them before any publishing connection exists.</p></div><span class="local-badge">LOCAL DRAFT ONLY</span></div>
+            <div class="editor-grid">
+              <form class="panel editor-form" id="page-editor">
+                <label for="edit-page">Select page</label>
+                <select id="edit-page" name="page">
+                  <option value="home">Home</option><option value="about">About</option><option value="services">Services</option><option value="contact">Contact</option>
+                </select>
+                <label for="edit-title">Browser title</label><input id="edit-title" name="title" maxlength="70" required>
+                <label for="edit-description">Search description</label><textarea id="edit-description" name="description" rows="3" maxlength="180" required></textarea>
+                <label for="edit-heading">Main heading</label><input id="edit-heading" name="heading" maxlength="100" required>
+                <label for="edit-intro">Introductory text</label><textarea id="edit-intro" name="intro" rows="4" maxlength="500" required></textarea>
+                <div class="editor-actions"><button class="primary-button" type="submit">Save local draft</button><button class="secondary-button" id="reset-draft" type="button">Reset page</button></div>
+                <p class="editor-status" id="editor-status" role="status" aria-live="polite">No local changes saved.</p>
+              </form>
+              <div class="panel preview-panel"><div class="preview-top"><strong>Live text preview</strong><span>Preview only</span></div><div class="preview-canvas"><p class="preview-brand">THE RED SPARROW</p><p class="preview-kicker">PAGE PREVIEW</p><h3 id="preview-heading">Ideas into interactive worlds.</h3><p id="preview-intro">Your page introduction will appear here.</p><div class="preview-rule"></div><p class="preview-meta" id="preview-title"></p><p class="preview-meta" id="preview-description"></p></div></div>
+            </div>
+            <p class="editor-footnote">This editor stores draft text in this browser only. It does not edit GitHub files, publish changes, or update the live website. Avoid entering private or confidential information.</p>
+          </section>
         </section>
 
         <section class="view" id="view-media">
