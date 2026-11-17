@@ -6,7 +6,8 @@ Official lightweight website for The Red Sparrow, an independent Unity-focused g
 **Production branch:** `main`  
 **Hosting:** GitHub Pages  
 **Admin API:** Cloudflare Worker `the-red-sparrow-admin-api`  
-**Draft and audit storage:** Cloudflare KV
+**Draft and audit storage:** Cloudflare KV  
+**Response headers:** Cloudflare response-header transform ruleset
 
 ## Public pages
 
@@ -50,7 +51,7 @@ node --check admin/worker.js
 node --test admin/tests/worker.test.mjs
 ```
 
-GitHub Actions runs these checks on pushes to `main`. A passing quality check does not replace manual browser, accessibility, advertising-consent or legal review.
+GitHub Actions runs these checks on pushes to `main`. A passing quality check does not replace manual browser, accessibility, advertising-consent or legal review. Cloudflare applies baseline response headers; a restrictive Content Security Policy is intentionally not enabled until all required third-party origins and features are reviewed.
 
 ## Services presented
 
