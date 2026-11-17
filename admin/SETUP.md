@@ -16,7 +16,15 @@ Add these secrets to Cloudflare Worker `the-red-sparrow-admin-api`:
 - `GITHUB_OAUTH_CLIENT_SECRET` = OAuth App Client Secret
 - `GITHUB_TOKEN` = fine-grained token scoped only to `hamadcheema/red`, Contents read/write, Metadata read-only.
 
-## 3. Route the API
+## 3. Add Worker variables
+Add these as plain-text Worker variables (not secrets):
+- `GITHUB_OWNER` = `hamadcheema`
+- `GITHUB_REPO` = `red`
+- `GITHUB_BRANCH` = `main`
+
+The `DRAFTS` KV namespace must also be bound to the Worker.
+
+## 4. Route the API
 Create one Cloudflare Worker route:
 - Zone: theredsparrow.online
 - Pattern: `theredsparrow.online/admin-api*`
