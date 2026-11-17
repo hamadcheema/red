@@ -62,7 +62,7 @@
     const b=document.createElement("button");b.type="button";b.className="primary-button";b.textContent="Publish SEO";sf.querySelector(".seo-actions").append(b);b.addEventListener("click",async()=>{if(!confirm("Publish these SEO changes to the live website?"))return;b.disabled=true;b.textContent="Publishing…";try{const d=await call("/publish/seo",{method:"POST",body:JSON.stringify({slug:$("seo-page").value,title:$("seo-title").value,description:$("seo-description").value,canonical:$("seo-canonical").value,ogTitle:$("seo-og-title").value,ogDescription:$("seo-og-description").value,ogImage:$("seo-og-image").value})});say(ss,"SEO published in GitHub ("+(d.commit||"commit created").slice(0,7)+").")}catch(e){say(ss,e.message,true)}finally{b.disabled=false;b.textContent="Publish SEO"}})}
   const input=$("media-file-input"),actions=$("media-clear")?.parentElement,dropZone=$("media-drop-zone"),queue=$("media-queue");
   const acceptedMediaTypes=new Set(["image/png","image/jpeg","image/webp","image/gif"]);
-  const safeFilename=value=>String(value||"").trim().replace(/[\\\\/:*?"<>|]+/g,"-").replace(/\\s+/g,"-").replace(/-+/g,"-").replace(/^[-.]+|[-.]+$/g,"");
+  const safeFilename=value=>String(value||"").trim().replace(/[^\w.-]+/g,"-").replace(/-+/g,"-").replace(/^[-.]+|[-.]+$/g,"");
   const rememberFiles=files=>{
     let total=selectedFiles.reduce((sum,item)=>sum+item.file.size,0);
     const rejected=[];
@@ -104,7 +104,7 @@
     const button=document.createElement("button");button.type="button";button.className="primary-button";button.textContent="Upload to website";actions.prepend(button);
     button.addEventListener("click",async()=>{
       if(!selectedFiles.length){say($("media-status"),"Choose images first.",true);return}
-      const invalid=selectedFiles.find(item=>!safeFilename(item.name)||!/\\.(png|jpe?g|webp|gif)$/i.test(item.name));
+      const invalid=selectedFiles.find(item=>!safeFilename(item.name)||!/(\.png|\.jpe?g|\.webp|\.gif)$/i.test(item.name));
       if(invalid){say($("media-status"),"Enter a valid image filename with its extension for every queued image.",true);return}
       const names=selectedFiles.map(item=>safeFilename(item.name).toLowerCase());
       if(new Set(names).size!==names.length){say($("media-status"),"Each uploaded image must have a unique filename.",true);return}
