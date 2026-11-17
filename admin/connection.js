@@ -41,7 +41,7 @@
       const stat=document.querySelector("#view-overview .stats-grid .stat-card:nth-child(3) .stat-word");
       if(stat)stat.textContent=s.githubConnected?"Ready":"Pending";
       if($("edit-page"))await loadRemoteDraft("page",$("edit-page").value,{title:"edit-title",description:"edit-description",heading:"edit-heading",intro:"edit-intro",image:"edit-image",imageAlt:"edit-image-alt"},ps);
-      if($("seo-page"))await loadRemoteDraft("seo",$("seo-page").value,{title:"seo-title",description:"seo-description",canonical:"seo-canonical",ogTitle:"seo-og-title",ogDescription:"seo-og-description",ogImage:"seo-og-image"},ss);
+      if($("seo-page"))await loadRemoteDraft("seo",$("seo-page").value,{title:"seo-title",description:"seo-description",canonical:"seo-canonical",ogTitle:"seo-og-title",ogDescription:"seo-og-description",ogImage:"seo-og-image",ogImageAlt:"seo-og-image-alt"},ss);
     }catch(e){
       if(logout)logout.hidden=true;
       if(e.status===401){
@@ -56,7 +56,7 @@
   $("auth-retry")?.addEventListener("click",connect);
   const pf=$("page-editor"),ps=$("editor-status");
   const pageValue=()=>({title:$("edit-title").value,description:$("edit-description").value,heading:$("edit-heading").value,intro:$("edit-intro").value,image:$("edit-image")?.value||"",imageAlt:$("edit-image-alt")?.value.trim()||""});
-  const seoValue=()=>({title:$("seo-title").value,description:$("seo-description").value,canonical:$("seo-canonical").value,ogTitle:$("seo-og-title").value,ogDescription:$("seo-og-description").value,ogImage:$("seo-og-image").value});
+  const seoValue=()=>({title:$("seo-title").value,description:$("seo-description").value,canonical:$("seo-canonical").value,ogTitle:$("seo-og-title").value,ogDescription:$("seo-og-description").value,ogImage:$("seo-og-image").value,ogImageAlt:$("seo-og-image-alt")?.value.trim()||""});
   const saveRemoteDraft=async(key,value)=>call("/draft",{method:"POST",body:JSON.stringify({key,value})});
   if(pf){
     pf.addEventListener("submit",async event=>{event.preventDefault();try{await saveRemoteDraft("page:"+$("edit-page").value,pageValue());say(ps,"Draft saved securely to Cloudflare KV.")}catch(e){say(ps,"Local draft saved; remote save failed: "+e.message,true)}});
