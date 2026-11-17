@@ -115,7 +115,29 @@
           <div class="empty-panel"><span class="empty-icon">▧</span><h2>Media library</h2><p>Image uploads and safe asset replacement will be added after the secure API is connected.</p></div>
         </section>
         <section class="view" id="view-seo">
-          <div class="empty-panel"><span class="empty-icon">⌕</span><h2>SEO settings</h2><p>Manage page titles, descriptions, canonical URLs, Open Graph details and indexing settings in a later milestone.</p></div>
+          <div class="section-heading"><div><h2>SEO settings</h2><p>Search metadata and social-sharing previews for your website.</p></div></div>
+          <section class="seo-workspace" aria-labelledby="seo-editor-title">
+  <div class="editor-heading"><div><p class="eyebrow">LOCAL SEO WORKSPACE</p><h2 id="seo-editor-title">Search & social metadata</h2><p>Edit metadata for each public page and inspect how it may appear when shared.</p></div><span class="local-badge">LOCAL DRAFT ONLY</span></div>
+  <form class="panel seo-form" id="seo-editor">
+    <div class="seo-fields">
+      <div class="seo-field full"><label for="seo-page">Select page</label><select id="seo-page"><option value="home">Home</option><option value="about">About</option><option value="services">Services</option><option value="contact">Contact</option><option value="privacy">Privacy policy</option><option value="terms">Terms of use</option></select></div>
+      <div class="seo-field"><label for="seo-title">SEO title <span id="seo-title-count">0 / 70</span></label><input id="seo-title" maxlength="70" required></div>
+      <div class="seo-field"><label for="seo-canonical">Canonical URL</label><input id="seo-canonical" type="url" inputmode="url" required></div>
+      <div class="seo-field full"><label for="seo-description">Meta description <span id="seo-description-count">0 / 180</span></label><textarea id="seo-description" rows="3" maxlength="180" required></textarea></div>
+      <div class="seo-field"><label for="seo-og-title">Social title <span id="seo-og-title-count">0 / 70</span></label><input id="seo-og-title" maxlength="70" required></div>
+      <div class="seo-field"><label for="seo-og-image">Social image URL</label><input id="seo-og-image" type="url" inputmode="url" required></div>
+      <div class="seo-field full"><label for="seo-og-description">Social description <span id="seo-og-description-count">0 / 200</span></label><textarea id="seo-og-description" rows="3" maxlength="200" required></textarea></div>
+    </div>
+    <div class="seo-actions"><button class="primary-button" type="submit">Save SEO draft</button><button class="secondary-button" id="seo-reset" type="button">Reset page</button></div>
+    <p class="editor-status" id="seo-status" role="status" aria-live="polite">Showing current website metadata.</p>
+    <p class="seo-validation" id="seo-validation" role="status">Canonical and image URLs must use HTTPS and the theredsparrow.online domain.</p>
+  </form>
+  <div class="seo-preview-grid">
+    <article class="panel snippet-card"><div class="preview-top"><strong>Google-style search preview</strong><span>Illustrative only</span></div><div class="snippet-body"><p class="snippet-url" id="snippet-url">https://theredsparrow.online/</p><h3 id="snippet-title">The Red Sparrow — Unity Game Development</h3><p id="snippet-description">The Red Sparrow develops Unity gameplay systems, integrates supplied 3D assets and prepares mobile-focused game builds.</p></div></article>
+    <article class="panel social-card"><div class="preview-top"><strong>Social sharing preview</strong><span>Open Graph</span></div><div class="social-image-wrap"><img id="social-image-preview" alt="Social sharing image preview" src="https://theredsparrow.online/og-image.png" loading="lazy"></div><div class="social-copy"><h3 id="social-title-preview">The Red Sparrow — Unity Game Development</h3><p id="social-description-preview">Unity gameplay development, 3D asset integration, game UI implementation and mobile build preparation.</p><small>THEREDSPARROW.ONLINE</small></div></article>
+  </div>
+  <p class="editor-footnote">SEO drafts are stored in this browser only. This tool does not change HTML files, request indexing, or publish metadata. Search engines choose their own snippets and display formats.</p>
+</section>
         </section>
         <section class="view" id="view-settings">
           <div class="empty-panel"><span class="empty-icon">⚙</span><h2>Workspace settings</h2><p>Authentication, allowed account, repository connection and publishing controls will appear here after security setup.</p></div>
