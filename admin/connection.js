@@ -88,7 +88,7 @@
           urls.push(out.url);selectedFiles.shift();
         }
         $("media-clear")?.click();
-        say($("media-status"),"Uploaded: "+urls.join(" · "));
+        say($("media-status"),"Uploaded: "+urls.join(" · "));window.dispatchEvent(new Event("trs:media-updated"));
       }catch(e){say($("media-status"),e.message+" Remaining files are still queued.",true)}
       finally{b.disabled=false;b.textContent="Upload to website"}
     });
