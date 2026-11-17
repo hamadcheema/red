@@ -70,7 +70,7 @@
       if(!acceptedMediaTypes.has(file.type)){rejected.push(file.name+": unsupported file type");continue}
       if(file.size>5242880){rejected.push(file.name+": larger than 5 MB");continue}
       if(total+file.size>20971520){rejected.push(file.name+": queue would exceed 20 MB");continue}
-      if(selectedFiles.some(item=>item.file.name===file.name&&item.file.size===file.size)){rejected.push(file.name+": already selected");continue}
+      const normalizedName=safeFilename(file.name).toLowerCase();if(selectedFiles.some(item=>safeFilename(item.name).toLowerCase()===normalizedName)){rejected.push(file.name+": filename already in this queue");continue}
       selectedFiles.push({file,name:file.name});total+=file.size;
     }
     renderUploadQueue();
@@ -107,7 +107,7 @@
       const invalid=selectedFiles.find(item=>!safeFilename(item.name)||!/(\.png|\.jpe?g|\.webp|\.gif)$/i.test(item.name));
       if(invalid){say($("media-status"),"Enter a valid image filename with its extension for every queued image.",true);return}
       const names=selectedFiles.map(item=>safeFilename(item.name).toLowerCase());
-      if(new Set(names).size!==names.length){say($("media-status"),"Each uploaded image must have a unique filename.",true);return}
+      if(new Set(names).size!==names.length){say($("media-status"),"Each uploaded image must have a unique filename. Rename one of the files first.",true);return}
       button.disabled=true;button.textContent="Uploading…";
       try{
         const urls=[];
