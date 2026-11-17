@@ -107,12 +107,12 @@
   }
 
   const seoDefaults = {
-    home: {title:"The Red Sparrow — Unity Game Development",description:"The Red Sparrow develops Unity gameplay systems, integrates supplied 3D assets and prepares mobile-focused game builds.",canonical:"https://theredsparrow.online/",ogTitle:"The Red Sparrow — Unity Game Development",ogDescription:"Unity gameplay development, 3D asset integration, game UI implementation and mobile build preparation.",ogImage:"https://theredsparrow.online/og-image.png"},
-    about: {title:"About — The Red Sparrow",description:"Learn about The Red Sparrow, an independent game-development brand focused on Unity and interactive experiences.",canonical:"https://theredsparrow.online/about.html",ogTitle:"About — The Red Sparrow",ogDescription:"An independent game-development brand focused on Unity.",ogImage:"https://theredsparrow.online/og-image.png"},
-    services: {title:"Services — The Red Sparrow",description:"Explore The Red Sparrow's services: Unity gameplay development, 3D asset integration, game UI implementation and mobile build preparation.",canonical:"https://theredsparrow.online/services.html",ogTitle:"Services — The Red Sparrow",ogDescription:"Unity gameplay development, 3D asset integration, game UI implementation and mobile build preparation.",ogImage:"https://theredsparrow.online/og-image.png"},
-    contact: {title:"Contact — The Red Sparrow",description:"Contact The Red Sparrow about Unity game development, 3D asset integration, game UI implementation and mobile game projects.",canonical:"https://theredsparrow.online/contact.html",ogTitle:"Contact — The Red Sparrow",ogDescription:"Tell us about the game or interactive experience you have in mind.",ogImage:"https://theredsparrow.online/og-image.png"},
-    privacy: {title:"Privacy Policy — The Red Sparrow",description:"Privacy information for visitors to The Red Sparrow, including contact enquiries, website hosting and advertising technologies.",canonical:"https://theredsparrow.online/privacy.html",ogTitle:"Privacy Policy — The Red Sparrow",ogDescription:"How The Red Sparrow handles information shared through its website and advertising services.",ogImage:"https://theredsparrow.online/og-image.png"},
-    terms: {title:"Terms of Use — The Red Sparrow",description:"Terms governing access to and use of The Red Sparrow website.",canonical:"https://theredsparrow.online/terms.html",ogTitle:"Terms of Use — The Red Sparrow",ogDescription:"Terms governing use of The Red Sparrow website.",ogImage:"https://theredsparrow.online/og-image.png"}
+    home: {title:"The Red Sparrow — Unity Game Development",description:"The Red Sparrow develops Unity gameplay systems, integrates supplied 3D assets and prepares mobile-focused game builds.",canonical:"https://theredsparrow.online/",ogTitle:"The Red Sparrow — Unity Game Development",ogDescription:"Unity gameplay development, 3D asset integration, game UI implementation and mobile build preparation.",ogImage:"https://theredsparrow.online/og-image.png",ogImageAlt:"The Red Sparrow — independent Unity game development"},
+    about: {title:"About — The Red Sparrow",description:"Learn about The Red Sparrow, an independent game-development brand focused on Unity and interactive experiences.",canonical:"https://theredsparrow.online/about.html",ogTitle:"About — The Red Sparrow",ogDescription:"An independent game-development brand focused on Unity.",ogImage:"https://theredsparrow.online/og-image.png",ogImageAlt:"The Red Sparrow — independent Unity game development"},
+    services: {title:"Services — The Red Sparrow",description:"Explore The Red Sparrow's services: Unity gameplay development, 3D asset integration, game UI implementation and mobile build preparation.",canonical:"https://theredsparrow.online/services.html",ogTitle:"Services — The Red Sparrow",ogDescription:"Unity gameplay development, 3D asset integration, game UI implementation and mobile build preparation.",ogImage:"https://theredsparrow.online/og-image.png",ogImageAlt:"The Red Sparrow — independent Unity game development"},
+    contact: {title:"Contact — The Red Sparrow",description:"Contact The Red Sparrow about Unity game development, 3D asset integration, game UI implementation and mobile game projects.",canonical:"https://theredsparrow.online/contact.html",ogTitle:"Contact — The Red Sparrow",ogDescription:"Tell us about the game or interactive experience you have in mind.",ogImage:"https://theredsparrow.online/og-image.png",ogImageAlt:"The Red Sparrow — independent Unity game development"},
+    privacy: {title:"Privacy Policy — The Red Sparrow",description:"Privacy information for visitors to The Red Sparrow, including contact enquiries, website hosting and advertising technologies.",canonical:"https://theredsparrow.online/privacy.html",ogTitle:"Privacy Policy — The Red Sparrow",ogDescription:"How The Red Sparrow handles information shared through its website and advertising services.",ogImage:"https://theredsparrow.online/og-image.png",ogImageAlt:"The Red Sparrow — independent Unity game development"},
+    terms: {title:"Terms of Use — The Red Sparrow",description:"Terms governing access to and use of The Red Sparrow website.",canonical:"https://theredsparrow.online/terms.html",ogTitle:"Terms of Use — The Red Sparrow",ogDescription:"Terms governing use of The Red Sparrow website.",ogImage:"https://theredsparrow.online/og-image.png",ogImageAlt:"The Red Sparrow — independent Unity game development"}
   };
   const seoForm = document.getElementById("seo-editor");
   if (seoForm) {
@@ -123,7 +123,8 @@
       canonical: document.getElementById("seo-canonical"),
       ogTitle: document.getElementById("seo-og-title"),
       ogDescription: document.getElementById("seo-og-description"),
-      ogImage: document.getElementById("seo-og-image")
+      ogImage: document.getElementById("seo-og-image"),
+      ogImageAlt: document.getElementById("seo-og-image-alt")
     };
     const seoKey = "trs-admin-local-seo-drafts-v1";
     const seoStatus = document.getElementById("seo-status");
@@ -148,6 +149,7 @@
       try {
         const parsed = new URL(seoFields.ogImage.value);
         if (parsed.protocol === "https:" && parsed.hostname === "theredsparrow.online") image.src = parsed.href;
+        image.alt = seoFields.ogImageAlt.value.trim();
       } catch {}
       counters.title.textContent = seoFields.title.value.length + " / 70";
       counters.description.textContent = seoFields.description.value.length + " / 180";
@@ -157,7 +159,7 @@
     const loadSeoPage = () => {
       const saved = readSeoDrafts()[seoFields.page.value] || {};
       const data = {...seoDefaults[seoFields.page.value], ...saved};
-      ["title","description","canonical","ogTitle","ogDescription","ogImage"].forEach(key => seoFields[key].value = data[key]);
+      ["title","description","canonical","ogTitle","ogDescription","ogImage","ogImageAlt"].forEach(key => { if(seoFields[key]) seoFields[key].value = data[key] || ""; });
       seoStatus.textContent = saved.title ? "Saved local SEO draft loaded." : "Showing current website metadata.";
       validation.textContent = "Canonical and image URLs must use HTTPS and the theredsparrow.online domain.";
       updateSeoPreview();
@@ -169,7 +171,7 @@
       } catch { return false; }
     };
     seoFields.page.addEventListener("change", loadSeoPage);
-    ["title","description","canonical","ogTitle","ogDescription","ogImage"].forEach(key => seoFields[key].addEventListener("input", updateSeoPreview));
+    ["title","description","canonical","ogTitle","ogDescription","ogImage","ogImageAlt"].forEach(key => seoFields[key]?.addEventListener("input", updateSeoPreview));
     seoForm.addEventListener("submit", event => {
       event.preventDefault();
       if (!validSiteUrl(seoFields.canonical.value) || !validSiteUrl(seoFields.ogImage.value)) {
@@ -178,7 +180,7 @@
       }
       const drafts = readSeoDrafts();
       drafts[seoFields.page.value] = {};
-      ["title","description","canonical","ogTitle","ogDescription","ogImage"].forEach(key => drafts[seoFields.page.value][key] = seoFields[key].value.trim());
+      ["title","description","canonical","ogTitle","ogDescription","ogImage","ogImageAlt"].forEach(key => drafts[seoFields.page.value][key] = seoFields[key].value.trim());
       try {
         localStorage.setItem(seoKey, JSON.stringify(drafts));
         seoStatus.textContent = "SEO draft saved in this browser. Nothing was published.";
