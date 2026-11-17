@@ -10,13 +10,13 @@
     try{
       const data=await request("/media/list");
       const picker=$("edit-image");
-      if(picker){const selected=picker.value;picker.replaceChildren(new Option("No image selected",""));for(const item of data.items){const option=new Option(item.name,item.siteUrl||item.url);option.dataset.previewUrl=item.previewUrl||item.siteUrl||item.url;picker.add(option)}picker.value=[...picker.options].some(o=>o.value===selected)?selected:"";picker.dispatchEvent(new Event("change",{bubbles:true}));}
+      if(picker){const selected=picker.value;picker.replaceChildren(new Option("No image selected",""));for(const item of data.items){const option=new Option(item.name,item.siteUrl||item.url);option.dataset.previewUrl=(item.siteUrl||item.url)+"?v="+encodeURIComponent(item.name);picker.add(option)}picker.value=[...picker.options].some(o=>o.value===selected)?selected:"";picker.dispatchEvent(new Event("change",{bubbles:true}));}
       grid.replaceChildren();
       if(!data.items.length){const empty=document.createElement("p");empty.className="editor-footnote";empty.textContent="No uploaded images yet. Upload an image above to add it here.";grid.append(empty);return}
       for(const item of data.items){
         const card=document.createElement("article");card.className="asset-card";
         const art=document.createElement("div");art.className="asset-art";
-        const img=document.createElement("img");img.src=item.previewUrl||item.siteUrl||item.url;img.alt=item.name;img.loading="lazy";art.append(img);
+        const img=document.createElement("img");img.src=(item.siteUrl||item.url)+"?v="+encodeURIComponent(item.name);img.alt=item.name;img.loading="lazy";art.append(img);
         const info=document.createElement("div");info.className="asset-info";
         const name=document.createElement("strong");name.textContent=item.name;
         const meta=document.createElement("small");meta.textContent=(item.size/1024).toFixed(1)+" KB · assets/uploads/";
