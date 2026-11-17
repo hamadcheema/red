@@ -84,7 +84,7 @@
       if(file.size>5242880){rejected.push(file.name+": larger than 5 MB");continue}
       if(total+file.size>20971520){rejected.push(file.name+": queue would exceed 20 MB");continue}
       const normalizedName=safeFilename(file.name).toLowerCase();if(selectedFiles.some(item=>safeFilename(item.name).toLowerCase()===normalizedName)){rejected.push(file.name+": filename already in this queue");continue}
-      selectedFiles.push({file,name:file.name});total+=file.size;
+      selectedFiles.push({file,name:file.name,previewUrl:URL.createObjectURL(file)});total+=file.size;
     }
     renderUploadQueue();
     if(rejected.length)say($("media-status"),selectedFiles.length+" image(s) ready. Skipped: "+rejected.join("; "),true);
@@ -96,11 +96,11 @@
     queue.replaceChildren();
     selectedFiles.forEach((item,index)=>{
       const card=document.createElement("article");card.className="queued-file";
-      const preview=document.createElement("img");preview.alt="Preview of "+item.name;preview.src=URL.createObjectURL(item.file);
+      const preview=document.createElement("img");preview.alt="Preview of "+item.name;preview.src=item.previewUrl;
       const meta=document.createElement("div");meta.className="queued-meta";
       const filename=document.createElement("strong");filename.textContent=uploadFilename(item);filename.title=filename.textContent;
       const detail=document.createElement("span");detail.textContent=item.file.type.replace("image/","").toUpperCase()+" · "+formatMediaSize(item.file.size);
-      meta.append(filename,detail);card.append(preview,meta);queue.append(card);
+      meta.append(filename,detail);const remove=document.createElement("button");remove.type="button";remove.className="remove-queued-file";remove.textContent="Remove";remove.setAttribute("aria-label","Remove "+item.name+" from upload queue");remove.addEventListener("click",()=>{URL.revokeObjectURL(item.previewUrl);selectedFiles.splice(index,1);renderUploadQueue()});card.append(preview,meta,remove);queue.append(card);
     });
     const total=selectedFiles.reduce((sum,item)=>sum+item.file.size,0);
     const count=$("media-file-count"),size=$("media-total-size"),clear=$("media-clear");
@@ -118,8 +118,8 @@
     dropZone.addEventListener("drop",event=>{event.preventDefault();event.stopPropagation();dropZone.classList.remove("drag-over");if(event.dataTransfer?.files?.length)rememberFiles([...event.dataTransfer.files])});
   }
   if(input&&actions){
-    document.addEventListener("change",event=>{if(event.target===input)rememberFiles([...input.files])},true);
-    $("media-clear")?.addEventListener("click",()=>{selectedFiles=[];renderUploadQueue()});
+    document.addEventListener("change",event=>{if(event.target===input){rememberFiles([...input.files]);input.value=""}},true);
+    $("media-clear")?.addEventListener("click",()=>{selectedFiles.forEach(item=>URL.revokeObjectURL(item.previewUrl));selectedFiles=[];if(input)input.value="";renderUploadQueue()});
     const button=document.createElement("button");button.type="button";button.className="primary-button";button.textContent="Upload to website";actions.prepend(button);
     button.addEventListener("click",async()=>{
       if(!selectedFiles.length){say($("media-status"),"Choose images first.",true);return}
@@ -133,7 +133,7 @@
           const item=selectedFiles[0],file=item.file;
           const data=await new Promise((resolve,reject)=>{const reader=new FileReader();reader.onload=()=>resolve(reader.result);reader.onerror=reject;reader.readAsDataURL(file)});
           const finalName=uploadFilename(item);const out=await call("/media/upload",{method:"POST",body:JSON.stringify({name:finalName,type:file.type,base64:data})});
-          urls.push(out.url);selectedFiles.shift();renderUploadQueue();
+          urls.push(out.url);const completed=selectedFiles.shift();if(completed)URL.revokeObjectURL(completed.previewUrl);renderUploadQueue();
         }
         say($("media-status"),"Upload complete. "+urls.length+" image(s) added to Uploaded images.");
         window.dispatchEvent(new Event("trs:media-updated"));
