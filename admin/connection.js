@@ -11,7 +11,7 @@
     if(retry)retry.hidden=state!=="error";
     if(msg)msg.textContent=message||(
       state==="checking"?"Checking your secure admin session…":
-      state==="signed-out"?"You are signed out. Sign in with the authorized GitHub account to open the admin workspace.":
+      state==="signed-out"?"You are signed out. Sign in with the authorized Google account to open the admin workspace.":
       "The admin service could not verify your session. Check your connection and try again."
     );
     if(status)status.textContent=state==="checking"?"Verifying access…":state==="signed-out"?"Authentication required.":"Access check failed.";
@@ -25,7 +25,7 @@
     if(pill)pill.textContent="CHECKING";
     try{
       const s=await call("/status");
-      if(!s.ok||s.admin!=="hamadcheema")throw new Error("The server returned an unexpected admin identity.");
+      if(!s.ok||String(s.admin||"").toLowerCase()!=="thatsmehammad@gmail.com")throw new Error("The server returned an unexpected admin identity.");
       const app=$("admin-app"),gate=$("auth-gate");
       if(app)app.hidden=false;
       if(gate)gate.hidden=true;
