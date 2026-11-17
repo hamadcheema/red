@@ -16,8 +16,6 @@ Add these secrets to Cloudflare Worker `the-red-sparrow-admin-api`:
 - `GITHUB_OAUTH_CLIENT_SECRET` = OAuth App Client Secret
 - `GITHUB_TOKEN` = fine-grained token scoped only to `hamadcheema/red`, Contents read/write, Metadata read-only.
 
-Set `SESSION_SECRET` to a long random value if you enable signed session tokens in a future update; current session identifiers are random, opaque, HttpOnly cookies stored server-side in KV.
-
 ## 3. Route the API
 Create one Cloudflare Worker route:
 - Zone: theredsparrow.online
@@ -39,4 +37,4 @@ This route handles the API only; it does not intercept the rest of the site. No 
 Publishing writes a normal commit to `main`; GitHub Pages then deploys it. Confirm the commit and public website after each publish.
 
 ## Security notes
-The admin HTML itself is static and may be viewable publicly, but no private drafts or publishing API actions are available without the GitHub session. Only the GitHub account `hamadcheema` is authorized. Protect your GitHub account with two-factor authentication and never share OAuth or GitHub tokens.
+The admin HTML itself is static and may be viewable publicly, but all API data and mutating actions require a valid server-side session. Only the GitHub account `hamadcheema` is authorized. Protect your GitHub account with two-factor authentication and never share OAuth or GitHub tokens.
