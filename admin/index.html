@@ -8,9 +8,9 @@
   <title>Admin · The Red Sparrow</title>
   <link rel="icon" href="../favicon.svg" type="image/svg+xml">
   <link rel="stylesheet" href="admin.css">
-  <script src="admin.js?v=20261117-3" defer></script>
-  <script src="features.js?v=20261117-2" defer></script>
-  <script src="connection.js?v=20261117-2" defer></script>
+  <script src="admin.js?v=20261117-4" defer></script>
+  <script src="features.js?v=20261117-4" defer></script>
+  <script src="connection.js?v=20261117-4" defer></script>
 </head>
 <body>
   <section class="auth-gate" id="auth-gate" aria-labelledby="auth-title">
@@ -118,7 +118,7 @@
                 <label for="edit-description">Search description</label><textarea id="edit-description" name="description" rows="3" maxlength="180" required></textarea>
                 <label for="edit-heading">Main heading</label><textarea id="edit-heading" name="heading" rows="3" maxlength="100" required aria-describedby="heading-help"></textarea><small id="heading-help" class="field-help">Use a new line for a line break, *italic* for emphasis, or **bold** for strong emphasis.</small>
                 <label for="edit-intro">Introductory text</label><textarea id="edit-intro" name="intro" rows="4" maxlength="500" required></textarea>
-                <label for="edit-image">Page image <span class="field-optional">Optional</span></label><select id="edit-image"><option value="">No image selected</option></select><small class="field-help">Choose an image from your Media Library. It will appear below the page heading when published.</small><div class="selected-image-preview" id="selected-image-preview" hidden><img id="selected-image" alt="Selected page image preview"><button class="text-button" id="clear-page-image" type="button">Remove image</button></div>
+                <label for="edit-image">Page image <span class="field-optional">Optional</span></label><select id="edit-image"><option value="">No image selected</option></select><small class="field-help">Choose an image from your Media Library. It will appear below the page heading when published.</small><div class="selected-image-preview" id="selected-image-preview" hidden><img id="selected-image" alt="Selected page image preview"><button class="text-button" id="clear-page-image" type="button">Remove image</button></div><label for="edit-image-alt">Image description <span class="field-optional">Optional</span></label><input id="edit-image-alt" name="imageAlt" type="text" maxlength="160" placeholder="Describe the image for screen readers"><small class="field-help">Leave blank if the image is purely decorative.</small>
                 <div class="editor-actions"><button class="primary-button" type="submit">Save draft</button><button class="secondary-button" id="reset-draft" type="button">Reset page</button></div>
                 <p class="editor-status" id="editor-status" role="status" aria-live="polite">No local changes saved.</p>
               </form>
