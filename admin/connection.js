@@ -1,8 +1,26 @@
+import { initializeApp } from "https://www.gstatic.com/firebasejs/10.14.1/firebase-app.js";
+import { getAuth, GoogleAuthProvider, signInWithPopup, signOut, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.14.1/firebase-auth.js";
+
+const firebaseConfig = {
+  apiKey: "AIzaSyBW8EG4rNIktVAioqYnHqi0xvY_mqQcgAo",
+  authDomain: "the-red-sparrow-admin.firebaseapp.com",
+  projectId: "the-red-sparrow-admin",
+  storageBucket: "the-red-sparrow-admin.firebasestorage.app",
+  messagingSenderId: "724317931201",
+  appId: "1:724317931201:web:6a395be3e4eb0055a77640",
+  measurementId: "G-E33PYSBT5V"
+};
+const firebaseApp = initializeApp(firebaseConfig);
+const auth = getAuth(firebaseApp);
+const googleProvider = new GoogleAuthProvider();
+googleProvider.setCustomParameters({ prompt: "select_account" });
+
 (() => {
   const API="/admin-api", $=id=>document.getElementById(id);
   let selectedFiles=[];
+  let firebaseUser=null;
   const say=(el,text,bad=false)=>{if(el){el.textContent=text;el.style.color=bad?"#f18b83":""}};
-  async function call(path,options={}){const r=await fetch(API+path,{credentials:"include",...options,headers:{"content-type":"application/json",...(options.headers||{})}});const d=await r.json().catch(()=>({}));if(!r.ok){const error=new Error(d.error||"Request failed ("+r.status+")");error.status=r.status;if(r.status===401)showGate("signed-out");throw error}return d}
+  async function call(path,options={}){if(!firebaseUser)throw new Error("Please sign in first.");const token=await firebaseUser.getIdToken();const r=await fetch(API+path,{credentials:"same-origin",...options,headers:{"content-type":"application/json","authorization":"Bearer "+token,...(options.headers||{})}});const d=await r.json().catch(()=>({}));if(!r.ok){const error=new Error(d.error||"Request failed ("+r.status+")");error.status=r.status;if(r.status===401)showGate("signed-out");throw error}return d}
   function showGate(state,message){
     const app=$("admin-app"),gate=$("auth-gate"),login=$("auth-gate-login"),retry=$("auth-retry"),msg=$("auth-message"),status=$("auth-status");
     if(app)app.hidden=true;
@@ -19,7 +37,9 @@
     if(topLogin)topLogin.hidden=true;
     if(logout)logout.hidden=true;
   }
-  async function connect(){
+  async function connect(user=firebaseUser){
+    firebaseUser=user;
+    if(!user){showGate("signed-out");return}
     const n=document.querySelector(".notice"),login=$("github-login"),logout=$("admin-logout"),pill=$("connection-pill");
     showGate("checking");
     if(pill)pill.textContent="CHECKING";
@@ -53,7 +73,15 @@
       }
     }
   }
-  $("auth-retry")?.addEventListener("click",connect);
+  $("auth-gate-login")?.addEventListener("click",async event=>{
+    event.preventDefault();
+    const link=$("auth-gate-login");
+    if(link){link.textContent="Opening Google sign-in…";link.setAttribute("aria-disabled","true")}
+    try{await signInWithPopup(auth,googleProvider)}catch(error){
+      showGate("error",error?.message||"Google sign-in could not be completed.");
+    }finally{if(link){link.textContent="Continue with Google";link.removeAttribute("aria-disabled")}}
+  });
+  $("auth-retry")?.addEventListener("click",()=>connect(firebaseUser));
   const pf=$("page-editor"),ps=$("editor-status");
   const pageValue=()=>({title:$("edit-title").value,description:$("edit-description").value,heading:$("edit-heading").value,intro:$("edit-intro").value,image:$("edit-image")?.value||"",imageAlt:$("edit-image-alt")?.value.trim()||""});
   const seoValue=()=>({title:$("seo-title").value,description:$("seo-description").value,canonical:$("seo-canonical").value,ogTitle:$("seo-og-title").value,ogDescription:$("seo-og-description").value,ogImage:$("seo-og-image").value,ogImageAlt:$("seo-og-image-alt")?.value.trim()||""});
@@ -171,16 +199,9 @@
   if(logout)logout.addEventListener("click",async()=>{
     logout.disabled=true;
     logout.textContent="Logging out…";
-    try{
-      await call("/auth/logout",{method:"POST",body:JSON.stringify({})});
-      window.location.replace("/admin/");
-    }catch(e){
-      const n=document.querySelector(".notice");
-      if(n)n.querySelector("p").textContent="Could not log out: "+e.message;
-      logout.disabled=false;
-      logout.textContent="Log out";
-    }
+    try{await signOut(auth);window.location.replace("/admin/")}
+    catch(e){const n=document.querySelector(".notice");if(n)n.querySelector("p").textContent="Could not log out: "+e.message;logout.disabled=false;logout.textContent="Log out"}
   });
 
-  connect();
+  onAuthStateChanged(auth,user=>{firebaseUser=user;connect(user)});
 })();
