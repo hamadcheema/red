@@ -1,39 +1,42 @@
 # The Red Sparrow admin backend
 
-## Deployment status
-The Cloudflare KV namespace `THE_RED_SPARROW_ADMIN_DRAFTS` has been created. Cloudflare Access is not enabled yet, the Worker is not deployed/routed, and the GitHub credential is not configured. Keep the dashboard and API private until all security steps are complete.
+## Authentication
+This backend uses GitHub OAuth (not Cloudflare Zero Trust). Only the GitHub account `hamadcheema` is allowed. The admin dashboard HTML is served as a static page; the API and all editing/publishing actions require a valid server-side session. The session cookie is HttpOnly, Secure and SameSite=Lax, and OAuth state is single-use.
 
-## 1. Enable Cloudflare Access
-In the Cloudflare dashboard, open Zero Trust / Access and choose **Enable Access**. Then create two self-hosted applications:
-- Dashboard: `theredsparrow.online/admin*`
-- API: `admin-api.theredsparrow.online`
+## 1. Create a GitHub OAuth App
+In GitHub, open Settings → Developer settings → OAuth Apps → New OAuth App.
+- Application name: The Red Sparrow Admin
+- Homepage URL: https://theredsparrow.online
+- Authorization callback URL: https://theredsparrow.online/admin-api/auth/callback
+Copy the Client ID. Generate a Client Secret. Do not paste the secret into browser code or commit it.
 
-For each application, create an Allow policy that includes only `thatsmehammad@gmail.com`. Do not use Everyone. If no identity provider is configured, enable One-time PIN email authentication. Protect the API hostname before attaching it to the Worker.
+## 2. Add Worker secrets
+Add these secrets to Cloudflare Worker `the-red-sparrow-admin-api`:
+- `GITHUB_OAUTH_CLIENT_ID` = OAuth App Client ID
+- `GITHUB_OAUTH_CLIENT_SECRET` = OAuth App Client Secret
+- `GITHUB_TOKEN` = fine-grained token scoped only to `hamadcheema/red`, Contents read/write, Metadata read-only.
 
-## 2. Create a least-privilege GitHub token
-Create a fine-grained personal access token for only `hamadcheema/red`:
-- Repository access: Only select repositories → `red`
-- Contents: Read and write
-- Metadata: Read-only
-No Actions, Administration, workflow, Issues or Pull requests permissions are required. Never put this token in browser code or commit it to GitHub.
+Set `SESSION_SECRET` to a long random value if you enable signed session tokens in a future update; current session identifiers are random, opaque, HttpOnly cookies stored server-side in KV.
 
-## 3. Deploy the Worker
-From this directory, authenticate Wrangler to the same Cloudflare account, then run:
-```sh
-npx wrangler secret put GITHUB_TOKEN
-npx wrangler deploy
-```
-Add the Worker custom domain `admin-api.theredsparrow.online` only after the API Access application is active. The Worker has `workers_dev = false`, so it is not exposed on a public workers.dev URL.
+## 3. Route the API
+Create one Cloudflare Worker route:
+- Zone: theredsparrow.online
+- Pattern: `theredsparrow.online/admin-api*`
+- Script: `the-red-sparrow-admin-api`
 
-## 4. Features
-- Remote drafts in Cloudflare KV (90-day expiry).
+This route handles the API only; it does not intercept the rest of the site. No Cloudflare Access / Zero Trust is required.
+
+## Features
+- GitHub OAuth allow-list for `hamadcheema`.
+- Server-side session in Cloudflare KV (8-hour expiry).
+- Remote drafts (90-day expiry).
 - Publish copy for Home, About, Services and Contact.
 - Publish SEO title, description, canonical and Open Graph/Twitter metadata on all six pages.
 - Upload PNG/JPEG/WebP/GIF images (5 MB each) to `assets/uploads/`.
 - View page commit history and restore a previous version by creating a new revert commit.
 - Audit events in KV (180-day expiry).
 
-Publishing writes a normal commit to the repository's `main` branch; GitHub Pages then deploys it. Confirm the commit and the public website after each publish.
+Publishing writes a normal commit to `main`; GitHub Pages then deploys it. Confirm the commit and public website after each publish.
 
-## Limitations
-The editor is a focused text/metadata editor, not a full visual page builder. Privacy and Terms content remain read-only; their SEO metadata can be updated. Uploaded images are stored in GitHub and increase repository size.
+## Security notes
+The admin HTML itself is static and may be viewable publicly, but no private drafts or publishing API actions are available without the GitHub session. Only the GitHub account `hamadcheema` is authorized. Protect your GitHub account with two-factor authentication and never share OAuth or GitHub tokens.
