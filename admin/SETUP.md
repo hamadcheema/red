@@ -44,6 +44,9 @@ This route handles the API only; it does not intercept the rest of the site. No 
 - View page commit history and restore a previous version by creating a new revert commit.
 - Audit events in KV (180-day expiry), with latest-event pagination. Audit write failures do not turn a completed GitHub operation into a false failure.
 
+## Response security headers
+A zone-level Cloudflare response-header transform rule applies `X-Content-Type-Options: nosniff`, `Referrer-Policy: strict-origin-when-cross-origin`, `X-Frame-Options: SAMEORIGIN`, and a restrictive Permissions-Policy for camera, microphone and geolocation. A Content Security Policy is intentionally not set until every required third-party asset origin has been reviewed.
+
 ## Quality checks
 From the repository root, run `python scripts/validate_site.py` and `node --test admin/tests/worker.test.mjs`. GitHub Actions runs these checks and JavaScript syntax checks on every push to `main`.
 
