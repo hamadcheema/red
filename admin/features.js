@@ -3,6 +3,7 @@
   const $=id=>document.getElementById(id);
   const request=async(path,options={})=>{const r=await fetch(API+path,{credentials:"include",...options,headers:{"content-type":"application/json",accept:"application/json",...(options.headers||{})}});const d=await r.json().catch(()=>({}));if(!r.ok)throw new Error(d.error||"Request failed ("+r.status+")");return d};
   const showError=(el,error)=>{if(el)el.textContent="Could not load data: "+error.message};
+  const sayMediaStatus=(message,bad=false)=>{const el=$("media-status");if(el){el.textContent=message;el.style.color=bad?"#f18b83":""}};
   async function loadMedia(){
     const grid=$("media-library-grid");if(!grid)return;
     grid.replaceChildren();const loading=document.createElement("p");loading.className="editor-footnote";loading.textContent="Loading uploaded images…";grid.append(loading);
@@ -20,7 +21,7 @@
         const name=document.createElement("strong");name.textContent=item.name;
         const meta=document.createElement("small");meta.textContent=(item.size/1024).toFixed(1)+" KB · assets/uploads/";
         const link=document.createElement("a");link.href=item.url;link.target="_blank";link.rel="noopener";link.textContent="Open image ↗";
-        const remove=document.createElement("button");remove.type="button";remove.className="delete-media";remove.textContent="Delete image";remove.addEventListener("click",async()=>{if(!confirm("Permanently delete "+item.name+" from the website repository? This cannot be undone here."))return;remove.disabled=true;remove.textContent="Deleting…";try{await request("/media/delete",{method:"POST",body:JSON.stringify({path:item.path})});showError(grid,{message:"Image deleted from the repository."});await loadMedia();window.dispatchEvent(new Event("trs:media-updated"))}catch(e){remove.disabled=false;remove.textContent="Delete image";collectionStatus("projects","Could not delete image: "+e.message,true);alert(e.message)}});info.append(name,meta,link,remove);card.append(art,info);grid.append(card);
+        const remove=document.createElement("button");remove.type="button";remove.className="delete-media";remove.textContent="Delete image";remove.addEventListener("click",async()=>{if(!confirm("Permanently delete "+item.name+" from the website repository? This cannot be undone here."))return;remove.disabled=true;remove.textContent="Deleting…";try{await request("/media/delete",{method:"POST",body:JSON.stringify({path:item.path})});sayMediaStatus("Image deleted from the repository.");await loadMedia();window.dispatchEvent(new Event("trs:media-updated"))}catch(e){remove.disabled=false;remove.textContent="Delete image";sayMediaStatus("Could not delete image: "+e.message,true);alert(e.message)}});info.append(name,meta,link,remove);card.append(art,info);grid.append(card);
       }
     }catch(e){showError(grid,e)}
   }
