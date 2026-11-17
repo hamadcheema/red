@@ -60,38 +60,69 @@
   const sf=$("seo-editor"),ss=$("seo-status");
   if(sf){sf.addEventListener("submit",async()=>{const value={title:$("seo-title").value,description:$("seo-description").value,canonical:$("seo-canonical").value,ogTitle:$("seo-og-title").value,ogDescription:$("seo-og-description").value,ogImage:$("seo-og-image").value};try{await call("/draft",{method:"POST",body:JSON.stringify({key:"seo:"+$("seo-page").value,value})});say(ss,"SEO draft saved securely to Cloudflare KV.")}catch(e){say(ss,"Local draft saved; remote save failed: "+e.message,true)}});
     const b=document.createElement("button");b.type="button";b.className="primary-button";b.textContent="Publish SEO";sf.querySelector(".seo-actions").append(b);b.addEventListener("click",async()=>{if(!confirm("Publish these SEO changes to the live website?"))return;b.disabled=true;b.textContent="Publishing…";try{const d=await call("/publish/seo",{method:"POST",body:JSON.stringify({slug:$("seo-page").value,title:$("seo-title").value,description:$("seo-description").value,canonical:$("seo-canonical").value,ogTitle:$("seo-og-title").value,ogDescription:$("seo-og-description").value,ogImage:$("seo-og-image").value})});say(ss,"SEO published in GitHub ("+(d.commit||"commit created").slice(0,7)+").")}catch(e){say(ss,e.message,true)}finally{b.disabled=false;b.textContent="Publish SEO"}})}
-  const input=$("media-file-input"),actions=$("media-clear")?.parentElement,dropZone=$("media-drop-zone");
+  const input=$("media-file-input"),actions=$("media-clear")?.parentElement,dropZone=$("media-drop-zone"),queue=$("media-queue");
   const acceptedMediaTypes=new Set(["image/png","image/jpeg","image/webp","image/gif"]);
+  const safeFilename=value=>String(value||"").trim().replace(/[\\\\/:*?"<>|]+/g,"-").replace(/\\s+/g,"-").replace(/-+/g,"-").replace(/^[-.]+|[-.]+$/g,"");
   const rememberFiles=files=>{
-    let total=selectedFiles.reduce((sum,file)=>sum+file.size,0);
+    let total=selectedFiles.reduce((sum,item)=>sum+item.file.size,0);
+    const rejected=[];
     for(const file of files){
-      if(!acceptedMediaTypes.has(file.type)||file.size>5242880)continue;
-      if(total+file.size>20971520)continue;
-      if(selectedFiles.some(existing=>existing.name===file.name&&existing.size===file.size))continue;
-      selectedFiles.push(file);total+=file.size;
+      if(!acceptedMediaTypes.has(file.type)){rejected.push(file.name+": unsupported file type");continue}
+      if(file.size>5242880){rejected.push(file.name+": larger than 5 MB");continue}
+      if(total+file.size>20971520){rejected.push(file.name+": queue would exceed 20 MB");continue}
+      if(selectedFiles.some(item=>item.file.name===file.name&&item.file.size===file.size)){rejected.push(file.name+": already selected");continue}
+      selectedFiles.push({file,name:file.name});total+=file.size;
     }
+    renderUploadQueue();
+    if(rejected.length)say($("media-status"),selectedFiles.length+" image(s) ready. Skipped: "+rejected.join("; "),true);
+    else say($("media-status"),selectedFiles.length+" image(s) ready. You can rename files below before uploading.");
   };
-  if(dropZone)dropZone.addEventListener("drop",e=>rememberFiles([...e.dataTransfer.files]));
+  const formatMediaSize=bytes=>bytes<1048576?Math.max(1,Math.round(bytes/1024))+" KB":(bytes/1048576).toFixed(2)+" MB";
+  function renderUploadQueue(){
+    if(!queue)return;
+    queue.replaceChildren();
+    selectedFiles.forEach((item,index)=>{
+      const card=document.createElement("article");card.className="queued-file";
+      const preview=document.createElement("img");preview.alt="Preview of "+item.name;preview.src=URL.createObjectURL(item.file);
+      const meta=document.createElement("div");meta.className="queued-meta";
+      const label=document.createElement("label");label.textContent="File name";label.htmlFor="queued-file-name-"+index;
+      const name=document.createElement("input");name.id=label.htmlFor;name.type="text";name.value=item.name;name.maxLength=120;name.autocomplete="off";name.spellcheck=false;name.setAttribute("aria-label","Rename "+item.file.name);
+      name.addEventListener("input",()=>{item.name=name.value});
+      const detail=document.createElement("span");detail.textContent=item.file.type.replace("image/","").toUpperCase()+" · "+formatMediaSize(item.file.size);
+      meta.append(label,name,detail);card.append(preview,meta);queue.append(card);
+    });
+    const total=selectedFiles.reduce((sum,item)=>sum+item.file.size,0);
+    const count=$("media-file-count"),size=$("media-total-size"),clear=$("media-clear");
+    if(count)count.textContent=String(selectedFiles.length);
+    if(size)size.textContent=total?formatMediaSize(total):"0 MB";
+    if(clear)clear.disabled=selectedFiles.length===0;
+  }
+  if(dropZone)dropZone.addEventListener("drop",event=>rememberFiles([...event.dataTransfer.files]));
   if(input&&actions){
-    document.addEventListener("change",e=>{if(e.target===input)rememberFiles([...input.files])},true);
-    $("media-clear")?.addEventListener("click",()=>{selectedFiles=[]});
-    const b=document.createElement("button");b.type="button";b.className="primary-button";b.textContent="Upload to website";actions.prepend(b);
-    b.addEventListener("click",async()=>{
+    document.addEventListener("change",event=>{if(event.target===input)rememberFiles([...input.files])},true);
+    $("media-clear")?.addEventListener("click",()=>{selectedFiles=[];renderUploadQueue()});
+    const button=document.createElement("button");button.type="button";button.className="primary-button";button.textContent="Upload to website";actions.prepend(button);
+    button.addEventListener("click",async()=>{
       if(!selectedFiles.length){say($("media-status"),"Choose images first.",true);return}
-      b.disabled=true;b.textContent="Uploading…";
+      const invalid=selectedFiles.find(item=>!safeFilename(item.name)||!/\\.(png|jpe?g|webp|gif)$/i.test(item.name));
+      if(invalid){say($("media-status"),"Enter a valid image filename with its extension for every queued image.",true);return}
+      const names=selectedFiles.map(item=>safeFilename(item.name).toLowerCase());
+      if(new Set(names).size!==names.length){say($("media-status"),"Each uploaded image must have a unique filename.",true);return}
+      button.disabled=true;button.textContent="Uploading…";
       try{
         const urls=[];
         while(selectedFiles.length){
-          const f=selectedFiles[0];
-          const data=await new Promise((resolve,reject)=>{const r=new FileReader();r.onload=()=>resolve(r.result);r.onerror=reject;r.readAsDataURL(f)});
-          const out=await call("/media/upload",{method:"POST",body:JSON.stringify({name:f.name,type:f.type,base64:data})});
-          urls.push(out.url);selectedFiles.shift();
+          const item=selectedFiles[0],file=item.file;
+          const data=await new Promise((resolve,reject)=>{const reader=new FileReader();reader.onload=()=>resolve(reader.result);reader.onerror=reject;reader.readAsDataURL(file)});
+          const out=await call("/media/upload",{method:"POST",body:JSON.stringify({name:safeFilename(item.name),type:file.type,base64:data})});
+          urls.push(out.url);selectedFiles.shift();renderUploadQueue();
         }
-        $("media-clear")?.click();
-        say($("media-status"),"Uploaded: "+urls.join(" · "));window.dispatchEvent(new Event("trs:media-updated"));
-      }catch(e){say($("media-status"),e.message+" Remaining files are still queued.",true)}
-      finally{b.disabled=false;b.textContent="Upload to website"}
+        say($("media-status"),"Upload complete. "+urls.length+" image(s) added to Uploaded images.");
+        window.dispatchEvent(new Event("trs:media-updated"));
+      }catch(error){say($("media-status"),error.message+" Remaining files are still queued.",true)}
+      finally{button.disabled=false;button.textContent="Upload to website"}
     });
+    renderUploadQueue();
   }
 
   const pageFiles={home:"index.html",about:"about.html",services:"services.html",contact:"contact.html"};
