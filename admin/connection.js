@@ -7,7 +7,7 @@
     const app=$("admin-app"),gate=$("auth-gate"),login=$("auth-gate-login"),retry=$("auth-retry"),msg=$("auth-message"),status=$("auth-status");
     if(app)app.hidden=true;
     if(gate)gate.hidden=false;
-    if(login)login.hidden=state!=="signed-out";
+    if(login)login.hidden=state==="checking";
     if(retry)retry.hidden=state!=="error";
     if(msg)msg.textContent=message||(
       state==="checking"?"Checking your secure admin session…":
