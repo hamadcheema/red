@@ -97,7 +97,15 @@
     if(size)size.textContent=total?formatMediaSize(total):"0 MB";
     if(clear)clear.disabled=selectedFiles.length===0;
   }
-  if(dropZone)dropZone.addEventListener("drop",event=>rememberFiles([...event.dataTransfer.files]));
+  const chooseButton=$("media-choose");
+  if(input&&chooseButton)chooseButton.addEventListener("click",event=>{event.preventDefault();event.stopPropagation();input.click()});
+  if(input&&dropZone){
+    dropZone.addEventListener("click",event=>{if(event.target!==chooseButton&&!chooseButton?.contains(event.target))input.click()});
+    dropZone.addEventListener("keydown",event=>{if(event.target===dropZone&&(event.key==="Enter"||event.key===" ")){event.preventDefault();input.click()}});
+    ["dragenter","dragover"].forEach(type=>dropZone.addEventListener(type,event=>{event.preventDefault();event.stopPropagation();dropZone.classList.add("drag-over");if(event.dataTransfer)event.dataTransfer.dropEffect="copy"}));
+    ["dragleave","dragend"].forEach(type=>dropZone.addEventListener(type,event=>{event.preventDefault();if(!dropZone.contains(event.relatedTarget))dropZone.classList.remove("drag-over")}));
+    dropZone.addEventListener("drop",event=>{event.preventDefault();event.stopPropagation();dropZone.classList.remove("drag-over");if(event.dataTransfer?.files?.length)rememberFiles([...event.dataTransfer.files])});
+  }
   if(input&&actions){
     document.addEventListener("change",event=>{if(event.target===input)rememberFiles([...input.files])},true);
     $("media-clear")?.addEventListener("click",()=>{selectedFiles=[];renderUploadQueue()});
