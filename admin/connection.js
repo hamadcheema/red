@@ -21,6 +21,10 @@ googleProvider.setCustomParameters({ prompt: "select_account" });
   let firebaseUser=null;
   const say=(el,text,bad=false)=>{if(el){el.textContent=text;el.style.color=bad?"#f18b83":""}};
   async function call(path,options={}){if(!firebaseUser)throw new Error("Please sign in first.");const token=await firebaseUser.getIdToken();const r=await fetch(API+path,{credentials:"same-origin",...options,headers:{"content-type":"application/json","authorization":"Bearer "+token,...(options.headers||{})}});const d=await r.json().catch(()=>({}));if(!r.ok){const error=new Error(d.error||"Request failed ("+r.status+")");error.status=r.status;if(r.status===401)showGate("signed-out");throw error}return d}
+  let resolveAuthReady;
+  const authReady=new Promise(resolve=>{resolveAuthReady=resolve});
+  window.trsAdminRequest=(path,options={})=>authReady.then(()=>call(path,options));
+  window.dispatchEvent(new Event("trs:admin-api-ready"));
   function showGate(state,message){
     const app=$("admin-app"),gate=$("auth-gate"),login=$("auth-gate-login"),retry=$("auth-retry"),msg=$("auth-message"),status=$("auth-status");
     if(app)app.hidden=true;
@@ -203,5 +207,5 @@ googleProvider.setCustomParameters({ prompt: "select_account" });
     catch(e){const n=document.querySelector(".notice");if(n)n.querySelector("p").textContent="Could not log out: "+e.message;logout.disabled=false;logout.textContent="Log out"}
   });
 
-  onAuthStateChanged(auth,user=>{firebaseUser=user;connect(user)});
+  onAuthStateChanged(auth,user=>{firebaseUser=user;resolveAuthReady();connect(user)});
 })();
