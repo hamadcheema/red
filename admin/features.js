@@ -1,7 +1,7 @@
 (() => {
   const API="/admin-api";
   const $=id=>document.getElementById(id);
-  const request=async(path,options={})=>{const r=await fetch(API+path,{credentials:"include",...options,headers:{"content-type":"application/json",accept:"application/json",...(options.headers||{})}});const d=await r.json().catch(()=>({}));if(!r.ok)throw new Error(d.error||"Request failed ("+r.status+")");return d};
+  const request=async(path,options={})=>{if(typeof window.trsAdminRequest!=="function")await new Promise(resolve=>window.addEventListener("trs:admin-api-ready",resolve,{once:true}));return window.trsAdminRequest(path,options)};
   const showError=(el,error)=>{if(el)el.textContent="Could not load data: "+error.message};
   const sayMediaStatus=(message,bad=false)=>{const el=$("media-status");if(el){el.textContent=message;el.style.color=bad?"#f18b83":""}};
   async function loadMedia(){
