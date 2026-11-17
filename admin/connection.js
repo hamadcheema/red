@@ -11,12 +11,42 @@
   if(sf){sf.addEventListener("submit",async()=>{const value={title:$("seo-title").value,description:$("seo-description").value,canonical:$("seo-canonical").value,ogTitle:$("seo-og-title").value,ogDescription:$("seo-og-description").value,ogImage:$("seo-og-image").value};try{await call("/draft",{method:"POST",body:JSON.stringify({key:"seo:"+$("seo-page").value,value})});say(ss,"SEO draft saved securely to Cloudflare KV.")}catch(e){say(ss,"Local draft saved; remote save failed: "+e.message,true)}});
     const b=document.createElement("button");b.type="button";b.className="primary-button";b.textContent="Publish SEO";sf.querySelector(".seo-actions").append(b);b.addEventListener("click",async()=>{if(!confirm("Publish these SEO changes to the live website?"))return;b.disabled=true;b.textContent="Publishing…";try{const d=await call("/publish/seo",{method:"POST",body:JSON.stringify({slug:$("seo-page").value,title:$("seo-title").value,description:$("seo-description").value,canonical:$("seo-canonical").value,ogTitle:$("seo-og-title").value,ogDescription:$("seo-og-description").value,ogImage:$("seo-og-image").value})});say(ss,"SEO published in GitHub ("+(d.commit||"commit created").slice(0,7)+").")}catch(e){say(ss,e.message,true)}finally{b.disabled=false;b.textContent="Publish SEO"}})}
   const input=$("media-file-input"),actions=$("media-clear")?.parentElement,dropZone=$("media-drop-zone");
-  if(dropZone)dropZone.addEventListener("drop",e=>{selectedFiles=[...e.dataTransfer.files]});
-  if(input&&actions){document.addEventListener("change",e=>{if(e.target===input)selectedFiles=[...input.files]},true);const b=document.createElement("button");b.type="button";b.className="primary-button";b.textContent="Upload to website";actions.prepend(b);b.addEventListener("click",async()=>{if(!selectedFiles.length){say($("media-status"),"Choose images first.",true);return}b.disabled=true;b.textContent="Uploading…";try{const urls=[];for(const f of selectedFiles){const data=await new Promise((resolve,reject)=>{const r=new FileReader();r.onload=()=>resolve(r.result);r.onerror=reject;r.readAsDataURL(f)});const out=await call("/media/upload",{method:"POST",body:JSON.stringify({name:f.name,type:f.type,base64:data})});urls.push(out.url)}say($("media-status"),"Uploaded: "+urls.join(" · "));selectedFiles=[]}catch(e){say($("media-status"),e.message,true)}finally{b.disabled=false;b.textContent="Upload to website"}})}
+  const acceptedMediaTypes=new Set(["image/png","image/jpeg","image/webp","image/gif"]);
+  const rememberFiles=files=>{
+    let total=selectedFiles.reduce((sum,file)=>sum+file.size,0);
+    for(const file of files){
+      if(!acceptedMediaTypes.has(file.type)||file.size>5242880)continue;
+      if(total+file.size>20971520)continue;
+      if(selectedFiles.some(existing=>existing.name===file.name&&existing.size===file.size))continue;
+      selectedFiles.push(file);total+=file.size;
+    }
+  };
+  if(dropZone)dropZone.addEventListener("drop",e=>rememberFiles([...e.dataTransfer.files]));
+  if(input&&actions){
+    document.addEventListener("change",e=>{if(e.target===input)rememberFiles([...input.files])},true);
+    $("media-clear")?.addEventListener("click",()=>{selectedFiles=[]});
+    const b=document.createElement("button");b.type="button";b.className="primary-button";b.textContent="Upload to website";actions.prepend(b);
+    b.addEventListener("click",async()=>{
+      if(!selectedFiles.length){say($("media-status"),"Choose images first.",true);return}
+      b.disabled=true;b.textContent="Uploading…";
+      try{
+        const urls=[];
+        while(selectedFiles.length){
+          const f=selectedFiles[0];
+          const data=await new Promise((resolve,reject)=>{const r=new FileReader();r.onload=()=>resolve(r.result);r.onerror=reject;r.readAsDataURL(f)});
+          const out=await call("/media/upload",{method:"POST",body:JSON.stringify({name:f.name,type:f.type,base64:data})});
+          urls.push(out.url);selectedFiles.shift();
+        }
+        $("media-clear")?.click();
+        say($("media-status"),"Uploaded: "+urls.join(" · "));
+      }catch(e){say($("media-status"),e.message+" Remaining files are still queued.",true)}
+      finally{b.disabled=false;b.textContent="Upload to website"}
+    });
+  }
 
   const pageFiles={home:"index.html",about:"about.html",services:"services.html",contact:"contact.html"};
   async function loadRemoteDraft(kind,slug,fields,status){
-    try{const d=await call("/draft?key="+encodeURIComponent(kind+":"+slug));if(!d.draft)return;for(const [key,id] of Object.entries(fields))if($(id)&&d.draft[key]!==undefined)$(id).value=d.draft[key];say(status,"Remote draft restored from Cloudflare KV.");}
+    try{const d=await call("/draft?key="+encodeURIComponent(kind+":"+slug));if(!d.draft)return;for(const [key,id] of Object.entries(fields))if($(id)&&d.draft[key]!==undefined){$(id).value=d.draft[key];$(id).dispatchEvent(new Event("input",{bubbles:true}))}say(status,"Remote draft restored from Cloudflare KV.");}
     catch(e){say(status,"Could not load remote draft: "+e.message,true)}
   }
   if($("edit-page"))$("edit-page").addEventListener("change",()=>loadRemoteDraft("page",$("edit-page").value,{title:"edit-title",description:"edit-description",heading:"edit-heading",intro:"edit-intro"},ps));
