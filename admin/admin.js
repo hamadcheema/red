@@ -27,11 +27,12 @@
     const selected = descriptions[name] ? name : "overview";
     views().forEach(view => view.classList.toggle("active", view.id === "view-" + selected));
     links().forEach(link => link.classList.toggle("active", link.dataset.view === selected));
-    const label = links().find(link => link.dataset.view === selected)?.textContent.trim() || "Overview";
+    const activeLink = links().find(link => link.dataset.view === selected);
+    const label = activeLink?.dataset.label || activeLink?.textContent.replace(/^[^\\p{L}\\p{N}]+/u,"").trim() || "Overview";
     title.textContent = label;
     breadcrumb.textContent = label;
     description.textContent = descriptions[selected];
-    document.getElementById("sidebar").classList.remove("open");
+    window.closeAdminSidebar?.();
     if (["analytics","calendar","inquiries","notifications","health","preview","files","security","site-settings"].includes(selected)) window.dispatchEvent(new CustomEvent("trs:control-view",{detail:selected}));
   }
   window.showAdminView = showView;
@@ -53,17 +54,12 @@
       imageAlt: document.getElementById("edit-image-alt")
     };
     const status = document.getElementById("editor-status");
-    const storageKey = "trs-admin-local-page-drafts-v1";
     const preview = {
       image: document.getElementById("preview-image"),
       title: document.getElementById("preview-title"),
       description: document.getElementById("preview-description"),
       heading: document.getElementById("preview-heading"),
       intro: document.getElementById("preview-intro")
-    };
-    const readDrafts = () => {
-      try { return JSON.parse(localStorage.getItem(storageKey) || "{}"); }
-      catch { return {}; }
     };
     const updatePreview = () => {
       preview.title.textContent = fields.title.value;
@@ -75,45 +71,19 @@
       if (preview.image) { preview.image.src = imageUrl; preview.image.hidden = !imageUrl; preview.image.alt = fields.imageAlt?.value.trim() || ""; }
     };
     const loadPage = () => {
-      const saved = readDrafts()[fields.page.value] || {};
-      const data = {...pageDefaults[fields.page.value], ...saved};
+      const data = pageDefaults[fields.page.value];
       const formattedHeadings = {home:["Ideas into interactive worlds.","Ideas into\n*interactive worlds.*"],about:["Built around the joy of play.","Built around\nthe joy of play."],services:["Our services.","Our *services.*"],contact:["Let’s start a conversation.","Let’s start\n*a conversation.*"]};
       const legacyHeading = formattedHeadings[fields.page.value];
-      if (legacyHeading && data.heading === legacyHeading[0]) data.heading = legacyHeading[1];
+      const heading = data.heading;
+      if (legacyHeading && heading === legacyHeading[0]) data.heading = legacyHeading[1];
       ["title","description","heading","intro","imageAlt"].forEach(key => { if (fields[key]) fields[key].value = data[key] || ""; });
       const imageField = document.getElementById("edit-image"); if (imageField) imageField.value = data.image || "";
-      status.textContent = saved.title ? "Saved local draft loaded." : "Showing original page copy. No draft saved.";
+      status.textContent = "Showing published page copy. Any saved remote draft will load after page selection.";
       updatePreview();
     };
     fields.page.addEventListener("change", loadPage);
     ["title","description","heading","intro","imageAlt"].forEach(key => fields[key]?.addEventListener("input", updatePreview));
     document.getElementById("edit-image")?.addEventListener("change", updatePreview);
-    editor.addEventListener("submit", event => {
-      event.preventDefault();
-      const drafts = readDrafts();
-      drafts[fields.page.value] = {
-        title: fields.title.value.trim(),
-        description: fields.description.value.trim(),
-        heading: fields.heading.value.trim(),
-        intro: fields.intro.value.trim(),
-        image: document.getElementById("edit-image")?.value || "",
-        imageAlt: fields.imageAlt?.value.trim() || ""
-      };
-      try {
-        localStorage.setItem(storageKey, JSON.stringify(drafts));
-        status.textContent = "Local draft saved in this browser. Nothing was published.";
-      } catch {
-        status.textContent = "This browser could not save the draft. Check local storage settings.";
-      }
-    });
-    document.getElementById("reset-draft").addEventListener("click", () => {
-      const drafts = readDrafts();
-      delete drafts[fields.page.value];
-      try { localStorage.setItem(storageKey, JSON.stringify(drafts)); }
-      catch {}
-      loadPage();
-      status.textContent = "Draft cleared. Original page copy restored.";
-    });
     loadPage();
   }
 
@@ -137,13 +107,8 @@
       ogImage: document.getElementById("seo-og-image"),
       ogImageAlt: document.getElementById("seo-og-image-alt")
     };
-    const seoKey = "trs-admin-local-seo-drafts-v1";
     const seoStatus = document.getElementById("seo-status");
     const validation = document.getElementById("seo-validation");
-    const readSeoDrafts = () => {
-      try { return JSON.parse(localStorage.getItem(seoKey) || "{}"); }
-      catch { return {}; }
-    };
     const counters = {
       title: document.getElementById("seo-title-count"),
       description: document.getElementById("seo-description-count"),
@@ -168,45 +133,14 @@
       counters.ogDescription.textContent = seoFields.ogDescription.value.length + " / 200";
     };
     const loadSeoPage = () => {
-      const saved = readSeoDrafts()[seoFields.page.value] || {};
-      const data = {...seoDefaults[seoFields.page.value], ...saved};
+      const data = seoDefaults[seoFields.page.value];
       ["title","description","canonical","ogTitle","ogDescription","ogImage","ogImageAlt"].forEach(key => { if(seoFields[key]) seoFields[key].value = data[key] || ""; });
-      seoStatus.textContent = saved.title ? "Saved local SEO draft loaded." : "Showing current website metadata.";
+      seoStatus.textContent = "Showing current website metadata. Any saved remote draft will load after page selection.";
       validation.textContent = "Canonical and image URLs must use HTTPS and the theredsparrow.online domain.";
       updateSeoPreview();
     };
-    const validSiteUrl = value => {
-      try {
-        const parsed = new URL(value);
-        return parsed.protocol === "https:" && parsed.hostname === "theredsparrow.online" && !parsed.username && !parsed.password;
-      } catch { return false; }
-    };
     seoFields.page.addEventListener("change", loadSeoPage);
     ["title","description","canonical","ogTitle","ogDescription","ogImage","ogImageAlt"].forEach(key => seoFields[key]?.addEventListener("input", updateSeoPreview));
-    seoForm.addEventListener("submit", event => {
-      event.preventDefault();
-      if (!validSiteUrl(seoFields.canonical.value) || !validSiteUrl(seoFields.ogImage.value)) {
-        validation.textContent = "Please use valid HTTPS URLs on theredsparrow.online for both fields.";
-        return;
-      }
-      const drafts = readSeoDrafts();
-      drafts[seoFields.page.value] = {};
-      ["title","description","canonical","ogTitle","ogDescription","ogImage","ogImageAlt"].forEach(key => drafts[seoFields.page.value][key] = seoFields[key].value.trim());
-      try {
-        localStorage.setItem(seoKey, JSON.stringify(drafts));
-        seoStatus.textContent = "SEO draft saved in this browser. Nothing was published.";
-        validation.textContent = "URL checks passed. These metadata changes are still local only.";
-      } catch {
-        seoStatus.textContent = "This browser could not save the draft. Check local storage settings.";
-      }
-    });
-    document.getElementById("seo-reset").addEventListener("click", () => {
-      const drafts = readSeoDrafts();
-      delete drafts[seoFields.page.value];
-      try { localStorage.setItem(seoKey, JSON.stringify(drafts)); } catch {}
-      loadSeoPage();
-      seoStatus.textContent = "SEO draft cleared. Current website metadata restored.";
-    });
     loadSeoPage();
   }
 
@@ -214,9 +148,16 @@
   const sidebar = document.getElementById("sidebar");
   const menuToggle = document.getElementById("menu-toggle");
   const mobileNavigation = window.matchMedia("(max-width:650px)");
+  const backdrop = document.createElement("button");
+  backdrop.type = "button";
+  backdrop.className = "sidebar-backdrop";
+  backdrop.setAttribute("aria-label", "Close navigation");
+  backdrop.hidden = true;
+  sidebar.parentNode.insertBefore(backdrop, sidebar.nextSibling);
   const setSidebarOpen = open => {
     const visible = mobileNavigation.matches && open;
     sidebar.classList.toggle("open", visible);
+    backdrop.hidden = !visible;
     menuToggle.setAttribute("aria-expanded", String(visible));
     if (mobileNavigation.matches && !visible) {
       sidebar.setAttribute("inert", "");
@@ -228,12 +169,13 @@
   };
   setSidebarOpen(false);
   window.closeAdminSidebar = () => setSidebarOpen(false);
+  backdrop.addEventListener("click", () => { setSidebarOpen(false); menuToggle.focus(); });
   links().forEach(link => link.addEventListener("click", () => {
     showView(link.dataset.view);
     setSidebarOpen(false);
   }));
   document.querySelectorAll("[data-go]").forEach(button => button.addEventListener("click", () => showView(button.dataset.go)));
-  menuToggle.addEventListener("click", () => setSidebarOpen(!sidebar.classList.contains("open")));
+  menuToggle.addEventListener("click", () => { const opening=!sidebar.classList.contains("open");setSidebarOpen(opening);if(opening)sidebar.querySelector("[data-view]")?.focus(); });
   mobileNavigation.addEventListener("change", () => setSidebarOpen(false));
   document.addEventListener("keydown", event => {
     if (event.key === "Escape" && sidebar.classList.contains("open")) {
