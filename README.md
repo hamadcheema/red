@@ -51,7 +51,7 @@ node --check admin/worker.js
 node --test admin/tests/worker.test.mjs
 ```
 
-GitHub Actions runs these checks on pushes to `main`. A passing quality check does not replace manual browser, accessibility or legal review. Cloudflare applies baseline response headers; a restrictive Content Security Policy is intentionally not enabled until all required third-party origins and features are reviewed.
+The repository quality workflow is currently configured for `main`; preview-specific checks should also be run before merging preview changes. A passing quality check does not replace manual browser, accessibility or legal review. Cloudflare applies baseline response headers; a restrictive Content Security Policy is intentionally not enabled until all required third-party origins and features are reviewed.
 
 ## Services presented
 
