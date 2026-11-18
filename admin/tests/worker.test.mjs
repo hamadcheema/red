@@ -200,3 +200,23 @@ test("schedule endpoint stores a future collection publication and returns it", 
   assert.equal(listedData.items[0].id, createdData.id);
   assert.deepEqual(listedData.items[0].items, items);
 });
+
+
+test("failed scheduled publications can be retried without changing their collection snapshot", async () => {
+  const id = "11111111-1111-4111-8111-111111111111";
+  const key = "scheduled:1790000000000:" + id;
+  const job = {
+    id, kind: "projects", items: [{ title: "Saved game" }],
+    scheduledAt: "2026-11-17T12:00:00.000Z", status: "failed", error: "Temporary GitHub error"
+  };
+  const env = makeEnv({ [key]: job });
+  const response = await call("/schedule/retry", { method: "POST", body: { id } }, env);
+  const result = await response.json();
+  const updated = await env.DRAFTS.get(key, "json");
+  assert.equal(response.status, 200);
+  assert.equal(result.scheduled, true);
+  assert.equal(updated.status, "scheduled");
+  assert.deepEqual(updated.items, job.items);
+  assert.equal(updated.error, undefined);
+  assert.ok(Date.parse(updated.scheduledAt) > Date.now());
+});
