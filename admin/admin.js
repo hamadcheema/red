@@ -28,7 +28,7 @@
     views().forEach(view => view.classList.toggle("active", view.id === "view-" + selected));
     links().forEach(link => link.classList.toggle("active", link.dataset.view === selected));
     const activeLink = links().find(link => link.dataset.view === selected);
-    const label = activeLink?.dataset.label || activeLink?.textContent.replace(/^[^\\p{L}\\p{N}]+/u,"").trim() || "Overview";
+    const label = activeLink?.dataset.label || activeLink?.textContent.replace(/^[^A-Za-z0-9]+/,"").trim() || "Overview";
     title.textContent = label;
     breadcrumb.textContent = label;
     description.textContent = descriptions[selected];
@@ -159,6 +159,7 @@
     sidebar.classList.toggle("open", visible);
     backdrop.hidden = !visible;
     menuToggle.setAttribute("aria-expanded", String(visible));
+    menuToggle.setAttribute("aria-label", visible ? "Close navigation" : "Open navigation");
     if (mobileNavigation.matches && !visible) {
       sidebar.setAttribute("inert", "");
       sidebar.setAttribute("aria-hidden", "true");
