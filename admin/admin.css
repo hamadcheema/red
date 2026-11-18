@@ -278,3 +278,6 @@ h2{font:700 16px 'Manrope',sans-serif;margin-bottom:3px;letter-spacing:-.25px}
 @media(max-width:650px){.manager-tools,.media-library-tools{grid-template-columns:1fr}.homepage-history-row{align-items:flex-start;flex-direction:column}}
 
 .manager-state.is-removed{background:rgba(237,75,69,.13);color:#f18b83}
+
+.admin-summary-grid{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:12px;margin:-7px 0 22px}.admin-summary-grid .stat-card{padding:15px}.admin-summary-grid .stat-card>strong{font-size:23px}.summary-date{font-size:15px!important;line-height:1.4;overflow-wrap:anywhere}
+@media(max-width:900px){.admin-summary-grid{grid-template-columns:repeat(2,minmax(0,1fr))}}@media(max-width:650px){.admin-summary-grid{grid-template-columns:1fr}}
