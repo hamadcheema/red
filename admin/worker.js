@@ -116,8 +116,9 @@ const who=await session(req,env);if(!who)return response({error:"Please sign in 
 
 if(req.method==="GET"&&r==="inquiries"){
  let cursor,keys=[];do{const page=await env.DRAFTS.list({prefix:"inquiry:",limit:1000,...(cursor?{cursor}:{})});keys.push(...page.keys);cursor=page.list_complete?null:page.cursor}while(cursor);
- const items=(await Promise.all(keys.map(k=>env.DRAFTS.get(k.name,"json")))).filter(Boolean).sort((a,b)=>String(b.createdAt).localeCompare(String(a.createdAt))).slice(0,100);
- return response({items,total:items.length,unread:items.filter(x=>x.status==="new").length});
+ const all=(await Promise.all(keys.map(k=>env.DRAFTS.get(k.name,"json")))).filter(Boolean).sort((a,b)=>String(b.createdAt).localeCompare(String(a.createdAt)));
+ const items=all.slice(0,100);
+ return response({items,total:all.length,unread:all.filter(x=>x.status==="new").length});
 }
 if(req.method==="POST"&&r==="inquiries/update"){
  const b=await req.json(),id=String(b.id||""),state=String(b.state||"");if(!/^[a-f0-9-]{36}$/i.test(id)||!["read","archived"].includes(state))return response({error:"Invalid enquiry update."},400);
