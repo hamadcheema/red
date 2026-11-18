@@ -46,7 +46,7 @@ test("page and SEO drafts use the authenticated remote API without duplicate loc
 });
 
 test("new Control Center modules have matching protected Worker routes", () => {
-  for (const route of ["system/health", "preview/page", "media/usage", "security/sessions", "security/revoke-sessions", "site-settings", "publish/site-settings", "schedule", "notifications", "inquiries"]) {
+  for (const route of ["system/health", "preview/page", "media/usage", "security/sessions", "security/revoke-sessions", "site-settings", "publish/site-settings", "schedule", "schedule/retry", "notifications", "inquiries"]) {
     assert.ok(worker.includes('r==="' + route + '"'), "missing Worker route: " + route);
   }
   assert.match(worker, /publishedItems,draft:!!draft/);
