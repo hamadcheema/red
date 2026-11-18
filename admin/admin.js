@@ -19,7 +19,8 @@
     health: "Live checks for the public website, repository and admin services.",
     preview: "Preview page edits without publishing them.",
     files: "Review uploaded assets and where each file is used.",
-    security: "Review active admin sessions and revoke other sessions."
+    security: "Review active admin sessions and revoke other sessions.",
+    "site-settings": "Manage shared contact details, site tagline and announcement banner."
   };
 
   function showView(name) {
@@ -31,7 +32,7 @@
     breadcrumb.textContent = label;
     description.textContent = descriptions[selected];
     document.getElementById("sidebar").classList.remove("open");
-    if (["analytics","calendar","inquiries","notifications","health","preview","files","security"].includes(selected)) window.dispatchEvent(new CustomEvent("trs:control-view",{detail:selected}));
+    if (["analytics","calendar","inquiries","notifications","health","preview","files","security","site-settings"].includes(selected)) window.dispatchEvent(new CustomEvent("trs:control-view",{detail:selected}));
   }
   window.showAdminView = showView;
 
