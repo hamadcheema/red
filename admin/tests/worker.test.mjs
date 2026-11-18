@@ -166,3 +166,37 @@ test("SEO publishing updates Open Graph and Twitter image descriptions", async (
   assert.match(publishedHtml, /property="og:image:alt" content="The Red Sparrow brand emblem on a dark background"/);
   assert.match(publishedHtml, /name="twitter:image:alt" content="The Red Sparrow brand emblem on a dark background"/);
 });
+
+
+test("content endpoint returns both draft and published collection snapshots", async () => {
+  const published = [{ title: "Published game", description: "Live item", image: ORIGIN + "/assets/uploads/live.jpg", url: "" }];
+  const draft = [{ title: "Draft game", description: "Unpublished item", image: ORIGIN + "/assets/uploads/draft.jpg", url: "" }];
+  const env = makeEnv({
+    "collection:projects": published,
+    "collection-draft:projects": draft,
+    "collection-published-at:projects": "2026-11-18T12:00:00.000Z"
+  });
+  const response = await call("/content?kind=projects", {}, env);
+  const result = await response.json();
+  assert.equal(response.status, 200);
+  assert.deepEqual(result.items, draft);
+  assert.deepEqual(result.publishedItems, published);
+  assert.equal(result.draft, true);
+  assert.equal(result.publishedAt, "2026-11-18T12:00:00.000Z");
+});
+
+test("schedule endpoint stores a future collection publication and returns it", async () => {
+  const items = [{ title: "Scheduled game", description: "A valid scheduled showcase", image: ORIGIN + "/assets/uploads/game.jpg", url: "" }];
+  const env = makeEnv({ "collection-draft:projects": items });
+  const scheduledAt = new Date(Date.now() + 10 * 60 * 1000).toISOString();
+  const created = await call("/schedule", { method: "POST", body: { kind: "projects", scheduledAt } }, env);
+  const createdData = await created.json();
+  assert.equal(created.status, 200);
+  assert.equal(createdData.scheduled, true);
+  const listed = await call("/schedule", {}, env);
+  const listedData = await listed.json();
+  assert.equal(listed.status, 200);
+  assert.equal(listedData.items.length, 1);
+  assert.equal(listedData.items[0].id, createdData.id);
+  assert.deepEqual(listedData.items[0].items, items);
+});
