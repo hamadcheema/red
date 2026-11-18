@@ -36,6 +36,12 @@
       for(const item of data.items){const card=document.createElement("article");card.className="asset-card";const art=document.createElement("div");art.className="asset-art";const label=document.createElement("span");label.textContent="Deleted";art.append(label);const info=document.createElement("div");info.className="asset-info";const name=document.createElement("strong");name.textContent=item.name;const meta=document.createElement("small");meta.textContent="Deleted "+new Date(item.deletedAt).toLocaleString()+" · "+(item.size/1024).toFixed(1)+" KB";const restore=document.createElement("button");restore.type="button";restore.className="secondary-button";restore.textContent="Restore image";restore.addEventListener("click",async()=>{if(!confirm("Restore "+item.name+" to assets/uploads/?"))return;restore.disabled=true;restore.textContent="Restoring…";try{await request("/media/restore",{method:"POST",body:JSON.stringify({id:item.id})});sayMediaStatus("Image restored to the Media Library.");await loadMedia();await loadMediaTrash();window.dispatchEvent(new Event("trs:media-updated"))}catch(e){restore.disabled=false;restore.textContent="Restore image";alert("Could not restore image: "+e.message)}});info.append(name,meta,restore);card.append(art,info);grid.append(card)}
     }catch(e){showError(grid,e)}
   }
+  async function loadContentTrash(){
+    const list=$("content-history-list");if(!list)return;list.replaceChildren();
+    try{const data=await request("/content/trash");if(!data.items.length){const empty=document.createElement("p");empty.className="editor-footnote";empty.textContent="No previous collection versions are available yet. Each successful publish will keep the previous version here for 7 days.";list.append(empty);return}
+      for(const item of data.items){const row=document.createElement("div");row.className="homepage-history-row";const detail=document.createElement("div"),title=document.createElement("strong"),meta=document.createElement("small");title.textContent=(item.kind==="projects"?"Projects":item.kind==="social"?"Social previews":"Company assets")+" · "+item.count+" item(s)";meta.textContent="Previous version · "+new Date(item.deletedAt).toLocaleString();detail.append(title,meta);const restore=document.createElement("button");restore.type="button";restore.className="secondary-button";restore.textContent="Restore collection";restore.addEventListener("click",async()=>{if(!confirm("Restore the entire "+title.textContent.split(" · ")[0]+" collection to this previous version? Current published items in this category will be replaced."))return;restore.disabled=true;restore.textContent="Restoring…";try{const result=await request("/content/restore",{method:"POST",body:JSON.stringify({id:item.id})});collectionStatus(item.kind,"Previous collection restored. Commit "+(result.commit||"created").slice(0,7)+".");await loadCollection(item.kind);await loadContentTrash();await loadAdminSummary()}catch(e){restore.disabled=false;restore.textContent="Restore collection";alert("Could not restore collection: "+e.message)}});row.append(detail,restore);list.append(row)}
+    }catch(e){showError(list,e)}
+  }
   async function loadAudit(){
     const list=$("audit-list");if(!list)return;list.replaceChildren();
     const loading=document.createElement("p");loading.className="editor-footnote";loading.textContent="Loading audit events…";list.append(loading);
@@ -136,7 +142,8 @@
     loadCollection(kind);
   });
   const populateCollectionImages=async()=>{try{const data=await request("/media/list");for(const kind of collectionKinds){const select=$(kind+"-image");if(!select)continue;const chosen=select.value;select.replaceChildren(new Option("Choose from Media Library",""));data.items.forEach(item=>select.add(new Option(item.name,item.siteUrl||item.url)));select.value=chosen}}catch(e){collectionKinds.forEach(kind=>collectionStatus(kind,"Media library unavailable: "+e.message,true))}};
-  populateCollectionImages();window.addEventListener("trs:media-updated",populateCollectionImages);document.querySelector('[data-view="showcase"]')?.addEventListener("click",()=>{collectionKinds.forEach(loadCollection);populateCollectionImages()});
+  populateCollectionImages();window.addEventListener("trs:media-updated",populateCollectionImages);document.querySelector('[data-view="showcase"]')?.addEventListener("click",()=>{collectionKinds.forEach(loadCollection);populateCollectionImages();loadContentTrash()});
+  $("content-history-refresh")?.addEventListener("click",loadContentTrash);
   document.querySelectorAll("[data-manager-filter]").forEach(button=>button.addEventListener("click",()=>{managerFilter=button.dataset.managerFilter;document.querySelectorAll("[data-manager-filter]").forEach(x=>x.classList.toggle("active",x===button));renderManager()}));
   $("content-manager-search")?.addEventListener("input",event=>{managerSearch=event.target.value.trim().toLowerCase();renderManager()});
   $("content-manager-status")?.addEventListener("change",event=>{managerStatus=event.target.value;renderManager()});
@@ -160,6 +167,7 @@
   window.addEventListener("beforeunload",event=>{if(Object.values(collectionDirty).some(Boolean)){event.preventDefault();event.returnValue=""}});
   loadMedia();
   loadMediaTrash();
+  loadContentTrash();
   document.querySelector('[data-view="overview"]')?.addEventListener("click",loadAdminSummary);
   loadAdminSummary();
 })();
