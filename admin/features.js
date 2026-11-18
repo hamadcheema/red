@@ -78,28 +78,32 @@
   const isPublishedItem=(kind,item)=>publishedCollections[kind].some(p=>p.title===item.title&&p.image===item.image);
   const renderManager=()=>{
     const grid=$("content-manager-grid"),count=$("content-manager-count");if(!grid)return;grid.replaceChildren();
-    let all=collectionKinds.flatMap(kind=>collections[kind].map((item,index)=>({kind,index,item,published:isPublishedItem(kind,item)})))
+    let all=collectionKinds.flatMap(kind=>{
+      const draftEntries=collections[kind].map((item,index)=>({kind,index,item,published:isPublishedItem(kind,item),pendingRemoval:false}));
+      for(const item of publishedCollections[kind])if(!collections[kind].some(d=>d.title===item.title&&d.image===item.image))draftEntries.push({kind,index:-1,item,published:true,pendingRemoval:true});
+      return draftEntries;
+    })
       .filter(entry=>(managerFilter==="all"||entry.kind===managerFilter))
       .filter(entry=>!managerSearch||(entry.item.title+" "+entry.item.description).toLowerCase().includes(managerSearch))
-      .filter(entry=>managerStatus==="all"||(managerStatus==="published"?entry.published:!entry.published));
+      .filter(entry=>managerStatus==="all"||(managerStatus==="published"?entry.published&&!entry.pendingRemoval:managerStatus==="removed"?entry.pendingRemoval:!entry.published));
     all.sort((a,b)=>managerSort==="title"?a.item.title.localeCompare(b.item.title):managerSort==="category"?a.kind.localeCompare(b.kind):b.index-a.index);
     if(count)count.textContent=all.length+" ITEMS";
     if(!all.length){const empty=document.createElement("p");empty.className="editor-footnote";empty.textContent="No items match these filters. Add content using the forms below.";grid.append(empty);updateBulkControls();return}
     for(const entry of all){
-      const {kind,index,item,published}=entry,key=kind+":"+index;
+      const {kind,index,item,published,pendingRemoval}=entry,key=kind+":"+index;
       const card=document.createElement("article");card.className="manager-card";
       const art=document.createElement("div");art.className="manager-card-art";const img=document.createElement("img");img.src=item.image;img.alt=item.title;img.loading="lazy";art.append(img);
       const body=document.createElement("div");body.className="manager-card-body";
       const meta=document.createElement("div");meta.className="manager-card-meta";
-      const check=document.createElement("input");check.type="checkbox";check.className="manager-select";check.checked=selectedManagerItems.has(key);check.setAttribute("aria-label","Select "+item.title);check.addEventListener("change",()=>{if(check.checked)selectedManagerItems.add(key);else selectedManagerItems.delete(key);updateBulkControls()});
+      const check=document.createElement("input");check.type="checkbox";check.className="manager-select";check.checked=selectedManagerItems.has(key);check.disabled=pendingRemoval;check.setAttribute("aria-label","Select "+item.title);check.addEventListener("change",()=>{if(check.checked)selectedManagerItems.add(key);else selectedManagerItems.delete(key);updateBulkControls()});
       const tag=document.createElement("span");tag.className="manager-card-tag";tag.textContent=kind==="projects"?"GAME PROJECT":kind==="social"?"SOCIAL PREVIEW":"COMPANY ASSET";
-      const state=document.createElement("span");state.className="manager-state "+(published?"is-published":"is-draft");state.textContent=published?"Published":"Draft";
+      const state=document.createElement("span");state.className="manager-state "+(published?"is-published":"is-draft");state.textContent=pendingRemoval?"Pending removal":published?"Published":"Draft";state.classList.toggle("is-removed",pendingRemoval);
       meta.append(check,tag,state);
       const title=document.createElement("h3");title.textContent=item.title;const desc=document.createElement("p");desc.textContent=item.description;body.append(meta,title,desc);
       const actions=document.createElement("div");actions.className="manager-card-actions";
       const preview=document.createElement("button");preview.type="button";preview.className="secondary-button";preview.textContent="Preview";preview.addEventListener("click",()=>openContentPreview(kind,item));
-      const edit=document.createElement("button");edit.type="button";edit.className="secondary-button";edit.textContent="Edit";edit.addEventListener("click",()=>editCollectionItem(kind,index));
-      const del=document.createElement("button");del.type="button";del.className="manager-delete";del.textContent="Delete";del.addEventListener("click",async()=>{if(!confirm("Delete "+item.title+" and publish the change to the homepage?"))return;selectedManagerItems.clear();del.disabled=true;del.textContent="Deleting…";const previous=collections[kind].slice();collections[kind].splice(index,1);collectionDirty[kind]=true;renderManager();try{await saveCollectionDraft(kind);const result=await request("/publish/content",{method:"POST",body:JSON.stringify({kind})});publishedCollections[kind]=collections[kind].slice();collectionDirty[kind]=false;collectionStatus(kind,"Deleted and published. Commit "+(result.commit||"created").slice(0,7)+".")}catch(error){collections[kind]=previous;collectionDirty[kind]=true;renderManager();collectionStatus(kind,"Delete was not published: "+error.message,true);alert("Could not complete deletion: "+error.message)}});
+      const edit=document.createElement("button");edit.type="button";edit.className="secondary-button";edit.textContent=pendingRemoval?"Undo removal":"Edit";edit.addEventListener("click",async()=>{if(pendingRemoval){collections[kind].push(item);collectionDirty[kind]=true;try{await saveCollectionDraft(kind);const result=await request("/publish/content",{method:"POST",body:JSON.stringify({kind})});publishedCollections[kind]=collections[kind].slice();collectionDirty[kind]=false;collectionStatus(kind,"Removal undone and item restored. Commit "+(result.commit||"created").slice(0,7)+".");renderManager()}catch(e){collectionStatus(kind,"Could not restore item: "+e.message,true)}}else editCollectionItem(kind,index)});
+      const del=document.createElement("button");del.type="button";del.className="manager-delete";del.textContent=pendingRemoval?"—":"Delete";del.disabled=pendingRemoval;if(!pendingRemoval)del.addEventListener("click",async()=>{if(!confirm("Delete "+item.title+" and publish the change to the homepage?"))return;selectedManagerItems.clear();del.disabled=true;del.textContent="Deleting…";const previous=collections[kind].slice();collections[kind].splice(index,1);collectionDirty[kind]=true;renderManager();try{await saveCollectionDraft(kind);const result=await request("/publish/content",{method:"POST",body:JSON.stringify({kind})});publishedCollections[kind]=collections[kind].slice();collectionDirty[kind]=false;collectionStatus(kind,"Deleted and published. Commit "+(result.commit||"created").slice(0,7)+".")}catch(error){collections[kind]=previous;collectionDirty[kind]=true;renderManager();collectionStatus(kind,"Delete was not published: "+error.message,true);alert("Could not complete deletion: "+error.message)}});
       actions.append(preview,edit,del);card.append(art,body,actions);grid.append(card);
     }
     updateBulkControls();
