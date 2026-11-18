@@ -220,3 +220,17 @@ test("failed scheduled publications can be retried without changing their collec
   assert.equal(updated.error, undefined);
   assert.ok(Date.parse(updated.scheduledAt) > Date.now());
 });
+
+test("inquiry listing reports all stored counts while returning only the latest 100 messages", async () => {
+  const values = Object.fromEntries(Array.from({ length: 105 }, (_, i) => {
+    const id = "00000000-0000-4000-8000-" + String(i).padStart(12, "0");
+    return ["inquiry:" + id, { id, name: "Visitor " + i, email: "visitor" + i + "@example.com", subject: "Question " + i, message: "A sufficiently long enquiry message.", createdAt: new Date(1700000000000 + i * 1000).toISOString(), status: i % 2 === 0 ? "new" : "read" }];
+  }));
+  const env = makeEnv(values);
+  const response = await call("/inquiries", {}, env);
+  const result = await response.json();
+  assert.equal(response.status, 200);
+  assert.equal(result.total, 105);
+  assert.equal(result.unread, 53);
+  assert.equal(result.items.length, 100);
+});
