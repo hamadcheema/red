@@ -57,12 +57,14 @@
     try{
       const results=await Promise.all([...collectionKinds.map(kind=>request("/content?kind="+kind)),request("/media/list")]);
       const content=results.slice(0,3),media=results[3];
+      const history=await request("/history?path=index.html");
       const total=content.reduce((sum,item)=>sum+(Array.isArray(item.items)?item.items.length:0),0);
       const pending=content.filter(item=>item.draftChanged).length;
       const dates=content.map(item=>item.publishedAt).filter(Boolean).sort();
+      const lastPublish=history.history?.[0]?.date||dates[dates.length-1]||null;
       const set=(id,value)=>{const el=$(id);if(el)el.textContent=value};
       set("summary-content-count",String(total));set("summary-media-count",String((media.items||[]).length));set("summary-draft-count",String(pending));
-      set("summary-published-at",dates.length?new Date(dates[dates.length-1]).toLocaleDateString(): "Not yet");
+      set("summary-published-at",lastPublish?new Date(lastPublish).toLocaleDateString():"Not yet");
     }catch(e){["summary-content-count","summary-media-count","summary-draft-count","summary-published-at"].forEach(id=>{const el=$(id);if(el)el.textContent="—"})}
   }
   async function loadSettings(){
@@ -87,7 +89,7 @@
   const selectedManagerItems=new Set();
   const updateBulkControls=()=>{const count=selectedManagerItems.size;const label=$("manager-selected-count");if(label)label.textContent=count+" selected";const publish=$("manager-publish-selected"),del=$("manager-delete-selected");if(publish)publish.disabled=!count;if(del)del.disabled=!count};
   const editCollectionItem=(kind,index)=>{const item=collections[kind][index];if(!item)return;$(kind+"-title").value=item.title;$(kind+"-description").value=item.description;$(kind+"-image").value=item.image.startsWith("http")?item.image:location.origin+item.image;$(kind+"-url").value=item.url||"";collectionEditing[kind]=index;formSubmitLabel(kind,"Update item");collectionStatus(kind,"Editing this item. Submit the form, then save draft and publish.");$(kind+"-form").scrollIntoView({behavior:"smooth",block:"center"});$(kind+"-title").focus({preventScroll:true})};
-  const isPublishedItem=(kind,item)=>publishedCollections[kind].some(p=>p.title===item.title&&p.image===item.image);
+  const isPublishedItem=(kind,item)=>publishedCollections[kind].some(p=>p.title===item.title&&p.description===item.description&&p.image===item.image&&(p.url||"")===(item.url||""));
   const renderManager=()=>{
     const grid=$("content-manager-grid"),count=$("content-manager-count");if(!grid)return;grid.replaceChildren();
     let all=collectionKinds.flatMap(kind=>{
@@ -140,7 +142,7 @@
   $("content-manager-status")?.addEventListener("change",event=>{managerStatus=event.target.value;renderManager()});
   $("content-manager-sort")?.addEventListener("change",event=>{managerSort=event.target.value;renderManager()});
   $("manager-delete-selected")?.addEventListener("click",async()=>{if(!selectedManagerItems.size)return;if(!confirm("Delete the selected items and publish the affected collections?"))return;const grouped={projects:[],social:[],brands:[]};for(const key of selectedManagerItems){const [kind,index]=key.split(":");grouped[kind].push(Number(index))}selectedManagerItems.clear();for(const kind of collectionKinds){grouped[kind].sort((a,b)=>b-a).forEach(index=>collections[kind].splice(index,1));if(!grouped[kind].length)continue;collectionDirty[kind]=true;try{await saveCollectionDraft(kind);await request("/publish/content",{method:"POST",body:JSON.stringify({kind})});publishedCollections[kind]=collections[kind].slice();collectionDirty[kind]=false;collectionStatus(kind,"Selected items deleted and published.")}catch(e){collectionStatus(kind,"Bulk deletion could not be published: "+e.message,true)}}renderManager()});
-  $("manager-publish-selected")?.addEventListener("click",async()=>{if(!selectedManagerItems.size)return;const grouped={projects:[],social:[],brands:[]};for(const key of selectedManagerItems){const [kind,index]=key.split(":");const item=collections[kind][Number(index)];if(item)grouped[kind].push(item)}selectedManagerItems.clear();for(const kind of collectionKinds){if(!grouped[kind].length)continue;const merged=publishedCollections[kind].slice();for(const item of grouped[kind])if(!merged.some(x=>x.title===item.title&&x.image===item.image))merged.push(item);collections[kind]=merged;collectionDirty[kind]=true;try{await saveCollectionDraft(kind);const result=await request("/publish/content",{method:"POST",body:JSON.stringify({kind})});publishedCollections[kind]=merged.slice();collectionDirty[kind]=false;collectionStatus(kind,"Selected items published. Commit "+(result.commit||"created").slice(0,7)+".")}catch(e){collectionStatus(kind,"Could not publish selected items: "+e.message,true)}}renderManager()});
+  $("manager-publish-selected")?.addEventListener("click",async()=>{if(!selectedManagerItems.size)return;const grouped={projects:[],social:[],brands:[]};for(const key of selectedManagerItems){const [kind,index]=key.split(":");const item=collections[kind][Number(index)];if(item)grouped[kind].push(item)}selectedManagerItems.clear();for(const kind of collectionKinds){if(!grouped[kind].length)continue;const merged=publishedCollections[kind].slice();for(const item of grouped[kind]){const existing=merged.findIndex(x=>x.title===item.title||x.image===item.image);if(existing>=0)merged[existing]=item;else merged.push(item)}collections[kind]=merged;collectionDirty[kind]=true;try{await saveCollectionDraft(kind);const result=await request("/publish/content",{method:"POST",body:JSON.stringify({kind})});publishedCollections[kind]=merged.slice();collectionDirty[kind]=false;collectionStatus(kind,"Selected items published. Commit "+(result.commit||"created").slice(0,7)+".")}catch(e){collectionStatus(kind,"Could not publish selected items: "+e.message,true)}}renderManager()});
   $("content-manager-refresh")?.addEventListener("click",()=>collectionKinds.forEach(loadCollection));
   $("media-library-refresh")?.addEventListener("click",loadMedia);
   $("media-search")?.addEventListener("input",event=>{mediaSearch=event.target.value.trim().toLowerCase();renderMediaLibrary()});
