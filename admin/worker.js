@@ -52,6 +52,7 @@ async function publishCollection(env,kind,items,actor="system"){
  const next=old.content.slice(0,begin)+collectionMarkup(kind,items)+old.content.slice(finish+end.length);
  const out=await writeFile(env,path,next,old.sha,"Publish "+kind+" collection from "+actor);
  await env.DRAFTS.put("collection:"+kind,JSON.stringify(items),{expirationTtl:7776000});
+ await env.DRAFTS.put("collection-published-at:"+kind,new Date().toISOString(),{expirationTtl:7776000});
  await audit(env,actor,"publish-collection",kind+":"+items.length);
  return out.commit?.sha||null;
 }
@@ -178,7 +179,7 @@ if(req.method==="POST"&&r==="publish/site-settings"){
 }
 if(req.method==="GET"&&r==="schedule"){
  let cursor,keys=[];do{const page=await env.DRAFTS.list({prefix:"scheduled:",limit:1000,...(cursor?{cursor}:{})});keys.push(...page.keys);cursor=page.list_complete?null:page.cursor}while(cursor);
- const items=(await Promise.all(keys.map(k=>env.DRAFTS.get(k.name,"json")))).filter(x=>x&&x.status==="scheduled").sort((a,b)=>a.scheduledAt.localeCompare(b.scheduledAt));
+ const items=(await Promise.all(keys.map(k=>env.DRAFTS.get(k.name,"json")))).filter(x=>x&&["scheduled","failed","processing"].includes(x.status)).sort((a,b)=>a.scheduledAt.localeCompare(b.scheduledAt));
  return response({items});
 }
 if(req.method==="POST"&&r==="schedule"){
@@ -192,7 +193,6 @@ if(req.method==="DELETE"&&r==="schedule"){
  const page=await env.DRAFTS.list({prefix:"scheduled:",limit:1000});for(const key of page.keys){const job=await env.DRAFTS.get(key.name,"json");if(job?.id===id){await env.DRAFTS.delete(key.name);await audit(env,who.login,"cancel-scheduled-publication",job.kind);return response({cancelled:true})}}
  return response({error:"Scheduled publication not found."},404);
 }
-if(req.method==="GET"&&r==="site-settings")return response({settings:await siteSettings(env)});
 
 if(req.method==="GET"&&r==="status"){let connected=false,msg="GitHub token not configured";if(env.GITHUB_TOKEN)try{await gh(env,"/repos/"+env.GITHUB_OWNER+"/"+env.GITHUB_REPO);connected=true;msg="Repository access verified"}catch(e){msg=e.message}return response({ok:true,admin:who.login,githubConnected:connected,githubMessage:msg})}
 if(req.method==="GET"&&r==="settings"){let connected=false,message="GitHub token not configured";if(env.GITHUB_TOKEN)try{await gh(env,"/repos/"+env.GITHUB_OWNER+"/"+env.GITHUB_REPO);connected=true;message="Repository access verified"}catch(e){message=e.message}return response({admin:who.login,repository:env.GITHUB_OWNER+"/"+env.GITHUB_REPO,branch:env.GITHUB_BRANCH||"main",sessionCreated:who.created||null,sessionExpires:who.created?who.created+28800000:null,githubConnected:connected,githubMessage:message})}
