@@ -224,3 +224,26 @@ h2{font:700 16px 'Manrope',sans-serif;margin-bottom:3px;letter-spacing:-.25px}
 .collection-actions{display:flex;gap:8px;flex-wrap:wrap;margin:14px 0 4px}.collection-actions button{flex:1}.collection-item-controls{display:flex;gap:8px;flex-direction:column;align-items:flex-end}.collection-item-controls button{font-size:10px}.asset-info .delete-media{margin-top:5px;border:0;background:transparent;color:#f18b83;text-align:left;font:inherit;font-size:10px;cursor:pointer}
 
 .remove-queued-file{display:block;width:100%;padding:7px 9px;border:0;border-top:1px solid var(--line);background:#171920;color:#f18b83;text-align:left;font-size:10px;cursor:pointer}.remove-queued-file:hover{background:rgba(237,75,69,.1)}.remove-queued-file:focus-visible{outline:2px solid var(--red);outline-offset:-2px}
+
+/* Visual content manager */
+.content-manager{margin:14px 0 24px;padding:18px}
+.content-manager-toolbar{display:flex;justify-content:space-between;align-items:center;gap:12px;flex-wrap:wrap;margin:12px 0 15px}
+.content-manager-filters{display:flex;gap:6px;flex-wrap:wrap}
+.manager-filter{border:1px solid var(--line);border-radius:20px;padding:7px 11px;background:#171920;color:#b9bbc4;font-size:10px;cursor:pointer}
+.manager-filter.active{border-color:rgba(237,75,69,.65);background:rgba(237,75,69,.12);color:#fff}
+.content-manager-grid{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:13px}
+.manager-card{min-width:0;overflow:hidden;border:1px solid var(--line);border-radius:9px;background:#13151b}
+.manager-card-art{aspect-ratio:16/10;background:#1b1e26;overflow:hidden}
+.manager-card-art img{width:100%;height:100%;object-fit:cover;display:block}
+.manager-card-body{padding:12px 12px 5px}
+.manager-card-tag{font-size:8px;letter-spacing:1px;color:#f18b83;font-weight:700}
+.manager-card-body h3{font-size:13px;margin:6px 0;overflow-wrap:anywhere}
+.manager-card-body p{font-size:10px;line-height:1.5;color:var(--muted);margin:0;overflow-wrap:anywhere;display:-webkit-box;-webkit-line-clamp:3;-webkit-box-orient:vertical;overflow:hidden}
+.manager-card-actions{display:flex;gap:8px;padding:11px 12px 12px}
+.manager-card-actions button{flex:1}
+.manager-delete{border:1px solid rgba(237,75,69,.35);border-radius:7px;background:rgba(237,75,69,.08);color:#f18b83;padding:9px 13px;font-size:11px;font-weight:700;cursor:pointer}
+.manager-delete:disabled{opacity:.5;cursor:wait}
+.collection-forms-heading{margin-top:26px}
+.collection-inline-note{padding:12px 0;border-top:1px solid var(--line)}
+@media(max-width:950px){.content-manager-grid{grid-template-columns:repeat(2,minmax(0,1fr))}}
+@media(max-width:650px){.content-manager{padding:13px}.content-manager-grid{grid-template-columns:1fr}.content-manager-toolbar{align-items:flex-start;flex-direction:column}.content-manager-filters{width:100%}.manager-filter{flex:1}}
