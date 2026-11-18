@@ -18,7 +18,8 @@
     health: ["System health","Live checks for the public website, repository and admin services."],
     preview: ["Live website preview","Preview page edits in the context of the real website without publishing."],
     files: ["Advanced file manager","Review uploaded assets, file sizes and where each asset is used."],
-    security: ["Access & security","Review active admin sessions and revoke other sessions."]
+    security: ["Access & security","Review active admin sessions and revoke other sessions."],
+    "site-settings": ["Website settings","Manage shared contact details, site tagline and announcement banner."]
   };
   Object.entries(views).forEach(([id,[title,description]])=>{
     const nav=el("button","nav-link","");nav.type="button";nav.dataset.view=id;nav.append(el("span","nav-icon","◇"),document.createTextNode(" "+title));
@@ -107,7 +108,22 @@
     try{const data=await call("/security/sessions");p.append(el("p","editor-footnote","Active sessions: "+data.total+" · Session lifetime: 8 hours"));for(const s of data.items||[]){const row=el("div","control-row");row.append(el("div","",s.current?"Current session":"Signed-in session"),el("small","",formatDate(s.created)));if(s.current)row.append(el("span","status-read","CURRENT"));p.append(row)}}catch(e){status(p,"Could not load sessions: "+e.message,true)}
     root.append(p);
   }
-  const loaders={analytics:loadAnalytics,calendar:loadCalendar,inquiries:loadInquiries,notifications:loadNotifications,health:loadHealth,preview:loadPreview,files:loadFiles,security:loadSecurity};
+
+  async function loadSiteSettings(){
+    const root=mount("view-site-settings")?.querySelector(".control-content");if(!root)return;
+    const p=panel("Shared website settings","Save changes as a private draft, review them, then publish across the public pages.");
+    const form=el("form","control-form settings-form");form.style.gridTemplateColumns="1fr 1fr";
+    const field=(label,type,value,max)=>{const wrap=el("label","",label),input=el("input");input.type=type;input.value=value||"";if(max)input.maxLength=max;wrap.append(input);form.append(wrap);return input};
+    const contact=field("General enquiries email","email","admin@theredsparrow.online",254),direct=field("Direct contact email","email","hammad@theredsparrow.online",254),tagline=field("Website tagline","text","Independent Unity game development.",120);
+    const announceWrap=el("label","","Enable announcement banner"),enabled=el("input");enabled.type="checkbox";announceWrap.append(enabled);form.append(announceWrap);
+    const message=field("Announcement message","text","",180);
+    const save=el("button","primary-button","Save settings draft");save.type="submit";const publish=button("Publish website settings",async()=>{publish.disabled=true;try{const r=await call("/publish/site-settings",{method:"POST",body:"{}"});status(p,"Published shared settings to "+r.files+" website page(s).");await loadSiteSettings()}catch(e){status(p,e.message,true)}finally{publish.disabled=false}},"primary-button");
+    form.append(save,publish);form.addEventListener("submit",async e=>{e.preventDefault();save.disabled=true;try{await call("/site-settings",{method:"POST",body:JSON.stringify({contactEmail:contact.value,directEmail:direct.value,tagline:tagline.value,announcementEnabled:enabled.checked,announcement:message.value})});status(p,"Website settings draft saved securely.");}catch(err){status(p,err.message,true)}finally{save.disabled=false}});
+    p.append(form);root.append(p);
+    try{const data=await call("/site-settings"),v=data.draft||data.settings||{};contact.value=v.contactEmail||contact.value;direct.value=v.directEmail||direct.value;tagline.value=v.tagline||tagline.value;enabled.checked=!!v.announcementEnabled;message.value=v.announcement||"";status(p,data.draft?"Unpublished settings draft loaded.":"Showing current published settings.")}catch(e){status(p,"Could not load website settings: "+e.message,true)}
+  }
+
+  const loaders={analytics:loadAnalytics,calendar:loadCalendar,inquiries:loadInquiries,notifications:loadNotifications,health:loadHealth,preview:loadPreview,files:loadFiles,security:loadSecurity,"site-settings":loadSiteSettings};
   const loaded=new Set();
   async function load(id){if(!loaders[id])return;loaded.delete(id);await loaders[id]();loaded.add(id)}
   window.addEventListener("trs:control-view",e=>load(e.detail));
