@@ -276,3 +276,5 @@ h2{font:700 16px 'Manrope',sans-serif;margin-bottom:3px;letter-spacing:-.25px}
 .homepage-history-row strong{font-size:11px}
 .homepage-history-row small{font-size:10px;color:var(--muted);margin-top:3px}
 @media(max-width:650px){.manager-tools,.media-library-tools{grid-template-columns:1fr}.homepage-history-row{align-items:flex-start;flex-direction:column}}
+
+.manager-state.is-removed{background:rgba(237,75,69,.13);color:#f18b83}
