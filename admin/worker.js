@@ -44,6 +44,52 @@ async function readFile(env,p,ref=env.GITHUB_BRANCH||"main"){const d=await gh(en
 async function writeFile(env,p,c,sha,msg){return gh(env,filePath(env,p),{method:"PUT",headers:{"content-type":"application/json"},body:JSON.stringify({message:msg,content:enc(c),sha,branch:env.GITHUB_BRANCH||"main"})})}
 async function audit(env,email,action,detail){try{await env.DRAFTS.put("audit:"+Date.now()+":"+crypto.randomUUID(),JSON.stringify({email,action,detail,at:new Date().toISOString()}),{expirationTtl:15552000});return true}catch(error){console.error("Audit log write failed:",error?.message||error);return false}}
 function normalizeMediaPath(value){try{const parsed=new URL(String(value||""),ORIGIN);if(parsed.origin!==ORIGIN)return "";const path=decodeURIComponent(parsed.pathname).replace(/^\//,"");return /^assets\/uploads\/[a-zA-Z0-9._-]+\.(png|jpe?g|webp|gif)$/i.test(path)?path:""}catch{return ""}}
+
+async function publishCollection(env,kind,items,actor="system"){
+ if(!collectionKinds[kind]||!Array.isArray(items))throw Error("Invalid scheduled collection.");
+ const path="index.html",old=await readFile(env,path),start="<!-- ADMIN:"+kind+":START -->",end="<!-- ADMIN:"+kind+":END -->",begin=old.content.indexOf(start),finish=old.content.indexOf(end,begin);
+ if(begin<0||finish<0)throw Error("Homepage content markers are missing.");
+ const next=old.content.slice(0,begin)+collectionMarkup(kind,items)+old.content.slice(finish+end.length);
+ const out=await writeFile(env,path,next,old.sha,"Publish "+kind+" collection from "+actor);
+ await env.DRAFTS.put("collection:"+kind,JSON.stringify(items),{expirationTtl:7776000});
+ await audit(env,actor,"publish-collection",kind+":"+items.length);
+ return out.commit?.sha||null;
+}
+const defaultSiteSettings={contactEmail:"admin@theredsparrow.online",directEmail:"hammad@theredsparrow.online",tagline:"Independent Unity game development.",announcementEnabled:false,announcement:""};
+async function siteSettings(env){return {...defaultSiteSettings,...(await env.DRAFTS.get("site-settings:live","json")||{})}}
+async function publishSiteSettings(env,v,actor){
+ const values={contactEmail:String(v.contactEmail||"").trim(),directEmail:String(v.directEmail||"").trim(),tagline:String(v.tagline||"").trim(),announcementEnabled:!!v.announcementEnabled,announcement:String(v.announcement||"").trim()};
+ for(const email of [values.contactEmail,values.directEmail])if(email.length>254||!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email))throw Error("Enter valid contact email addresses.");
+ if(!values.tagline||values.tagline.length>120||values.announcement.length>180)throw Error("Tagline or announcement is outside its character limit.");
+ const files=Object.values(FILES),commits=[];
+ for(const path of files){
+  const old=await readFile(env,path);let html=old.content;
+  html=html.replaceAll("mailto:admin@theredsparrow.online","mailto:"+esc(values.contactEmail)).replaceAll("admin@theredsparrow.online",esc(values.contactEmail));
+  html=html.replaceAll("mailto:hammad@theredsparrow.online","mailto:"+esc(values.directEmail)).replaceAll("hammad@theredsparrow.online",esc(values.directEmail));
+  html=html.replaceAll("Independent Unity game development.",esc(values.tagline));
+  const marker=/<!-- TRS-ANNOUNCEMENT:START -->[\s\S]*?<!-- TRS-ANNOUNCEMENT:END -->/g;
+  html=html.replace(marker,"");
+  if(values.announcementEnabled&&values.announcement){
+   const bar='<!-- TRS-ANNOUNCEMENT:START --><aside class="trs-site-announcement" role="status" style="padding:10px 16px;text-align:center;background:#272027;color:#fff;font:600 13px/1.5 system-ui,sans-serif">'+esc(values.announcement)+'</aside><!-- TRS-ANNOUNCEMENT:END -->';
+   html=html.replace(/(<body\b[^>]*>)/i,"$1"+bar);
+  }
+  if(html!==old.content){const out=await writeFile(env,path,html,old.sha,"Publish website settings from admin");commits.push(out.commit?.sha||null)}
+ }
+ await env.DRAFTS.put("site-settings:live",JSON.stringify(values),{expirationTtl:31536000});
+ await audit(env,actor,"publish-site-settings","Updated shared website settings");
+ return {published:true,files:commits.length,commits};
+}
+async function mediaUsage(env,p){
+ const usedBy=[];
+ for(const kind of Object.keys(collectionKinds))for(const key of ["collection:"+kind,"collection-draft:"+kind]){
+  const items=await env.DRAFTS.get(key,"json")||[];if(items.some(item=>normalizeMediaPath(item.image)===p))usedBy.push(kind+" collection");
+ }
+ for(const slug of ["home","about","services","contact"]){const draft=await env.DRAFTS.get("draft:page:"+slug,"json");if(draft&&normalizeMediaPath(draft.image)===p)usedBy.push(slug+" page draft")}
+ for(const slug of ["home","about","services","contact","privacy","terms"]){const draft=await env.DRAFTS.get("draft:seo:"+slug,"json");if(draft&&normalizeMediaPath(draft.ogImage)===p)usedBy.push(slug+" SEO draft")}
+ for(const path of [...Object.values(FILES),"styles.css","og-image.svg","llms.txt"]){try{const file=await readFile(env,path);if(file.content.includes("/"+p)||file.content.includes(encodeURI("/"+p)))usedBy.push(path+" published page")}catch{}}
+ return [...new Set(usedBy)];
+}
+
 const cookie=(v,max=28800)=>"trs_admin_session="+v+"; Path=/admin-api; Max-Age="+max+"; HttpOnly; Secure; SameSite=Lax";
 function getCookie(req){return (req.headers.get("cookie")||"").split(";").map(x=>x.trim()).find(x=>x.startsWith("trs_admin_session="))?.slice(18)||""}
 async function session(req,env){const token=getCookie(req);if(!token||!/^[a-f0-9-]{36}$/.test(token))return null;const s=await env.DRAFTS.get("session:"+token,"json");if(!s||s.login!=="hamadcheema")return null;return s}
@@ -53,7 +99,101 @@ if(!["GET","HEAD"].includes(req.method)&&req.headers.get("origin")!==ORIGIN)retu
 if(req.method==="GET"&&r==="auth/login"){if(!env.GITHUB_OAUTH_CLIENT_ID)return response({error:"GitHub OAuth app is not configured."},503);const state=crypto.randomUUID();await env.DRAFTS.put("oauth-state:"+state,"1",{expirationTtl:600});const q=new URLSearchParams({client_id:env.GITHUB_OAUTH_CLIENT_ID,redirect_uri:ORIGIN+API+"/auth/callback",scope:"read:user",state});return Response.redirect("https://github.com/login/oauth/authorize?"+q.toString(),302)}
 if(req.method==="GET"&&r==="auth/callback"){const state=u.searchParams.get("state")||"",code=u.searchParams.get("code")||"";if(!state||!code||!await env.DRAFTS.get("oauth-state:"+state))return new Response("Invalid or expired login state.",{status:400});await env.DRAFTS.delete("oauth-state:"+state);const tokenRes=await fetch("https://github.com/login/oauth/access_token",{method:"POST",headers:{"accept":"application/json","content-type":"application/json"},body:JSON.stringify({client_id:env.GITHUB_OAUTH_CLIENT_ID,client_secret:env.GITHUB_OAUTH_CLIENT_SECRET,code})});const tokenData=await tokenRes.json();if(!tokenRes.ok||!tokenData.access_token)return new Response("GitHub login failed.",{status:401});const userRes=await fetch("https://api.github.com/user",{headers:{authorization:"Bearer "+tokenData.access_token,accept:"application/vnd.github+json","user-agent":"The-Red-Sparrow-Admin"}});const user=await userRes.json();if(!userRes.ok||String(user.login).toLowerCase()!=="hamadcheema")return new Response("This GitHub account is not authorized.",{status:403});const sid=crypto.randomUUID();await env.DRAFTS.put("session:"+sid,JSON.stringify({login:user.login,id:user.id,created:Date.now()}),{expirationTtl:28800});return new Response(null,{status:302,headers:{location:ORIGIN+"/admin/", "set-cookie":cookie(sid),"cache-control":"no-store"}})}
 if(req.method==="POST"&&r==="auth/logout"){const sid=getCookie(req);if(sid)await env.DRAFTS.delete("session:"+sid);return response({ok:true},200,{"set-cookie":cookie("",0)})}
+
+if(req.method==="POST"&&r==="inquiries"){
+ const b=await req.json(),name=String(b.name||"").trim(),email=String(b.email||"").trim(),subject=String(b.subject||"").trim(),message=String(b.message||"").trim();
+ if(!b.consent||!name||name.length>80||!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)||email.length>254||subject.length>120||message.length<10||message.length>2000)return response({error:"Please complete the form with a valid email and a message of 10–2,000 characters."},400);
+ const ip=req.headers.get("cf-connecting-ip")||"unknown",digest=await crypto.subtle.digest("SHA-256",new TextEncoder().encode(ip)),ipKey=[...new Uint8Array(digest)].map(x=>x.toString(16).padStart(2,"0")).join(""),rateKey="inquiry-rate:"+ipKey+":"+new Date().toISOString().slice(0,10),count=Number(await env.DRAFTS.get(rateKey)||"0");
+ if(count>=3)return response({error:"Daily enquiry limit reached. Please try again tomorrow or email us directly."},429);
+ await env.DRAFTS.put(rateKey,String(count+1),{expirationTtl:86400});
+ const id=crypto.randomUUID(),item={id,name,email,subject:subject||"Website enquiry",message,createdAt:new Date().toISOString(),status:"new"};
+ await env.DRAFTS.put("inquiry:"+id,JSON.stringify(item),{expirationTtl:7776000});
+ return response({received:true,message:"Thank you. Your enquiry has been received."},201);
+}
+
 const who=await session(req,env);if(!who)return response({error:"Please sign in with the authorized GitHub account.",loginRequired:true},401);
+
+if(req.method==="GET"&&r==="inquiries"){
+ let cursor,keys=[];do{const page=await env.DRAFTS.list({prefix:"inquiry:",limit:1000,...(cursor?{cursor}:{})});keys.push(...page.keys);cursor=page.list_complete?null:page.cursor}while(cursor);
+ const items=(await Promise.all(keys.map(k=>env.DRAFTS.get(k.name,"json")))).filter(Boolean).sort((a,b)=>String(b.createdAt).localeCompare(String(a.createdAt))).slice(0,100);
+ return response({items,total:items.length,unread:items.filter(x=>x.status==="new").length});
+}
+if(req.method==="POST"&&r==="inquiries/update"){
+ const b=await req.json(),id=String(b.id||""),state=String(b.state||"");if(!/^[a-f0-9-]{36}$/i.test(id)||!["read","archived"].includes(state))return response({error:"Invalid enquiry update."},400);
+ const key="inquiry:"+id,item=await env.DRAFTS.get(key,"json");if(!item)return response({error:"Enquiry not found."},404);item.status=state;item.updatedAt=new Date().toISOString();await env.DRAFTS.put(key,JSON.stringify(item),{expirationTtl:7776000});await audit(env,who.login,"update-inquiry",state);return response({updated:true});
+}
+if(req.method==="DELETE"&&r==="inquiries"){
+ const id=u.searchParams.get("id")||"";if(!/^[a-f0-9-]{36}$/i.test(id))return response({error:"Invalid enquiry ID."},400);await env.DRAFTS.delete("inquiry:"+id);await audit(env,who.login,"delete-inquiry","Enquiry removed");return response({deleted:true});
+}
+if(req.method==="GET"&&r==="notifications"){
+ const [inquiries,scheduled,auditPage]=await Promise.all([
+  env.DRAFTS.list({prefix:"inquiry:",limit:100}),env.DRAFTS.list({prefix:"scheduled:",limit:100}),env.DRAFTS.list({prefix:"audit:",limit:100})
+ ]);
+ const all=await Promise.all(inquiries.keys.map(k=>env.DRAFTS.get(k.name,"json"))),events=await Promise.all(auditPage.keys.map(k=>env.DRAFTS.get(k.name,"json"))),jobs=await Promise.all(scheduled.keys.map(k=>env.DRAFTS.get(k.name,"json")));
+ const items=[];
+ all.filter(x=>x&&x.status==="new").forEach(x=>items.push({title:"New website enquiry",detail:x.subject+" · "+x.name,at:x.createdAt,href:"/admin/#inquiries"}));
+ jobs.filter(x=>x&&x.status==="scheduled").forEach(x=>items.push({title:"Scheduled publication",detail:x.kind+" collection is due "+new Date(x.scheduledAt).toLocaleString(),at:x.createdAt,href:"/admin/#calendar"}));
+ events.filter(Boolean).forEach(x=>items.push({title:String(x.action||"Admin event").replace(/-/g," "),detail:x.detail||"",at:x.at,href:"/admin/#audit"}));
+ items.sort((a,b)=>String(b.at).localeCompare(String(a.at)));return response({items:items.slice(0,50)});
+}
+if(req.method==="GET"&&r==="system/health"){
+ const checks=[];
+ try{const repo=await gh(env,"/repos/"+env.GITHUB_OWNER+"/"+env.GITHUB_REPO);checks.push({label:"GitHub repository",ok:!!repo.default_branch,detail:repo.full_name+" · "+repo.default_branch})}catch(e){checks.push({label:"GitHub repository",ok:false,detail:e.message})}
+ try{const home=await readFile(env,"index.html");const markers=["<!-- ADMIN:projects:START -->","<!-- ADMIN:social:START -->","<!-- ADMIN:brands:START -->"];const missing=markers.filter(x=>!home.content.includes(x));checks.push({label:"Homepage content structure",ok:missing.length===0,detail:missing.length?"Missing "+missing.join(", "):"All showcase markers are present"})}catch(e){checks.push({label:"Homepage content structure",ok:false,detail:e.message})}
+ try{await env.DRAFTS.put("health:probe",new Date().toISOString(),{expirationTtl:60});const probe=await env.DRAFTS.get("health:probe");checks.push({label:"Cloudflare KV storage",ok:!!probe,detail:probe?"Read/write test passed":"Read/write test failed"})}catch(e){checks.push({label:"Cloudflare KV storage",ok:false,detail:e.message})}
+ try{await gh(env,filePath(env,"assets/uploads"));checks.push({label:"Media repository folder",ok:true,detail:"assets/uploads/ is accessible"})}catch(e){checks.push({label:"Media repository folder",ok:false,detail:e.message})}
+ checks.push({label:"Admin authentication",ok:true,detail:"Authorized session verified"});
+ return response({checks,checkedAt:new Date().toISOString()});
+}
+if(req.method==="POST"&&r==="preview/page"){
+ const b=await req.json(),slug=String(b.slug||"");if(!["home","about","services","contact"].includes(slug))return response({error:"Page cannot be previewed here."},400);
+ const old=await readFile(env,FILES[slug]),html=pagePatch(old.content,b);return response({html});
+}
+if(req.method==="GET"&&r==="media/usage"){
+ const p=normalizeMediaPath(u.searchParams.get("path"));if(!p)return response({error:"Invalid media path."},400);
+ const usedBy=await mediaUsage(env,p);return response({path:p,usedBy});
+}
+if(req.method==="GET"&&r==="security/sessions"){
+ const sid=getCookie(req);let cursor,keys=[];do{const page=await env.DRAFTS.list({prefix:"session:",limit:1000,...(cursor?{cursor}:{})});keys.push(...page.keys);cursor=page.list_complete?null:page.cursor}while(cursor);
+ const items=(await Promise.all(keys.map(async k=>({key:k.name,session:await env.DRAFTS.get(k.name,"json")})))).filter(x=>x.session).map(x=>({created:x.session.created||null,current:x.key==="session:"+sid,login:x.session.login}));
+ return response({items,total:items.length});
+}
+if(req.method==="POST"&&r==="security/revoke-sessions"){
+ const sid=getCookie(req);let cursor,keys=[];do{const page=await env.DRAFTS.list({prefix:"session:",limit:1000,...(cursor?{cursor}:{})});keys.push(...page.keys);cursor=page.list_complete?null:page.cursor}while(cursor);
+ let revoked=0;for(const key of keys)if(key.name!=="session:"+sid){await env.DRAFTS.delete(key.name);revoked++}
+ await audit(env,who.login,"revoke-sessions",String(revoked));return response({revoked});
+}
+if(req.method==="GET"&&r==="site-settings"){
+ return response({settings:await siteSettings(env),draft:await env.DRAFTS.get("site-settings:draft","json")||null});
+}
+if(req.method==="POST"&&r==="site-settings"){
+ const b=await req.json(),v={contactEmail:String(b.contactEmail||"").trim(),directEmail:String(b.directEmail||"").trim(),tagline:String(b.tagline||"").trim(),announcementEnabled:!!b.announcementEnabled,announcement:String(b.announcement||"").trim()};
+ for(const email of [v.contactEmail,v.directEmail])if(email.length>254||!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email))return response({error:"Enter valid contact email addresses."},400);
+ if(!v.tagline||v.tagline.length>120||v.announcement.length>180)return response({error:"Tagline or announcement is outside its character limit."},400);
+ await env.DRAFTS.put("site-settings:draft",JSON.stringify(v),{expirationTtl:7776000});await audit(env,who.login,"save-site-settings","Website settings draft");return response({saved:true,settings:v});
+}
+if(req.method==="POST"&&r==="publish/site-settings"){
+ const draft=await env.DRAFTS.get("site-settings:draft","json");if(!draft)return response({error:"Save website settings before publishing."},400);
+ const result=await publishSiteSettings(env,draft,who.login);await env.DRAFTS.delete("site-settings:draft");return response(result);
+}
+if(req.method==="GET"&&r==="schedule"){
+ let cursor,keys=[];do{const page=await env.DRAFTS.list({prefix:"scheduled:",limit:1000,...(cursor?{cursor}:{})});keys.push(...page.keys);cursor=page.list_complete?null:page.cursor}while(cursor);
+ const items=(await Promise.all(keys.map(k=>env.DRAFTS.get(k.name,"json")))).filter(x=>x&&x.status==="scheduled").sort((a,b)=>a.scheduledAt.localeCompare(b.scheduledAt));
+ return response({items});
+}
+if(req.method==="POST"&&r==="schedule"){
+ const b=await req.json(),kind=String(b.kind||""),scheduledAt=Date.parse(String(b.scheduledAt||""));if(!collectionKinds[kind]||!Number.isFinite(scheduledAt)||scheduledAt<Date.now()+120000||scheduledAt>Date.now()+7776000000)return response({error:"Choose a valid collection and a time at least 2 minutes and no more than 90 days away."},400);
+ const items=await env.DRAFTS.get("collection-draft:"+kind,"json")||await env.DRAFTS.get("collection:"+kind,"json")||[];if(!Array.isArray(items)||!items.length)return response({error:"Save at least one item in this collection before scheduling it."},400);
+ const id=crypto.randomUUID(),job={id,kind,items,scheduledAt:new Date(scheduledAt).toISOString(),createdAt:new Date().toISOString(),createdBy:who.login,status:"scheduled"};
+ await env.DRAFTS.put("scheduled:"+scheduledAt+":"+id,JSON.stringify(job),{expirationTtl:7776000});await audit(env,who.login,"schedule-publication",kind+":"+job.scheduledAt);return response({scheduled:true,id,scheduledAt:job.scheduledAt});
+}
+if(req.method==="DELETE"&&r==="schedule"){
+ const id=u.searchParams.get("id")||"";if(!/^[a-f0-9-]{36}$/i.test(id))return response({error:"Invalid schedule ID."},400);
+ const page=await env.DRAFTS.list({prefix:"scheduled:",limit:1000});for(const key of page.keys){const job=await env.DRAFTS.get(key.name,"json");if(job?.id===id){await env.DRAFTS.delete(key.name);await audit(env,who.login,"cancel-scheduled-publication",job.kind);return response({cancelled:true})}}
+ return response({error:"Scheduled publication not found."},404);
+}
+if(req.method==="GET"&&r==="site-settings")return response({settings:await siteSettings(env)});
+
 if(req.method==="GET"&&r==="status"){let connected=false,msg="GitHub token not configured";if(env.GITHUB_TOKEN)try{await gh(env,"/repos/"+env.GITHUB_OWNER+"/"+env.GITHUB_REPO);connected=true;msg="Repository access verified"}catch(e){msg=e.message}return response({ok:true,admin:who.login,githubConnected:connected,githubMessage:msg})}
 if(req.method==="GET"&&r==="settings"){let connected=false,message="GitHub token not configured";if(env.GITHUB_TOKEN)try{await gh(env,"/repos/"+env.GITHUB_OWNER+"/"+env.GITHUB_REPO);connected=true;message="Repository access verified"}catch(e){message=e.message}return response({admin:who.login,repository:env.GITHUB_OWNER+"/"+env.GITHUB_REPO,branch:env.GITHUB_BRANCH||"main",sessionCreated:who.created||null,sessionExpires:who.created?who.created+28800000:null,githubConnected:connected,githubMessage:message})}
 if(req.method==="GET"&&r==="audit"){let cursor,keys=[];do{const page=await env.DRAFTS.list({prefix:"audit:",limit:1000,...(cursor?{cursor}:{})});keys.push(...page.keys);cursor=page.list_complete?null:page.cursor}while(cursor);const latest=keys.sort((a,b)=>b.name.localeCompare(a.name)).slice(0,50);const entries=await Promise.all(latest.map(item=>env.DRAFTS.get(item.name,"json")));return response({events:entries.filter(Boolean).sort((a,b)=>String(b.at).localeCompare(String(a.at)))})}
@@ -71,4 +211,16 @@ if(req.method==="POST"&&r==="publish/content"){const b=await req.json(),kind=Str
 if(req.method==="GET"&&r==="history"){const p=u.searchParams.get("path")||"";if(!Object.values(FILES).includes(p))return response({error:"Path not allowed."},400);const c=await gh(env,"/repos/"+env.GITHUB_OWNER+"/"+env.GITHUB_REPO+"/commits?path="+encodeURIComponent(p)+"&per_page=12");return response({history:c.map(x=>({sha:x.sha,message:x.commit.message,date:x.commit.author?.date||x.commit.committer?.date}))})}
 if(req.method==="POST"&&r==="rollback"){const b=await req.json(),p=String(b.path||""),sha=String(b.sha||"");if(!Object.values(FILES).includes(p)||!/^[a-f0-9]{40}$/.test(sha))return response({error:"Invalid rollback request."},400);const previous=await readFile(env,p,sha),current=await readFile(env,p),out=await writeFile(env,p,previous.content,current.sha,"Restore "+p+" from "+sha.slice(0,7));await audit(env,who.login,"rollback",p+":"+sha);return response({restored:true,commit:out.commit?.sha||null})}
 return response({error:"Not found."},404)}
-export default {async fetch(req,env){try{return await run(req,env)}catch(e){return response({error:e?.message||"Unexpected server error."},500)}}};
+export default {
+ async fetch(req,env){try{return await run(req,env)}catch(e){console.error(JSON.stringify({message:"admin request failed",error:e?.message||String(e),path:new URL(req.url).pathname}));return response({error:e?.message||"Unexpected server error."},500)}},
+ async scheduled(controller,env){
+  const page=await env.DRAFTS.list({prefix:"scheduled:",limit:1000});
+  for(const key of page.keys){
+   const job=await env.DRAFTS.get(key.name,"json");
+   if(!job||job.status!=="scheduled"||Date.parse(job.scheduledAt)>Date.now())continue;
+   job.status="processing";await env.DRAFTS.put(key.name,JSON.stringify(job),{expirationTtl:7776000});
+   try{const commit=await publishCollection(env,job.kind,job.items,"scheduled-publisher");job.status="published";job.publishedAt=new Date().toISOString();job.commit=commit;await env.DRAFTS.put(key.name,JSON.stringify(job),{expirationTtl:7776000})}
+   catch(error){job.status="failed";job.error=String(error?.message||error).slice(0,300);await env.DRAFTS.put(key.name,JSON.stringify(job),{expirationTtl:7776000});console.error(JSON.stringify({message:"scheduled publication failed",id:job.id,error:job.error}))}
+  }
+ }
+};
