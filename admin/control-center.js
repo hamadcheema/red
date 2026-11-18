@@ -28,7 +28,7 @@
     const heading=el("div","section-heading");heading.append(el("div",""));heading.firstChild.append(el("h2","",title),el("p","",description));section.append(heading);
     const content=el("div","control-content");section.append(content);
     const parent=document.querySelector(".content");if(parent)parent.append(section);
-    nav.addEventListener("click",()=>{if(window.showAdminView)window.showAdminView(id);load(id)});
+    nav.addEventListener("click",()=>{if(window.showAdminView)window.showAdminView(id);else load(id)});
   });
   const content=id=>$("view-"+id)?.querySelector(".control-content");
   async function loadAnalytics(){
