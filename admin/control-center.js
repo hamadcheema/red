@@ -7,7 +7,7 @@
   const panel=(title,desc)=>{const p=el("section","panel control-panel");const h=el("div","panel-heading");const d=el("div");d.append(el("h2","",title),el("p","",desc));h.append(d);p.append(h);return p};
   const call=async(path,options={})=>{const r=await fetch(API+path,{credentials:"include",...options,headers:{"content-type":"application/json",accept:"application/json",...(options.headers||{})}});const data=await r.json().catch(()=>({}));if(!r.ok)throw Error(data.error||"Request failed ("+r.status+")");return data};
   const status=(root,msg,bad=false)=>{let n=root.querySelector(".control-status");if(!n){n=el("p","control-status");n.setAttribute("role","status");n.setAttribute("aria-live","polite");root.append(n)}n.textContent=msg;n.dataset.error=bad?"true":"false"};
-  const mount=(id)=>{const root=$(id);if(root)root.replaceChildren();return root};
+  const mount=(id)=>{const root=$(id);const content=root?.querySelector(".control-content");if(content)content.replaceChildren();return root};
   const card=(title,value,detail)=>{const c=el("article","stat-card");c.append(el("span","stat-label",title),el("strong","",value),el("span","stat-foot",detail));return c};
   const formatDate=v=>v?new Date(v).toLocaleString():"—";
   const views={
@@ -22,19 +22,19 @@
     "site-settings": ["Website settings","Manage shared contact details, site tagline and announcement banner."]
   };
   Object.entries(views).forEach(([id,[title,description]])=>{
-    const nav=el("button","nav-link","");nav.type="button";nav.dataset.view=id;nav.append(el("span","nav-icon","◇"),document.createTextNode(" "+title));
-    const navRoot=document.querySelector(".nav");if(navRoot)navRoot.append(nav);
-    const section=el("section","view");section.id="view-"+id;section.hidden=true;
+    const nav=el("button","nav-link","");nav.type="button";nav.dataset.view=id;nav.dataset.label=title;nav.append(el("span","nav-icon","◇"),document.createTextNode(" "+title));
+    const navRoot=document.querySelector(".nav");if(navRoot){if(id==="analytics")navRoot.append(el("div","nav-group-label","OPERATIONS"));if(id==="preview")navRoot.append(el("div","nav-group-label","TOOLS"));navRoot.append(nav);}
+    const section=el("section","view");section.id="view-"+id;
     const heading=el("div","section-heading");heading.append(el("div",""));heading.firstChild.append(el("h2","",title),el("p","",description));section.append(heading);
     const content=el("div","control-content");section.append(content);
-    const parent=document.querySelector(".content");if(parent)parent.append(section);
+    const parent=document.querySelector(".content");if(parent){const footer=parent.querySelector(".footer");parent.insertBefore(section,footer||null);}
     nav.addEventListener("click",()=>{if(window.showAdminView)window.showAdminView(id);else load(id);window.closeAdminSidebar?.()});
   });
   const content=id=>$("view-"+id)?.querySelector(".control-content");
   async function loadAnalytics(){
     const root=mount("view-analytics")?.querySelector(".control-content");if(!root)return;
     const p=panel("Cloudflare Web Analytics","Privacy-focused website analytics already configured for theredsparrow.online.");
-    p.append(card("MEASUREMENT","Enabled","Cloudflare Web Analytics site is registered and automatic installation is enabled."));
+    p.append(card("ANALYTICS PROVIDER","Cloudflare","Open the Cloudflare dashboard to inspect current traffic and analytics configuration."));
     const note=el("p","editor-footnote","Traffic charts and visitor breakdowns remain inside Cloudflare. No API token is placed in the public admin page.");
     p.append(note);
     const link=el("a","small-button","Open Cloudflare Analytics ↗");link.href="https://dash.cloudflare.com/c979fbebb9b22fce788bfa99b4d825b6/theredsparrow.online/analytics";link.target="_blank";link.rel="noopener";p.append(link);
@@ -70,7 +70,7 @@
     const root=mount("view-notifications")?.querySelector(".control-content");if(!root)return;
     const p=panel("Recent notifications","A combined feed of new enquiries, upcoming publications and recent admin activity.");
     try{const data=await call("/notifications");if(!data.items?.length)p.append(el("p","editor-footnote","You're all caught up. No new notifications."));
-      for(const item of data.items||[]){const row=el("article","notification-row");row.append(el("strong","",item.title),el("p","",item.detail||""),el("small","",formatDate(item.at)));if(item.href){const a=el("a","small-button","Open");a.href=item.href;row.append(a)}p.append(row)}
+      for(const item of data.items||[]){const row=el("article","notification-row");row.append(el("strong","",item.title),el("p","",item.detail||""),el("small","",formatDate(item.at)));if(item.href){const destination=item.href.includes("calendar")?"calendar":"inquiries";row.append(button("Open",()=>window.showAdminView?.(destination)))}p.append(row)}
     }catch(e){status(p,"Could not load notifications: "+e.message,true)}
     root.append(p);
   }
@@ -85,7 +85,7 @@
     const root=mount("view-preview")?.querySelector(".control-content");if(!root)return;
     const p=panel("Preview an unpublished page","Uses the current page editor fields. The preview is isolated and does not commit to GitHub.");
     const page=$("edit-page"),title=$("edit-title"),description=$("edit-description"),heading=$("edit-heading"),intro=$("edit-intro"),image=$("edit-image"),alt=$("edit-image-alt");
-    const btn=button("Build preview",async()=>{btn.disabled=true;try{const data=await call("/preview/page",{method:"POST",body:JSON.stringify({slug:page?.value||"home",title:title?.value||"",description:description?.value||"",heading:heading?.value||"",intro:intro?.value||"",imageUrl:image?.value||"",imageAlt:alt?.value||""})});frame.srcdoc=data.html;status(p,"Preview generated from current editor values. Nothing was published.")}catch(e){status(p,e.message,true)}finally{btn.disabled=false}});
+    const btn=button("Build preview",async()=>{btn.disabled=true;try{const data=await call("/preview/page",{method:"POST",body:JSON.stringify({slug:page?.value||"home",title:title?.value||"",description:description?.value||"",heading:heading?.value||"",intro:intro?.value||"",imageUrl:image?.value||"",imageAlt:alt?.value||""})});frame.srcdoc=data.html.replace(/<head([^>]*)>/i,'<head$1><base href="https://theredsparrow.online/">');status(p,"Preview generated from current editor values. Nothing was published.")}catch(e){status(p,e.message,true)}finally{btn.disabled=false}});
     const hint=el("p","editor-footnote","Open Website pages, edit a page, then return here and build the preview. You can also preview the original content by leaving the fields unchanged.");
     const frame=el("iframe","live-preview");frame.title="Unpublished website preview";frame.setAttribute("sandbox","");frame.srcdoc='<p style="font:14px sans-serif;padding:20px">Build a preview to see the selected page here.</p>';
     p.append(hint,btn,frame);root.append(p);
@@ -112,7 +112,7 @@
   async function loadSiteSettings(){
     const root=mount("view-site-settings")?.querySelector(".control-content");if(!root)return;
     const p=panel("Shared website settings","Save changes as a private draft, review them, then publish across the public pages.");
-    const form=el("form","control-form settings-form");form.style.gridTemplateColumns="1fr 1fr";
+    const form=el("form","control-form settings-form");
     const field=(label,type,value,max)=>{const wrap=el("label","",label),input=el("input");input.type=type;input.value=value||"";if(max)input.maxLength=max;wrap.append(input);form.append(wrap);return input};
     const contact=field("General enquiries email","email","admin@theredsparrow.online",254),direct=field("Direct contact email","email","hammad@theredsparrow.online",254),tagline=field("Website tagline","text","Independent Unity game development.",120);
     const announceWrap=el("label","","Enable announcement banner"),enabled=el("input");enabled.type="checkbox";announceWrap.append(enabled);form.append(announceWrap);
