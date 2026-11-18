@@ -1,6 +1,6 @@
 (() => {
-  const links = [...document.querySelectorAll("[data-view]")];
-  const views = [...document.querySelectorAll(".view")];
+  const links = () => [...document.querySelectorAll("[data-view]")];
+  const views = () => [...document.querySelectorAll(".view")];
   const title = document.getElementById("view-title");
   const description = document.getElementById("view-description");
   const breadcrumb = document.getElementById("breadcrumb-current");
@@ -11,19 +11,29 @@
     showcase: "Manage game projects, social previews and brand assets shown on the homepage.",
     seo: "Review search and social-sharing metadata.",
     settings: "Manage the admin workspace and publishing connection.",
-    audit: "Review recent changes made through the admin workspace."
+    audit: "Review recent changes made through the admin workspace.",
+    analytics: "Traffic measurement and visitor trends.",
+    calendar: "Schedule approved showcase collections for automatic publication.",
+    inquiries: "Review messages submitted through the public contact form.",
+    notifications: "Recent admin activity, new enquiries and scheduled publications.",
+    health: "Live checks for the public website, repository and admin services.",
+    preview: "Preview page edits without publishing them.",
+    files: "Review uploaded assets and where each file is used.",
+    security: "Review active admin sessions and revoke other sessions."
   };
 
   function showView(name) {
     const selected = descriptions[name] ? name : "overview";
-    views.forEach(view => view.classList.toggle("active", view.id === "view-" + selected));
-    links.forEach(link => link.classList.toggle("active", link.dataset.view === selected));
-    const label = links.find(link => link.dataset.view === selected)?.textContent.trim() || "Overview";
+    views().forEach(view => view.classList.toggle("active", view.id === "view-" + selected));
+    links().forEach(link => link.classList.toggle("active", link.dataset.view === selected));
+    const label = links().find(link => link.dataset.view === selected)?.textContent.trim() || "Overview";
     title.textContent = label;
     breadcrumb.textContent = label;
     description.textContent = descriptions[selected];
     document.getElementById("sidebar").classList.remove("open");
+    if (["analytics","calendar","inquiries","notifications","health","preview","files","security"].includes(selected)) window.dispatchEvent(new CustomEvent("trs:control-view",{detail:selected}));
   }
+  window.showAdminView = showView;
 
   const pageDefaults = {
     home: {image:"",imageAlt:"",title:"The Red Sparrow — Unity Game Development",description:"The Red Sparrow develops Unity gameplay systems, integrates supplied 3D assets and prepares mobile-focused game builds.",heading:"Ideas into\n*interactive worlds.*",intro:"We develop gameplay experiences with Unity, integrate supplied 3D assets and prepare builds for agreed platforms."},
