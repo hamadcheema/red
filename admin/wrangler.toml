@@ -12,3 +12,6 @@ ALLOWED_GITHUB_LOGIN = "hamadcheema"
 GITHUB_OWNER = "hamadcheema"
 GITHUB_REPO = "red"
 GITHUB_BRANCH = "main"
+
+[triggers]
+crons = ["*/5 * * * *"]
