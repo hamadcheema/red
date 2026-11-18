@@ -7,7 +7,7 @@ const out = path.join(root, "dist-preview");
 
 const excluded = [
   ".git", ".github", ".well-known", "dist-preview", "admin-preview",
-  "CNAME", "README.md", "sitemap.xml", "ads.txt",
+  "CNAME", "README.md", "sitemap.xml",
   "admin/worker.js", "admin/wrangler.toml", "admin/SETUP.md", "admin/tests",
 ];
 
