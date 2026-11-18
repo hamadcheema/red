@@ -281,3 +281,5 @@ h2{font:700 16px 'Manrope',sans-serif;margin-bottom:3px;letter-spacing:-.25px}
 
 .admin-summary-grid{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:12px;margin:-7px 0 22px}.admin-summary-grid .stat-card{padding:15px}.admin-summary-grid .stat-card>strong{font-size:23px}.summary-date{font-size:15px!important;line-height:1.4;overflow-wrap:anywhere}
 @media(max-width:900px){.admin-summary-grid{grid-template-columns:repeat(2,minmax(0,1fr))}}@media(max-width:650px){.admin-summary-grid{grid-template-columns:1fr}}
+
+.content-recovery-panel{margin-top:16px}
