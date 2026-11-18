@@ -57,3 +57,18 @@ test("admin HTML IDs remain unique and all admin scripts are loaded", () => {
   assert.equal(ids.length, new Set(ids).size, "duplicate HTML IDs detected");
   for (const script of ["admin.js", "features.js", "control-center.js", "connection.js"]) assert.ok(html.includes(script));
 });
+
+test("inquiry inbox provides Gmail-style folders, search, responsive reading and Gmail reply links", () => {
+  assert.match(control, /inquiryFolder/);
+  assert.match(control, /Search mail/);
+  assert.match(control, /Reply in Gmail/);
+  assert.match(control, /https:\/\/mail\.google\.com\/mail\//);
+  assert.match(control, /URLSearchParams\(\{view:"cm",fs:"1",to:item\.email/);
+  assert.match(controlCss, /\.inquiry-shell/);
+  assert.match(controlCss, /\.inquiry-shell\.has-selection/);
+  assert.match(controlCss, /@media\(max-width:650px\)/);
+});
+test("analytics copy does not claim Cloudflare analytics is already enabled", () => {
+  assert.doesNotMatch(control, /analytics already configured/i);
+  assert.match(control, /Confirm that Web Analytics is enabled/);
+});
