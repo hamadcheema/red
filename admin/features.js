@@ -74,7 +74,7 @@
   let managerFilter="all",managerSearch="",managerStatus="all",managerSort="newest";
   const selectedManagerItems=new Set();
   const updateBulkControls=()=>{const count=selectedManagerItems.size;const label=$("manager-selected-count");if(label)label.textContent=count+" selected";const publish=$("manager-publish-selected"),del=$("manager-delete-selected");if(publish)publish.disabled=!count;if(del)del.disabled=!count};
-  const editCollectionItem=(kind,index)=>{const item=collections[kind][index];if(!item)return;$ (kind+"-title").value=item.title;$(kind+"-description").value=item.description;$(kind+"-image").value=item.image.startsWith("http")?item.image:location.origin+item.image;$(kind+"-url").value=item.url||"";collectionEditing[kind]=index;formSubmitLabel(kind,"Update item");collectionStatus(kind,"Editing this item. Submit the form, then save draft and publish.");$(kind+"-form").scrollIntoView({behavior:"smooth",block:"center"});$(kind+"-title").focus({preventScroll:true})};
+  const editCollectionItem=(kind,index)=>{const item=collections[kind][index];if(!item)return;$(kind+"-title").value=item.title;$(kind+"-description").value=item.description;$(kind+"-image").value=item.image.startsWith("http")?item.image:location.origin+item.image;$(kind+"-url").value=item.url||"";collectionEditing[kind]=index;formSubmitLabel(kind,"Update item");collectionStatus(kind,"Editing this item. Submit the form, then save draft and publish.");$(kind+"-form").scrollIntoView({behavior:"smooth",block:"center"});$(kind+"-title").focus({preventScroll:true})};
   const isPublishedItem=(kind,item)=>publishedCollections[kind].some(p=>p.title===item.title&&p.image===item.image);
   const renderManager=()=>{
     const grid=$("content-manager-grid"),count=$("content-manager-count");if(!grid)return;grid.replaceChildren();
@@ -99,7 +99,7 @@
       const actions=document.createElement("div");actions.className="manager-card-actions";
       const preview=document.createElement("button");preview.type="button";preview.className="secondary-button";preview.textContent="Preview";preview.addEventListener("click",()=>openContentPreview(kind,item));
       const edit=document.createElement("button");edit.type="button";edit.className="secondary-button";edit.textContent="Edit";edit.addEventListener("click",()=>editCollectionItem(kind,index));
-      const del=document.createElement("button");del.type="button";del.className="manager-delete";del.textContent="Delete";del.addEventListener("click",async()=>{if(!confirm("Delete "+item.title+" and publish the change to the homepage?"))return;del.disabled=true;del.textContent="Deleting…";const previous=collections[kind].slice();collections[kind].splice(index,1);collectionDirty[kind]=true;renderManager();try{await saveCollectionDraft(kind);const result=await request("/publish/content",{method:"POST",body:JSON.stringify({kind})});publishedCollections[kind]=collections[kind].slice();collectionDirty[kind]=false;collectionStatus(kind,"Deleted and published. Commit "+(result.commit||"created").slice(0,7)+".")}catch(error){collections[kind]=previous;collectionDirty[kind]=true;renderManager();collectionStatus(kind,"Delete was not published: "+error.message,true);alert("Could not complete deletion: "+error.message)}});
+      const del=document.createElement("button");del.type="button";del.className="manager-delete";del.textContent="Delete";del.addEventListener("click",async()=>{if(!confirm("Delete "+item.title+" and publish the change to the homepage?"))return;selectedManagerItems.clear();del.disabled=true;del.textContent="Deleting…";const previous=collections[kind].slice();collections[kind].splice(index,1);collectionDirty[kind]=true;renderManager();try{await saveCollectionDraft(kind);const result=await request("/publish/content",{method:"POST",body:JSON.stringify({kind})});publishedCollections[kind]=collections[kind].slice();collectionDirty[kind]=false;collectionStatus(kind,"Deleted and published. Commit "+(result.commit||"created").slice(0,7)+".")}catch(error){collections[kind]=previous;collectionDirty[kind]=true;renderManager();collectionStatus(kind,"Delete was not published: "+error.message,true);alert("Could not complete deletion: "+error.message)}});
       actions.append(preview,edit,del);card.append(art,body,actions);grid.append(card);
     }
     updateBulkControls();
@@ -139,6 +139,7 @@
   document.querySelector('[data-view="media"]')?.addEventListener("click",loadMedia);
   document.querySelector('[data-view="audit"]')?.addEventListener("click",loadAudit);
   document.querySelector('[data-view="settings"]')?.addEventListener("click",loadSettings);
+  window.addEventListener("beforeunload",event=>{if(Object.values(collectionDirty).some(Boolean)){event.preventDefault();event.returnValue=""}});
   loadMedia();
   loadMediaTrash();
 })();
