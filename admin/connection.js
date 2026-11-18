@@ -167,6 +167,24 @@
     }catch(e){historyList.textContent=e.message}
     finally{historyButton.disabled=false;historyButton.textContent="Load history"}
   });
+  const homepageHistoryButton=$("load-homepage-history"),homepageHistoryList=$("homepage-history-list");
+  if(homepageHistoryButton&&homepageHistoryList)homepageHistoryButton.addEventListener("click",async()=>{
+    homepageHistoryButton.disabled=true;homepageHistoryButton.textContent="Loading…";
+    try{
+      const data=await call("/history?path=index.html");homepageHistoryList.replaceChildren();
+      if(!data.history.length){homepageHistoryList.textContent="No homepage history found.";return}
+      for(const item of data.history){
+        const row=document.createElement("div");row.className="homepage-history-row";
+        const detail=document.createElement("div"),title=document.createElement("strong"),meta=document.createElement("small");
+        title.textContent=item.message;meta.textContent=new Date(item.date).toLocaleString()+" · "+item.sha.slice(0,7);detail.append(title,meta);
+        const restore=document.createElement("button");restore.type="button";restore.className="secondary-button";restore.textContent="Restore homepage";
+        restore.addEventListener("click",async()=>{if(!confirm("Restore the entire homepage (index.html) to this version? This may roll back all homepage content and showcase sections."))return;restore.disabled=true;restore.textContent="Restoring…";try{const result=await call("/rollback",{method:"POST",body:JSON.stringify({path:"index.html",sha:item.sha})});restore.textContent="Restored";meta.textContent+=" · New commit "+(result.commit||"created").slice(0,7)}catch(e){restore.disabled=false;restore.textContent="Restore homepage";alert("Could not restore homepage: "+e.message)}});
+        row.append(detail,restore);homepageHistoryList.append(row);
+      }
+    }catch(e){homepageHistoryList.textContent=e.message}
+    finally{homepageHistoryButton.disabled=false;homepageHistoryButton.textContent="Load history"}
+  });
+  window.addEventListener("beforeunload",event=>{if(selectedFiles.length){event.preventDefault();event.returnValue=""}});
   const logout=$("admin-logout");
   if(logout)logout.addEventListener("click",async()=>{
     logout.disabled=true;
