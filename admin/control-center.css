@@ -1,0 +1,14 @@
+
+.control-content{display:grid;gap:16px}.control-panel{padding:20px}.control-panel .panel-heading{margin-bottom:16px}
+.control-panel .stats-grid{margin:14px 0}.control-form{display:grid;grid-template-columns:1fr 1fr auto;gap:10px;align-items:end}
+.control-form label{display:grid;gap:6px;color:var(--muted);font-size:11px}.control-form input,.control-form select,.control-content input,.control-content select{min-width:0;background:#101116;color:var(--text);border:1px solid var(--line);border-radius:7px;padding:10px;font:inherit}
+.control-row,.file-row{display:flex;justify-content:space-between;align-items:center;gap:14px;padding:13px 0;border-top:1px solid var(--line)}
+.control-row strong,.control-row small,.file-row strong,.file-row small{display:block}.control-row small,.file-row small{color:var(--muted);font-size:11px;margin-top:3px}
+.control-actions{display:flex;gap:7px;flex-wrap:wrap}.control-status{color:var(--green);font-size:12px;margin:12px 0 0}.control-status[data-error="true"]{color:#f18b83}
+.inquiry-card,.notification-row{padding:15px 0;border-top:1px solid var(--line)}.inquiry-message{white-space:pre-wrap;overflow-wrap:anywhere;margin:12px 0;color:#dedee3}
+.status-new,.status-read{font-size:9px;letter-spacing:1px;font-weight:700;padding:4px 7px;border-radius:20px;background:rgba(237,75,69,.12);color:#f18b83}.status-read{background:rgba(139,198,160,.12);color:var(--green)}
+.health-good{border-color:rgba(139,198,160,.25)}.health-warn{border-color:rgba(227,173,99,.35)}
+.live-preview{width:100%;height:650px;border:1px solid var(--line);border-radius:8px;background:#fff;margin-top:16px}
+.notification-row p{margin:5px 0;color:var(--muted);font-size:12px}.notification-row small{color:#858791;font-size:10px}
+.file-row{align-items:flex-start}.file-row>div:first-child{min-width:0;overflow-wrap:anywhere}
+@media(max-width:760px){.control-form{grid-template-columns:1fr}.control-row,.file-row{align-items:flex-start;flex-direction:column}.live-preview{height:520px}.control-panel{padding:15px}}
