@@ -67,10 +67,10 @@
         </div>
 
         <section class="view active" id="view-overview">
-          <div class="section-heading"><div><h2>Website snapshot</h2><p>Current public website structure</p></div><span class="muted-meta">Static site · GitHub Pages</span></div>
+          <div class="section-heading"><div><h2>Website snapshot</h2><p>Current preview website structure</p></div><span class="muted-meta">Static site · GitHub Pages</span></div>
           <div class="stats-grid">
-            <article class="stat-card"><span class="stat-label">PUBLIC PAGES</span><strong>6</strong><span class="stat-foot">Main website pages</span></article>
-            <article class="stat-card"><span class="stat-label">CONTENT STATUS</span><strong class="stat-word">Live</strong><span class="stat-foot">Served from the main branch</span></article>
+            <article class="stat-card"><span class="stat-label">PUBLIC PAGES</span><strong>6</strong><span class="stat-foot">Preview website pages</span></article>
+            <article class="stat-card"><span class="stat-label">CONTENT STATUS</span><strong class="stat-word">Live</strong><span class="stat-foot">Served from cloudflare-preview</span></article>
             <article class="stat-card"><span class="stat-label">ADMIN STATUS</span><strong class="stat-word">Draft</strong><span class="stat-foot">Google sign-in required</span></article>
           </div>
           <div class="dashboard-grid">
@@ -89,7 +89,7 @@
                 <li class="step-done"><span>✓</span><div><strong>Admin workspace created</strong><small>Available at /admin/</small></div></li>
                 <li><span>2</span><div><strong>Sign in with the authorized Google account</strong><small>Only the allow-listed Google account can access admin APIs</small></div></li>
                 <li><span>3</span><div><strong>Verify the GitHub repository connection</strong><small>Credentials remain in Cloudflare Worker secrets</small></div></li>
-                <li><span>4</span><div><strong>Review and test drafts, publishing and rollback</strong><small>Publishing creates a GitHub commit on main</small></div></li>
+                <li><span>4</span><div><strong>Review and test drafts, publishing and rollback</strong><small>Publishing creates a GitHub commit on cloudflare-preview</small></div></li>
               </ol>
             </article>
           </div>
@@ -99,7 +99,7 @@
           <div class="section-heading"><div><h2>Website pages</h2><p>Choose a page to prepare its content for editing.</p></div></div>
           <div class="panel table-panel">
             <div class="table-head"><span>PAGE</span><span>FILE</span><span>STATUS</span><span>ACTION</span></div>
-            <div class="table-row"><strong>Home</strong><code>index.html</code><span class="page-state">Published</span><a class="small-button" href="https://github.com/hamadcheema/red/blob/main/index.html" target="_blank" rel="noopener">View source ↗</a></div>
+            <div class="table-row"><strong>Home</strong><code>index.html</code><span class="page-state">Published</span><a class="small-button" href="https://github.com/hamadcheema/red/blob/cloudflare-preview/index.html" target="_blank" rel="noopener">View source ↗</a></div>
             <div class="table-row"><strong>About</strong><code>about.html</code><span class="page-state">Published</span><a class="small-button" href="https://github.com/hamadcheema/red/blob/main/about.html" target="_blank" rel="noopener">View source ↗</a></div>
             <div class="table-row"><strong>Services</strong><code>services.html</code><span class="page-state">Published</span><a class="small-button" href="https://github.com/hamadcheema/red/blob/main/services.html" target="_blank" rel="noopener">View source ↗</a></div>
             <div class="table-row"><strong>Contact</strong><code>contact.html</code><span class="page-state">Published</span><a class="small-button" href="https://github.com/hamadcheema/red/blob/main/contact.html" target="_blank" rel="noopener">View source ↗</a></div>
@@ -126,7 +126,7 @@
               <div class="panel preview-panel"><div class="preview-top"><strong>Live text preview</strong><span>Preview only</span></div><div class="preview-canvas"><p class="preview-brand">THE RED SPARROW</p><p class="preview-kicker">PAGE PREVIEW</p><h3 id="preview-heading">Ideas into interactive worlds.</h3><p id="preview-intro">Your page introduction will appear here.</p><img class="preview-image" id="preview-image" alt="Selected page image preview" hidden><div class="preview-rule"></div><p class="preview-meta" id="preview-title"></p><p class="preview-meta" id="preview-description"></p></div></div>
             </div>
             <section class="panel" style="margin-top:14px" aria-labelledby="history-heading"><div class="panel-heading"><div><h2 id="history-heading">Version history</h2><p>Review recent GitHub versions and restore a previous page version.</p></div><button class="secondary-button" type="button" id="load-history">Load history</button></div><div id="history-list" aria-live="polite"><p class="editor-footnote">Load history to see recent commits.</p></div></section>
-            <p class="editor-footnote">Drafts are stored in Cloudflare KV after sign-in. Publishing writes a commit to the GitHub main branch and updates the live site after GitHub Pages deploys.</p>
+            <p class="editor-footnote">Drafts are stored in Cloudflare KV after sign-in. Publishing writes a commit to the cloudflare-preview branch and updates this preview site after Cloudflare Pages deploys.</p>
           </section>
         </section>
 
@@ -199,7 +199,7 @@
     </div>
     <div class="seo-actions"><button class="primary-button" type="submit">Save SEO draft</button><button class="secondary-button" id="seo-reset" type="button">Reset page</button></div>
     <p class="editor-status" id="seo-status" role="status" aria-live="polite">Showing current website metadata.</p>
-    <p class="seo-validation" id="seo-validation" role="status">Canonical and image URLs must use HTTPS and the theredsparrow.online domain.</p>
+    <p class="seo-validation" id="seo-validation" role="status">Canonical and image URLs must use HTTPS and the preview.theredsparrow.online domain.</p>
   </form>
   <div class="seo-preview-grid">
     <article class="panel snippet-card"><div class="preview-top"><strong>Google-style search preview</strong><span>Illustrative only</span></div><div class="snippet-body"><p class="snippet-url" id="snippet-url">https://theredsparrow.online/</p><h3 id="snippet-title">The Red Sparrow — Unity Game Development</h3><p id="snippet-description">The Red Sparrow develops Unity gameplay systems, integrates supplied 3D assets and prepares mobile-focused game builds.</p></div></article>
