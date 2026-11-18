@@ -11,7 +11,7 @@ const [html, admin, adminCss, control, controlCss, connection, features, worker]
 
 test("all Control Center sections are created as visible-on-selection views", () => {
   for (const id of ["analytics", "calendar", "inquiries", "notifications", "health", "preview", "files", "security", "site-settings"]) {
-    assert.match(control, new RegExp("\\b" + id + "\\s*:"));
+    assert.ok(control.includes(id === "site-settings" ? '"site-settings":' : id + ":"), "missing Control Center view: " + id);
     assert.ok(control.includes('section.id="view-"+id'));
   }
   assert.doesNotMatch(control, /section\.hidden\s*=\s*true/);
