@@ -139,6 +139,7 @@ if(req.method==="GET"&&r==="notifications"){
 }
 if(req.method==="GET"&&r==="system/health"){
  const checks=[];
+ try{const site=await fetch(ORIGIN+"/",{method:"HEAD",redirect:"follow"});checks.push({label:"Public website",ok:site.ok,detail:"HTTP "+site.status+" · "+site.url})}catch(e){checks.push({label:"Public website",ok:false,detail:e.message})}
  try{const repo=await gh(env,"/repos/"+env.GITHUB_OWNER+"/"+env.GITHUB_REPO);checks.push({label:"GitHub repository",ok:!!repo.default_branch,detail:repo.full_name+" · "+repo.default_branch})}catch(e){checks.push({label:"GitHub repository",ok:false,detail:e.message})}
  try{const home=await readFile(env,"index.html");const markers=["<!-- ADMIN:projects:START -->","<!-- ADMIN:social:START -->","<!-- ADMIN:brands:START -->"];const missing=markers.filter(x=>!home.content.includes(x));checks.push({label:"Homepage content structure",ok:missing.length===0,detail:missing.length?"Missing "+missing.join(", "):"All showcase markers are present"})}catch(e){checks.push({label:"Homepage content structure",ok:false,detail:e.message})}
  try{await env.DRAFTS.put("health:probe",new Date().toISOString(),{expirationTtl:60});const probe=await env.DRAFTS.get("health:probe");checks.push({label:"Cloudflare KV storage",ok:!!probe,detail:probe?"Read/write test passed":"Read/write test failed"})}catch(e){checks.push({label:"Cloudflare KV storage",ok:false,detail:e.message})}
