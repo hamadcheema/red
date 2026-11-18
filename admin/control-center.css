@@ -12,3 +12,14 @@
 .notification-row p{margin:5px 0;color:var(--muted);font-size:12px}.notification-row small{color:#858791;font-size:10px}
 .file-row{align-items:flex-start}.file-row>div:first-child{min-width:0;overflow-wrap:anywhere}
 @media(max-width:760px){.control-form{grid-template-columns:1fr}.control-row,.file-row{align-items:flex-start;flex-direction:column}.live-preview{height:520px}.control-panel{padding:15px}}
+
+.control-content{min-width:0}.control-panel{min-width:0;overflow-wrap:anywhere}
+.control-form{grid-template-columns:repeat(2,minmax(0,1fr))}.control-form label{min-width:0}
+.control-form input,.control-form select{width:100%;min-width:0}
+.control-form .primary-button,.control-form .secondary-button{min-height:40px}
+.settings-form{grid-template-columns:repeat(2,minmax(0,1fr))}
+.control-content input[type="checkbox"]{width:17px;min-width:17px;height:17px;padding:0;accent-color:var(--red)}
+.control-actions button,.control-actions a,.small-button{min-height:36px;display:inline-flex;align-items:center;justify-content:center}
+.control-row>div:first-child,.inquiry-card,.notification-row{min-width:0;overflow-wrap:anywhere}
+@media(max-width:760px){.control-form,.settings-form{grid-template-columns:minmax(0,1fr)}.control-panel{padding:15px}.control-actions{width:100%}.control-actions button{flex:1 1 auto}.live-preview{height: min(65vh,520px)}}
+@media(max-width:420px){.control-content .stats-grid{grid-template-columns:minmax(0,1fr)}.control-panel .panel-heading{align-items:flex-start;flex-direction:column}.notification-row,.inquiry-card{padding:12px 0}}
