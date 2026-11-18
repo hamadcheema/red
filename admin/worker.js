@@ -45,7 +45,8 @@ async function writeFile(env,p,c,sha,msg){return gh(env,filePath(env,p),{method:
 async function audit(env,email,action,detail){try{await env.DRAFTS.put("audit:"+Date.now()+":"+crypto.randomUUID(),JSON.stringify({email,action,detail,at:new Date().toISOString()}),{expirationTtl:15552000});return true}catch(error){console.error("Audit log write failed:",error?.message||error);return false}}
 function normalizeMediaPath(value){try{const parsed=new URL(String(value||""),ORIGIN);if(parsed.origin!==ORIGIN)return "";const path=decodeURIComponent(parsed.pathname).replace(/^\//,"");return /^assets\/uploads\/[a-zA-Z0-9._-]+\.(png|jpe?g|webp|gif)$/i.test(path)?path:""}catch{return ""}}
 async function firebaseAdmin(req,env){
-const authorization=req.headers.get("authorization")||"",match=authorization.match(/^Bearer\\s+(.+)$/i);
+const authorization=req.headers.get("authorization")||"",token=authorization.startsWith("Bearer ")?authorization.slice(7).trim():"";
+if(!token)return null;
 if(!match)return null;
 if(!env.FIREBASE_WEB_API_KEY)throw Error("Firebase Web API key secret is not configured in the Worker.");
 const verification=await fetch("https://identitytoolkit.googleapis.com/v1/accounts:lookup?key="+encodeURIComponent(env.FIREBASE_WEB_API_KEY),{method:"POST",headers:{"content-type":"application/json"},body:JSON.stringify({idToken:match[1]})});
@@ -53,7 +54,7 @@ const data=await verification.json().catch(()=>({}));
 if(!verification.ok)return null;
 const user=data.users?.[0],email=String(user?.email||"").toLowerCase();
 if(!user||user.emailVerified!==true||email!=="thatsmehammad@gmail.com")return null;
-return{email,uid:user.localId};
+return{email,login:email,uid:user.localId};
 }
 async function run(req,env){const u=new URL(req.url),r=u.pathname.replace(/^\/admin-api\/?/,"");
 if(req.method==="OPTIONS")return new Response(null,{status:204,headers:{"access-control-allow-origin":ORIGIN,"access-control-allow-credentials":"true","access-control-allow-methods":"GET,POST,DELETE,OPTIONS","access-control-allow-headers":"content-type,authorization","vary":"Origin"}});
