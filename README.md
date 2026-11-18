@@ -25,7 +25,7 @@ Official lightweight website for The Red Sparrow, an independent Unity-focused g
 - `admin/` — private admin interface, publishing client, Worker source and setup notes.
 - `assets/uploads/` — images uploaded through the admin Media Library.
 - `logo.svg`, `favicon.svg`, `og-image.png` — brand and social preview assets.
-- `robots.txt`, `sitemap.xml`, `llms.txt`, `ads.txt` — crawler, discovery and advertising metadata.
+- `robots.txt`, `sitemap.xml`, `llms.txt` — crawler and discovery metadata.
 - `scripts/validate_site.py` — dependency-free public-site integrity checks.
 - `admin/tests/worker.test.mjs` — Node.js regression tests for Worker safeguards.
 - `.github/workflows/quality.yml` — automated syntax, Worker and site-integrity checks.
@@ -51,7 +51,7 @@ node --check admin/worker.js
 node --test admin/tests/worker.test.mjs
 ```
 
-GitHub Actions runs these checks on pushes to `main`. A passing quality check does not replace manual browser, accessibility, advertising-consent or legal review. Cloudflare applies baseline response headers; a restrictive Content Security Policy is intentionally not enabled until all required third-party origins and features are reviewed.
+GitHub Actions runs these checks on pushes to `main`. A passing quality check does not replace manual browser, accessibility or legal review. Cloudflare applies baseline response headers; a restrictive Content Security Policy is intentionally not enabled until all required third-party origins and features are reviewed.
 
 ## Services presented
 
@@ -67,6 +67,6 @@ The public service descriptions should be kept aligned with the work actually of
 - General enquiries: admin@theredsparrow.online
 - Direct contact: hammad@theredsparrow.online
 
-## Privacy and advertising
+## Privacy
 
-The privacy notice must reflect the actual email, hosting, advertising, cookie and analytics services in use. Before serving personalized advertising in regions where Google requires consent, configure an eligible certified consent-management platform in the relevant Google publisher account. Repository files alone cannot enable or verify that account-level setting.
+The privacy notice must reflect the actual email, hosting, cookie and analytics services in use.
