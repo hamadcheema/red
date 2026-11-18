@@ -28,6 +28,28 @@ html=html.replace(/<\/h1>/i,"</h1>"+markup);
 return html
 }
 
+
+function decodeHtml(value){return String(value||"").replace(/&amp;/g,"&").replace(/&lt;/g,"<").replace(/&gt;/g,">").replace(/&quot;/g,'"').replace(/&#39;|&#x27;/gi,"'").replace(/&nbsp;/g," ")}
+function plainHtml(value){return decodeHtml(String(value||"").replace(/<strong>([\s\S]*?)<\/strong>/gi,"**$1**").replace(/<em>([\s\S]*?)<\/em>/gi,"*$1*").replace(/<br\s*\/?>/gi,"\n").replace(/<\/(?:p|div|h[1-6])>/gi,"\n").replace(/<[^>]+>/g,"")).trim()}
+function metaContent(html,attr,key){const tags=html.match(/<meta\b[^>]*>/gi)||[],tag=tags.find(x=>x.toLowerCase().includes(attr.toLowerCase()+'="'+key.toLowerCase()+'"'));return decodeHtml(tag?.match(/\bcontent="([^"]*)"/i)?.[1]||"")}
+function pageData(html,slug){
+const title=decodeHtml(html.match(/<title>([\s\S]*?)<\/title>/i)?.[1]||"");
+const description=metaContent(html,"name","description");
+const heading=plainHtml(html.match(/<h1\b[^>]*>([\s\S]*?)<\/h1>/i)?.[1]||"");
+const intro=plainHtml(html.match(/<p\s+class="hero-copy"[^>]*>([\s\S]*?)<\/p>/i)?.[1]||"");
+const imageTag=html.match(/<figure class="admin-page-image">[\s\S]*?<img\b[^>]*>/i)?.[0]||"";
+const imagePath=imageTag.match(/\bsrc="([^"]*)"/i)?.[1]||"";
+const image=imagePath?(imagePath.startsWith("http")?imagePath:ORIGIN+(imagePath.startsWith("/")?"":"/")+imagePath):"";
+const imageAlt=decodeHtml(imageTag.match(/\balt="([^"]*)"/i)?.[1]||"");
+const links=html.match(/<link\b[^>]*>/gi)||[],canonicalTag=links.find(x=>/rel="canonical"/i.test(x));
+const canonical=decodeHtml(canonicalTag?.match(/\bhref="([^"]*)"/i)?.[1]||"");
+const ogTitle=metaContent(html,"property","og:title")||title;
+const ogDescription=metaContent(html,"property","og:description")||description;
+const ogImage=metaContent(html,"property","og:image")||ORIGIN+"/og-image.svg";
+const ogImageAlt=metaContent(html,"property","og:image:alt")||ogTitle;
+return{slug,title,description,heading,intro,image,imageAlt,canonical,ogTitle,ogDescription,ogImage,ogImageAlt};
+}
+
 const collectionKinds={projects:{heading:"Game project showcases",eyebrow:"SELECTED WORK"},social:{heading:"Social media previews",eyebrow:"FROM OUR CHANNELS"},brands:{heading:"Brand assets",eyebrow:"THE BRAND"}};
 function collectionMarkup(kind,items){
 const cfg=collectionKinds[kind],cards=items.map(item=>{
@@ -60,6 +82,7 @@ async function run(req,env){const u=new URL(req.url),r=u.pathname.replace(/^\/ad
 if(req.method==="OPTIONS")return new Response(null,{status:204,headers:{"access-control-allow-origin":ORIGIN,"access-control-allow-credentials":"true","access-control-allow-methods":"GET,POST,DELETE,OPTIONS","access-control-allow-headers":"content-type,authorization","vary":"Origin"}});
 const origin=req.headers.get("origin");if(origin&&origin!==ORIGIN)return response({error:"Request origin not allowed."},403);
 const who=await firebaseAdmin(req,env);if(!who)return response({error:"Please sign in with the authorized Google account.",loginRequired:true},401);
+if(req.method==="GET"&&r==="page"){const slug=u.searchParams.get("slug")||"";if(!FILES[slug])return response({error:"Invalid page."},400);const current=await readFile(env,FILES[slug]);return response({page:pageData(current.content,slug)})}
 if(req.method==="GET"&&r==="status"){let connected=false,msg="GitHub token not configured";if(env.GITHUB_TOKEN)try{await gh(env,"/repos/"+env.GITHUB_OWNER+"/"+env.GITHUB_REPO);connected=true;msg="Repository access verified"}catch(e){msg=e.message}return response({ok:true,admin:who.email,githubConnected:connected,githubMessage:msg})}
 if(req.method==="GET"&&r==="settings"){let connected=false,message="GitHub token not configured";if(env.GITHUB_TOKEN)try{await gh(env,"/repos/"+env.GITHUB_OWNER+"/"+env.GITHUB_REPO);connected=true;message="Repository access verified"}catch(e){message=e.message}return response({admin:who.login,repository:env.GITHUB_OWNER+"/"+env.GITHUB_REPO,branch:env.GITHUB_BRANCH||"main",sessionCreated:who.created||null,sessionExpires:who.created?who.created+28800000:null,githubConnected:connected,githubMessage:message})}
 if(req.method==="GET"&&r==="audit"){let cursor,keys=[];do{const page=await env.DRAFTS.list({prefix:"audit:",limit:1000,...(cursor?{cursor}:{})});keys.push(...page.keys);cursor=page.list_complete?null:page.cursor}while(cursor);const latest=keys.sort((a,b)=>b.name.localeCompare(a.name)).slice(0,50);const entries=await Promise.all(latest.map(item=>env.DRAFTS.get(item.name,"json")));return response({events:entries.filter(Boolean).sort((a,b)=>String(b.at).localeCompare(String(a.at)))})}
