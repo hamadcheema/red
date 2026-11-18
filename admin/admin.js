@@ -227,6 +227,7 @@
     }
   };
   setSidebarOpen(false);
+  window.closeAdminSidebar = () => setSidebarOpen(false);
   links().forEach(link => link.addEventListener("click", () => {
     showView(link.dataset.view);
     setSidebarOpen(false);
