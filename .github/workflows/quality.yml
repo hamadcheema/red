@@ -25,9 +25,11 @@ jobs:
           node --check admin/admin.js
           node --check admin/connection.js
           node --check admin/features.js
+          node --check admin/control-center.js
           node --check admin/worker.js
           node --check admin/tests/worker.test.mjs
+          node --check admin/tests/control-center.test.mjs
       - name: Run Worker regression tests
-        run: node --test admin/tests/worker.test.mjs
+        run: node --test admin/tests/*.test.mjs
       - name: Validate HTML, links, assets, metadata and sitemap
         run: python scripts/validate_site.py
