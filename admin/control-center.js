@@ -33,7 +33,7 @@
   const content=id=>$("view-"+id)?.querySelector(".control-content");
   async function loadAnalytics(){
     const root=mount("view-analytics")?.querySelector(".control-content");if(!root)return;
-    const p=panel("Cloudflare Web Analytics","Privacy-focused website analytics already configured for theredsparrow.online.");
+    const p=panel("Cloudflare Web Analytics","Cloudflare is the intended analytics provider. Confirm that Web Analytics is enabled for theredsparrow.online before relying on visitor data.");
     p.append(card("ANALYTICS PROVIDER","Cloudflare","Open the Cloudflare dashboard to inspect current traffic and analytics configuration."));
     const note=el("p","editor-footnote","Traffic charts and visitor breakdowns remain inside Cloudflare. No API token is placed in the public admin page.");
     p.append(note);
@@ -56,16 +56,79 @@
     }catch(e){status(list,"Could not load schedule: "+e.message,true)}
     root.append(list);
   }
+  let inquiryItems=[],inquiryFolder="inbox",selectedInquiryId=null,inquirySearch="";
   async function loadInquiries(){
     const root=mount("view-inquiries")?.querySelector(".control-content");if(!root)return;
-    const p=panel("Incoming messages","Messages are stored privately in Cloudflare KV and are visible only after admin sign-in.");p.append(button("Refresh inbox",loadInquiries));
-    try{const data=await call("/inquiries");p.append(card("TOTAL",String(data.total||0),"Stored enquiries"),card("NEW",String(data.unread||0),"Awaiting review"));
-      if(!data.items?.length)p.append(el("p","editor-footnote","No enquiries received yet."));
-      for(const item of data.items||[]){const row=el("article","inquiry-card");const head=el("div","control-row");const detail=el("div");detail.append(el("strong","",item.subject||"Website enquiry"),el("small","",item.name+" · "+item.email+" · "+formatDate(item.createdAt)));head.append(detail,el("span",item.status==="new"?"status-new":"status-read",item.status==="new"?"NEW":item.status.toUpperCase()));const body=el("p","inquiry-message",item.message);const actions=el("div","control-actions");if(item.status==="new")actions.append(button("Mark read",()=>updateInquiry(item.id,"read",p)));if(item.status!=="archived")actions.append(button("Archive",()=>updateInquiry(item.id,"archived",p)));else actions.append(button("Restore",()=>updateInquiry(item.id,"read",p)));actions.append(button("Delete",async()=>{if(!confirm("Permanently delete this enquiry?"))return;try{await call("/inquiries?id="+encodeURIComponent(item.id),{method:"DELETE"});await loadInquiries()}catch(e){status(p,e.message,true)}}));row.append(head,body,actions);p.append(row)}
+    const p=panel("Inbox","A private, Gmail-style workspace for messages submitted through your website contact form.");
+    const toolbar=el("div","inquiry-toolbar"),search=el("input");search.type="search";search.placeholder="Search mail";search.setAttribute("aria-label","Search enquiries by sender, subject or message");search.value=inquirySearch;
+    const refresh=button("Refresh",loadInquiries);toolbar.append(search,refresh);p.append(toolbar);
+    const summary=el("div","inquiry-summary");p.append(summary);
+    const shell=el("div","inquiry-shell"),folders=el("nav","inquiry-folders"),listPane=el("section","inquiry-list-pane"),reader=el("section","inquiry-reader");
+    folders.setAttribute("aria-label","Inbox folders");listPane.setAttribute("aria-label","Inquiry messages");reader.setAttribute("aria-label","Selected inquiry");
+    shell.append(folders,listPane,reader);p.append(shell);root.append(p);
+    search.addEventListener("input",()=>{inquirySearch=search.value;renderInbox()});
+    try{
+      const data=await call("/inquiries");inquiryItems=data.items||[];
+      if(!selectedInquiryId||!inquiryItems.some(x=>x.id===selectedInquiryId))selectedInquiryId=inquiryItems[0]?.id||null;
+      renderInbox();
     }catch(e){status(p,"Could not load enquiries: "+e.message,true)}
-    root.append(p);
+    function renderInbox(){
+      const unread=inquiryItems.filter(x=>x.status==="new").length,archived=inquiryItems.filter(x=>x.status==="archived").length;
+      summary.replaceChildren(card("TOTAL",String(data.total??inquiryItems.length),"Stored enquiries"),card("UNREAD",String(data.unread??unread),"Awaiting review"),card("ARCHIVED",String(archived),"Filed enquiries"));
+      const folderDefs=[["inbox","Inbox",inquiryItems.filter(x=>x.status!=="archived").length],["unread","Unread",unread],["archived","Archived",archived]];
+      folders.replaceChildren();
+      for(const [id,label,count] of folderDefs){const f=button(label+"  "+count,()=>{inquiryFolder=id;selectedInquiryId=null;renderInbox()},"inquiry-folder"+(inquiryFolder===id?" active":""));f.setAttribute("aria-current",inquiryFolder===id?"page":"false");folders.append(f)}
+      const term=inquirySearch.trim().toLowerCase();
+      const visible=inquiryItems.filter(item=>{
+        const inFolder=inquiryFolder==="archived"?item.status==="archived":inquiryFolder==="unread"?item.status==="new":item.status!=="archived";
+        const matches=!term||(item.name+" "+item.email+" "+item.subject+" "+item.message).toLowerCase().includes(term);
+        return inFolder&&matches;
+      }).sort((a,b)=>String(b.createdAt).localeCompare(String(a.createdAt)));
+      listPane.replaceChildren();
+      const listHeading=el("div","inquiry-list-heading");listHeading.append(el("strong","","Messages"),el("small","",visible.length+" shown · latest 100 available"));listPane.append(listHeading);
+      if(!visible.length)listPane.append(el("p","inquiry-empty",term?"No messages match your search.":"This folder is empty."));
+      for(const item of visible){
+        const row=button("",()=>openInquiry(item.id),"inquiry-message-row"+(selectedInquiryId===item.id?" selected":"")+(item.status==="new"?" unread":""));
+        row.setAttribute("aria-pressed",selectedInquiryId===item.id?"true":"false");
+        const top=el("span","inquiry-row-top");top.append(el("strong","inquiry-sender",item.name||"Website visitor"),el("time","inquiry-date",new Date(item.createdAt).toLocaleDateString()));
+        const subject=el("span","inquiry-subject",item.subject||"Website enquiry");
+        const snippet=el("span","inquiry-snippet",String(item.message||"").replace(/\\s+/g," ").slice(0,115));
+        row.append(top,subject,snippet);listPane.append(row);
+      }
+      renderReader();
+      shell.classList.toggle("has-selection",!!selectedInquiryId);
+    }
+    function openInquiry(id){
+      selectedInquiryId=id;const item=inquiryItems.find(x=>x.id===id);
+      if(item?.status==="new")updateInquiry(id,"read",p);
+      renderInbox();
+    }
+    function renderReader(){
+      reader.replaceChildren();const item=inquiryItems.find(x=>x.id===selectedInquiryId);
+      if(!item){reader.append(el("div","inquiry-reader-empty","Select a message to read it"));return}
+      const back=button("← Back to messages",()=>{selectedInquiryId=null;renderInbox()},"inquiry-back");
+      const actions=el("div","inquiry-reader-actions");
+      const reply=el("a","small-button gmail-reply","Reply in Gmail ↗");
+      const subject="Re: "+(item.subject||"Website enquiry");
+      const body="Hi "+(item.name||"there")+",\\n\\nThank you for contacting The Red Sparrow.\\n\\n\\nBest regards,\\nThe Red Sparrow";
+      const params=new URLSearchParams({view:"cm",fs:"1",to:item.email||"",su:subject,body});
+      reply.href="https://mail.google.com/mail/?"+params.toString();reply.target="_blank";reply.rel="noopener noreferrer";reply.setAttribute("aria-label","Open Gmail to reply to "+(item.name||"the sender"));
+      actions.append(reply);
+      if(item.status!=="archived")actions.append(button("Archive",()=>updateInquiry(id,"archived",p)));
+      else actions.append(button("Restore to inbox",()=>updateInquiry(id,"read",p)));
+      actions.append(button("Delete",async()=>{if(!confirm("Permanently delete this enquiry?"))return;try{await call("/inquiries?id="+encodeURIComponent(id),{method:"DELETE"});inquiryItems=inquiryItems.filter(x=>x.id!==id);selectedInquiryId=null;renderInbox()}catch(e){status(p,e.message,true)}}));
+      const head=el("div","inquiry-reader-heading");head.append(el("h3","",item.subject||"Website enquiry"),el("span",item.status==="new"?"status-new":"status-read",item.status==="new"?"UNREAD":item.status.toUpperCase()));
+      const sender=el("div","inquiry-sender-details");const avatar=el("span","inquiry-avatar",(item.name||"V").trim().charAt(0).toUpperCase());const meta=el("div");meta.append(el("strong","",item.name||"Website visitor"),el("a","",item.email||"No sender email"));if(item.email){const emailLink=meta.querySelector("a");emailLink.href="mailto:"+item.email}meta.append(el("small","",formatDate(item.createdAt)));sender.append(avatar,meta);
+      const message=el("div","inquiry-reader-body",item.message||"");
+      reader.append(back,actions,head,sender,message);
+    }
   }
-  async function updateInquiry(id,state,root){try{await call("/inquiries/update",{method:"POST",body:JSON.stringify({id,state})});await loadInquiries()}catch(e){status(root,e.message,true)}}
+  async function updateInquiry(id,state,root){
+    try{await call("/inquiries/update",{method:"POST",body:JSON.stringify({id,state})});const item=inquiryItems.find(x=>x.id===id);if(item)item.status=state;const data=await call("/inquiries");inquiryItems=data.items||[];renderCurrentInquiryView()}
+    catch(e){status(root,e.message,true)}
+  }
+  function renderCurrentInquiryView(){const active=$("view-inquiries")?.querySelector(".control-content");if(active)loadInquiries()}
+
   async function loadNotifications(){
     const root=mount("view-notifications")?.querySelector(".control-content");if(!root)return;
     const p=panel("Recent notifications","A combined feed of new enquiries, upcoming publications and recent admin activity.");p.append(button("Refresh notifications",loadNotifications));
