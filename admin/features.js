@@ -53,6 +53,18 @@
       list.append(table);
     }catch(e){showError(list,e)}
   }
+  async function loadAdminSummary(){
+    try{
+      const results=await Promise.all([...collectionKinds.map(kind=>request("/content?kind="+kind)),request("/media/list")]);
+      const content=results.slice(0,3),media=results[3];
+      const total=content.reduce((sum,item)=>sum+(Array.isArray(item.items)?item.items.length:0),0);
+      const pending=content.filter(item=>item.draftChanged).length;
+      const dates=content.map(item=>item.publishedAt).filter(Boolean).sort();
+      const set=(id,value)=>{const el=$(id);if(el)el.textContent=value};
+      set("summary-content-count",String(total));set("summary-media-count",String((media.items||[]).length));set("summary-draft-count",String(pending));
+      set("summary-published-at",dates.length?new Date(dates[dates.length-1]).toLocaleDateString(): "Not yet");
+    }catch(e){["summary-content-count","summary-media-count","summary-draft-count","summary-published-at"].forEach(id=>{const el=$(id);if(el)el.textContent="—"})}
+  }
   async function loadSettings(){
     const button=$("settings-refresh");if(button){button.disabled=true;button.textContent="Refreshing…"}
     try{
@@ -146,4 +158,6 @@
   window.addEventListener("beforeunload",event=>{if(Object.values(collectionDirty).some(Boolean)){event.preventDefault();event.returnValue=""}});
   loadMedia();
   loadMediaTrash();
+  document.querySelector('[data-view="overview"]')?.addEventListener("click",loadAdminSummary);
+  loadAdminSummary();
 })();
