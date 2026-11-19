@@ -56,7 +56,7 @@
     }catch(e){status(list,"Could not load schedule: "+e.message,true)}
     root.append(list);
   }
-  let inquiryItems=[],inquiryFolder="inbox",selectedInquiryId=null,inquirySearch="";
+  let inquiryItems=[],inquiryData={total:0,unread:0},inquiryFolder="inbox",selectedInquiryId=null,inquirySearch="";
   async function loadInquiries(){
     const root=mount("view-inquiries")?.querySelector(".control-content");if(!root)return;
     const p=panel("Inbox","A private, Gmail-style workspace for messages submitted through your website contact form.");
@@ -68,13 +68,13 @@
     shell.append(folders,listPane,reader);p.append(shell);root.append(p);
     search.addEventListener("input",()=>{inquirySearch=search.value;renderInbox()});
     try{
-      const data=await call("/inquiries");inquiryItems=data.items||[];
+      inquiryData=await call("/inquiries");inquiryItems=inquiryData.items||[];
       if(!selectedInquiryId||!inquiryItems.some(x=>x.id===selectedInquiryId))selectedInquiryId=inquiryItems[0]?.id||null;
       renderInbox();
     }catch(e){status(p,"Could not load enquiries: "+e.message,true)}
     function renderInbox(){
       const unread=inquiryItems.filter(x=>x.status==="new").length,archived=inquiryItems.filter(x=>x.status==="archived").length;
-      summary.replaceChildren(card("TOTAL",String(data.total??inquiryItems.length),"Stored enquiries"),card("UNREAD",String(data.unread??unread),"Awaiting review"),card("ARCHIVED",String(archived),"Filed enquiries"));
+      summary.replaceChildren(card("TOTAL",String(inquiryData.total??inquiryItems.length),"Stored enquiries"),card("UNREAD",String(inquiryData.unread??unread),"Awaiting review"),card("ARCHIVED",String(archived),"Filed enquiries"));
       const folderDefs=[["inbox","Inbox",inquiryItems.filter(x=>x.status!=="archived").length],["unread","Unread",unread],["archived","Archived",archived]];
       folders.replaceChildren();
       for(const [id,label,count] of folderDefs){const f=button(label+"  "+count,()=>{inquiryFolder=id;selectedInquiryId=null;renderInbox()},"inquiry-folder"+(inquiryFolder===id?" active":""));f.setAttribute("aria-current",inquiryFolder===id?"page":"false");folders.append(f)}
