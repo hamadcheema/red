@@ -469,6 +469,6 @@ test("public enquiries store an HMAC of the visitor IP instead of a plain hash",
   assert.equal(response.status, 201);
   const keys = [...env.DRAFTS.values.keys()].filter(key => key.startsWith("inquiry-rate:"));
   assert.equal(keys.length, 1);
-  assert.match(keys[0], /^inquiry-rate:[a-f0-9]{64}:\\d{4}-\\d{2}-\\d{2}$/);
+  assert.match(keys[0], /^inquiry-rate:[a-f0-9]{64}:[0-9]{4}-[0-9]{2}-[0-9]{2}$/);
   assert.equal(keys[0].includes("203.0.113.44"), false);
 });
