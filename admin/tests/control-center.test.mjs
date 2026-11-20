@@ -70,6 +70,12 @@ test("media upload controls use non-nested accessible semantics", () => {
   assert.doesNotMatch(connection, /dropZone\.addEventListener\("keydown"/);
 });
 
+test("website settings retain the saved logo when Media Library lookup fails or omits it", () => {
+  assert.match(control, /Media Library unavailable; the currently saved logo will be retained/);
+  assert.match(control, /savedLogoPath\.split\("\/"\)\.pop\(\)/);
+  assert.match(control, /currently saved/);
+});
+
 test("website settings preserve local edits and save them before publishing", () => {
   assert.match(control, /Unsaved website settings are being kept/);
   assert.match(control, /form\.addEventListener\("input",\(\)=>\{window\.trsSiteSettingsDirty=true\}\)/);
