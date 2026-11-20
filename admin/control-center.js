@@ -15,6 +15,7 @@
     calendar: ["Publishing calendar","Schedule approved showcase collections for automatic publication."],
     inquiries: ["Inquiry inbox","Review messages submitted through the public contact form."],
     notifications: ["Notification center","Recent admin activity, new inquiries and scheduled publications."],
+    activity: ["Personal activity timeline","Review and export your recorded admin activity."],
     health: ["System health","Live checks for the public website, repository and admin services."],
     preview: ["Live website preview","Preview page edits in the context of the real website without publishing."],
     files: ["Advanced file manager","Review uploaded assets, file sizes and where each asset is used."],
@@ -182,6 +183,33 @@
   }
   function renderCurrentInquiryView(){const active=$("view-inquiries")?.querySelector(".control-content");if(active)loadInquiries()}
 
+  async function loadActivityTimeline(){
+    const root=mount("view-activity")?.querySelector(".control-content");if(!root)return;
+    const p=panel("Your activity timeline","A read-only timeline of actions recorded for your authorized admin account. Choose a date range to review or export activity.");
+    const toolbar=el("div","activity-toolbar");
+    const from=el("input");from.type="date";from.setAttribute("aria-label","Activity start date");
+    const to=el("input");to.type="date";to.setAttribute("aria-label","Activity end date");
+    const kind=el("select");kind.setAttribute("aria-label","Filter activity type");
+    [["all","All activity"],["content","Content changes"],["website","Website settings"],["inquiry","Enquiry actions"],["media","Media actions"],["security","Security actions"]].forEach(([value,label])=>{const option=el("option","",label);option.value=value;kind.append(option)});
+    const refresh=button("Refresh",loadActivityTimeline);
+    const exportButton=button("Export CSV",()=>{const rows=filtered.map(item=>[item.at,item.email,item.action,item.detail]);const cell=value=>{let text=String(value??"");if(/^[\\s]*[=+\\-@]/.test(text)||/^[\\t\\r]/.test(text))text="'"+text;return '"'+text.replace(/"/g,'""')+'"'};const csv="\\uFEFF"+[["Date","Admin","Action","Details"],...rows].map(row=>row.map(cell).join(",")).join("\\r\\n")+"\\r\\n";const url=URL.createObjectURL(new Blob([csv],{type:"text/csv;charset=utf-8"}));const a=el("a");a.href=url;a.download="the-red-sparrow-activity.csv";a.hidden=true;document.body.append(a);a.click();a.remove();URL.revokeObjectURL(url);status(p,"Activity report exported.")});
+    toolbar.append(from,to,kind,refresh,exportButton);p.append(toolbar);
+    const summary=el("div","inquiry-summary");p.append(summary);
+    const timeline=el("div","activity-timeline");p.append(timeline);root.append(p);
+    let events=[],filtered=[];
+    const render=()=>{
+      const start=from.value?new Date(from.value+"T00:00:00").getTime():-Infinity;
+      const end=to.value?new Date(to.value+"T23:59:59.999").getTime():Infinity;
+      filtered=events.filter(item=>{const stamp=Date.parse(item.at||"");if(!Number.isFinite(stamp)||stamp<start||stamp>end)return false;const action=String(item.action||"").toLowerCase();return kind.value==="all"||(kind.value==="content"&&/(project|social|brand|content|publish)/.test(action))||(kind.value==="website"&&/(site|setting|brand|section)/.test(action))||(kind.value==="inquiry"&&/inquiry/.test(action))||(kind.value==="media"&&/media|upload|delete/.test(action))||(kind.value==="security"&&/auth|session|security|login|logout/.test(action))});
+      summary.replaceChildren(card("MATCHING EVENTS",String(filtered.length),"In selected date range"),card("TODAY",String(events.filter(x=>new Date(x.at).toDateString()===new Date().toDateString()).length),"Recorded events today"),card("LAST 7 DAYS",String(events.filter(x=>Date.now()-Date.parse(x.at||"")<=604800000&&Date.now()>=Date.parse(x.at||"")).length),"Recorded events"));
+      timeline.replaceChildren();
+      if(!filtered.length){timeline.append(el("p","inquiry-empty","No activity matches this filter and date range."));return}
+      for(const item of filtered){const row=el("article","activity-event");const date=el("time","activity-event-date",formatDate(item.at));if(item.at)date.dateTime=item.at;const body=el("div","activity-event-body");body.append(el("strong","",String(item.action||"Admin event").replace(/-/g," ")),el("p","",item.detail||"No additional details."),el("small","",item.email||"Authorized admin"));row.append(date,body);timeline.append(row)}
+    };
+    [from,to,kind].forEach(input=>input.addEventListener("change",render));
+    try{const data=await call("/audit");events=(data.events||[]).filter(item=>item&&item.at).sort((a,b)=>Date.parse(b.at)-Date.parse(a.at));render();status(p,"Loaded "+events.length+" recent audit events. The timeline reflects the audit retention window.");}
+    catch(e){status(p,"Could not load activity: "+e.message,true)}
+  }
   async function loadNotifications(){
     const root=mount("view-notifications")?.querySelector(".control-content");if(!root)return;
     const p=panel("Recent notifications","A combined feed of new enquiries, upcoming publications and recent admin activity.");p.append(button("Refresh notifications",loadNotifications));
@@ -274,7 +302,7 @@
     try{const data=await call("/site-settings"),v=data.draft||data.settings||{};contact.value=v.contactEmail||contact.value;direct.value=v.directEmail||direct.value;tagline.value=v.tagline||tagline.value;enabled.checked=!!v.announcementEnabled;message.value=v.announcement||"";accent.value=v.brand?.accentColor||"#ed4b45";font.value=v.brand?.fontFamily||"system";logo.value=v.brand?.logoPath||"/favicon.svg";updateBrandPreview();window.trsPublishedBrand=data.settings?.brand||{accentColor:"#ed4b45",fontFamily:"system",logoPath:"/favicon.svg"};updateComparison(window.trsPublishedBrand);Object.entries(visibilityInputs).forEach(([key,input])=>input.checked=(v.sectionVisibility||{})[key]!==false);status(p,data.draft?"Unpublished settings draft loaded.":"Showing current published settings.")}catch(e){status(p,"Could not load website settings: "+e.message,true)}
   }
 
-  const loaders={overview:loadDashboard,analytics:loadAnalytics,calendar:loadCalendar,inquiries:loadInquiries,notifications:loadNotifications,health:loadHealth,preview:loadPreview,files:loadFiles,security:loadSecurity,"site-settings":loadSiteSettings};
+  const loaders={overview:loadDashboard,analytics:loadAnalytics,calendar:loadCalendar,inquiries:loadInquiries,notifications:loadNotifications,activity:loadActivityTimeline,health:loadHealth,preview:loadPreview,files:loadFiles,security:loadSecurity,"site-settings":loadSiteSettings};
   const loaded=new Set();
   async function load(id){if(!loaders[id])return;loaded.delete(id);await loaders[id]();loaded.add(id)}
   window.addEventListener("trs:control-view",e=>load(e.detail));
