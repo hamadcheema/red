@@ -61,6 +61,9 @@ test("admin HTML IDs remain unique and all admin scripts are loaded", () => {
 test("inquiry Today filter uses Pakistan local calendar date", () => {
   assert.match(control, /timeZone:"Asia\/Karachi"/);
   assert.match(control, /karachiDate\(stamp\)===karachiDate\(now\)/);
+  assert.match(control, /T00:00:00\+05:00/);
+  assert.match(control, /T23:59:59\.999\+05:00/);
+  assert.match(control, /karachiDate\(Date\.parse\(x\.at\|\|"\?"\)\)/);
 });
 
 test("inquiry inbox provides Gmail-style folders, search, responsive reading and Gmail reply links", () => {
