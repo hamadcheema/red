@@ -161,3 +161,11 @@ test("executive dashboard reports accurate enquiry activity windows", () => {
   assert.match(control, /LAST 7 DAYS/);
   assert.match(control, /LAST 30 DAYS/);
 });
+
+
+test("successful admin sign-in and sign-out are recorded in the audit timeline", () => {
+  assert.match(worker, /audit\(env,String\(user\.login\)\.toLowerCase\(\),"login","GitHub OAuth session created"\)/);
+  assert.match(worker, /who=await session\(req,env\)/);
+  assert.match(worker, /audit\(env,who\.login,"logout","Admin session ended"\)/);
+  assert.match(control, /\["security","Security actions"\]/);
+});
