@@ -22,8 +22,9 @@ Already present in the repository:
 - Health checks and admin session controls, including individual session revocation
 - Content Manager bulk operations and safe media move-to-trash
 - Unsaved-change protection for Content Manager, page editor, SEO editor and shared website settings
+- Collection loading guards that preserve edits made while requests are in flight
 - Shared accessible confirmation dialogs
-- Accessible Media Library upload controls and recovery feedback
+- Accessible Media Library upload controls, normalized filename collision checks and partial-upload recovery feedback
 - GitHub Actions syntax, regression, HTML, link, asset, metadata and sitemap validation
 
 Known limitations to verify:
@@ -58,8 +59,11 @@ Known limitations to verify:
 - [x] Bulk Content Manager publish/delete and safe Media Library move-to-trash; server-side usage checks skip referenced files.
 - [x] Authenticated CSV export for all active enquiries with spreadsheet formula-injection protection.
 - [x] Protect unsaved Content Manager, page editor and SEO editor changes from accidental in-app navigation; confirm destructive refreshes.
-- [x] Preserve unsaved shared website settings on navigation and save them before publishing.
-- [x] Improve Media Library upload accessibility and partial-batch failure feedback.
+- [x] Preserve unsaved shared website settings on navigation, prevent edits racing with load/save/publish, and save changes before publishing.
+- [x] Prevent collection navigation and in-flight refreshes from overwriting local edits; reuse loaded collections and protect edit selection.
+- [x] Improve Media Library upload accessibility, normalized filename collision detection and partial-batch failure feedback.
+- [x] Advance enquiry pagination using the server-returned page size, even when duplicate records are filtered.
+- [x] Show the publishing calendar's local timezone and prevent selecting past schedule times.
 - [ ] Consistent empty/loading/error states across every module.
 
 ### Phase 2 — Content operations
