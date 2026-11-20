@@ -278,10 +278,10 @@ test("site settings publish all changed public pages in one atomic Git commit", 
   assert.ok(cssBlob);
   assert.match(cssBlob.content, /--red:#2b6cb0/);
   assert.match(cssBlob.content, /--brand-font:Georgia/);
-  assert.match(cssBlob.content, /rgba\\(var\\(--red-rgb\\),/);
-  const pageBlob = github.atomic.blobs.find(item => String(item.content || "").includes("class=\\"brand-logo\\""));
+  assert.ok(cssBlob.content.includes("rgba(var(--red-rgb),"));
+  const pageBlob = github.atomic.blobs.find(item => String(item.content || "").includes('class="brand-logo"'));
   assert.ok(pageBlob);
-  assert.match(pageBlob.content, /src=\\"\\/assets\\/uploads\\/brand\\.png\\"/);
+  assert.ok(pageBlob.content.includes('src="/assets/uploads/brand.png"'));
   assert.deepEqual((await env.DRAFTS.get("site-settings:live", "json")).brand, settings.brand);
 
 });
