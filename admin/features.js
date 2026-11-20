@@ -9,7 +9,7 @@
   function renderMediaLibrary(){
     const grid=$("media-library-grid");if(!grid)return;grid.replaceChildren();
     const items=mediaItems.filter(item=>item.name.toLowerCase().includes(mediaSearch));
-    items.sort((a,b)=>mediaSort==="name"?a.name.localeCompare(b.name):mediaSort==="size"?b.size-a.size:mediaSort==="oldest"?a.name.localeCompare(b.name):b.name.localeCompare(a.name));
+    items.sort((a,b)=>mediaSort==="name-az"?a.name.localeCompare(b.name):mediaSort==="size"?b.size-a.size:b.name.localeCompare(a.name));
     const toolbar=document.createElement("div");toolbar.className="media-bulk-toolbar";
     const selectAll=document.createElement("input");selectAll.type="checkbox";selectAll.setAttribute("aria-label","Select all visible media files");
     const selectLabel=document.createElement("label");selectLabel.append(selectAll,document.createTextNode(" Select visible"));
