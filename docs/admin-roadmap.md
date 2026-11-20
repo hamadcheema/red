@@ -62,7 +62,7 @@ Known limitations to verify:
 
 ### Phase 3 — Security and recovery
 - [x] Successful admin login and logout events in the audit timeline (failed/expired attempts remain unrecorded).
-- [ ] Individual session revocation.
+- [x] Individual admin session revocation using temporary SHA-256 fingerprints; the current session is protected and cookie tokens are never returned to the browser.
 - [ ] Stronger CSRF/origin and rate-limit review.
 - [x] Exportable audit history (CSV of up to the latest 500 retained events); automated security alerts remain planned.
 - [ ] Backup restore drill and documented recovery point objectives.
