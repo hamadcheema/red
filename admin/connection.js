@@ -128,17 +128,18 @@
       if(names.some(name=>name.startsWith("."))){say($("media-status"),"Please enter a name for each image.",true);return}
       if(new Set(names).size!==names.length){say($("media-status"),"Each uploaded image must have a unique filename. Rename one of the files first.",true);return}
       button.disabled=true;button.textContent="Uploading…";
+      let uploaded=0;
       try{
         const urls=[];
         while(selectedFiles.length){
           const item=selectedFiles[0],file=item.file;
           const data=await new Promise((resolve,reject)=>{const reader=new FileReader();reader.onload=()=>resolve(reader.result);reader.onerror=reject;reader.readAsDataURL(file)});
           const finalName=uploadFilename(item);const out=await call("/media/upload",{method:"POST",body:JSON.stringify({name:finalName,type:file.type,base64:data})});
-          urls.push(out.url);const completed=selectedFiles.shift();if(completed)URL.revokeObjectURL(completed.previewUrl);renderUploadQueue();
+          urls.push(out.url);uploaded++;const completed=selectedFiles.shift();if(completed)URL.revokeObjectURL(completed.previewUrl);renderUploadQueue();
         }
         say($("media-status"),"Upload complete. "+urls.length+" image(s) added to Uploaded images.");
         window.dispatchEvent(new Event("trs:media-updated"));
-      }catch(error){say($("media-status"),error.message+" Remaining files are still queued.",true)}
+      }catch(error){if(uploaded)window.dispatchEvent(new Event("trs:media-updated"));say($("media-status"),(uploaded?uploaded+" image(s) uploaded. ":"")+error.message+" Remaining files are still queued.",true)}
       finally{button.disabled=false;button.textContent="Upload to website"}
     });
     renderUploadQueue();
