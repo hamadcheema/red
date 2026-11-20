@@ -2,7 +2,7 @@
 
 Last reviewed: 2026-11-20
 Repository: https://github.com/hamadcheema/red
-Baseline: main commit 552fdd73baea082d6d4c76b8e39bc307adad3576
+Baseline: main branch, reviewed after the 2026-11-20 Admin Panel reliability pass
 
 ## Product direction
 
@@ -21,7 +21,9 @@ Already present in the repository:
 - Website preview and shared site settings
 - Health checks and admin session controls, including individual session revocation
 - Content Manager bulk operations and safe media move-to-trash
+- Unsaved-change protection for Content Manager, page editor, SEO editor and shared website settings
 - Shared accessible confirmation dialogs
+- Accessible Media Library upload controls and recovery feedback
 - GitHub Actions syntax, regression, HTML, link, asset, metadata and sitemap validation
 
 Known limitations to verify:
@@ -55,6 +57,9 @@ Known limitations to verify:
 - [ ] General undo for other safe draft actions.
 - [x] Bulk Content Manager publish/delete and safe Media Library move-to-trash; server-side usage checks skip referenced files.
 - [x] Authenticated CSV export for all active enquiries with spreadsheet formula-injection protection.
+- [x] Protect unsaved Content Manager, page editor and SEO editor changes from accidental in-app navigation; confirm destructive refreshes.
+- [x] Preserve unsaved shared website settings on navigation and save them before publishing.
+- [x] Improve Media Library upload accessibility and partial-batch failure feedback.
 - [ ] Consistent empty/loading/error states across every module.
 
 ### Phase 2 — Content operations
