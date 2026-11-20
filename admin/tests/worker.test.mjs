@@ -47,6 +47,7 @@ function installGitHubMock({ pages = {}, deleted = [], updated = [] } = {}) {
     if (pathname.endsWith("/git/ref/heads/main")) return json({ object: { sha: "a".repeat(40) } });
     if (pathname.endsWith("/git/commits/" + "a".repeat(40))) return json({ tree: { sha: "b".repeat(40) } });
     if (pathname.endsWith("/git/blobs") && init.method === "POST") return json({ sha: "b".repeat(40) });
+    if (pathname.includes("/git/blobs/")) return json({ encoding: "base64", content: Buffer.from("test image bytes").toString("base64") });
     if (pathname.endsWith("/git/trees") && init.method === "POST") { atomic.trees.push(JSON.parse(init.body)); return json({ sha: "c".repeat(40) }); }
     if (pathname.endsWith("/git/commits") && init.method === "POST") { atomic.commits.push(JSON.parse(init.body)); return json({ sha: "d".repeat(40) }); }
     if (pathname.endsWith("/git/refs/heads/main") && init.method === "PATCH") { atomic.refs.push(JSON.parse(init.body)); return json({ object: { sha: "d".repeat(40) } }); }
@@ -302,7 +303,7 @@ test("inquiry pagination returns older records without losing total counts", asy
 test("malformed public enquiry JSON returns a 400 without leaking parser errors", async () => {
   const env = makeEnv();
   const request = new Request(ORIGIN + "/admin-api/inquiries", { method: "POST", headers: { origin: ORIGIN, "content-type": "application/json" }, body: "{" });
-  const response = await worker.__run(request, env);
+  const response = await worker.default.fetch(request, env);
   const result = await response.json();
   assert.equal(response.status, 400);
   assert.equal(result.error, "Invalid JSON body.");
