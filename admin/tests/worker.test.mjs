@@ -40,13 +40,13 @@ const json = (value, status = 200) => new Response(JSON.stringify(value), {
 });
 
 function installGitHubMock({ pages = {}, deleted = [], updated = [] } = {}) {
-  const atomic = { trees: [], commits: [], refs: [] };
+  const atomic = { blobs: [], trees: [], commits: [], refs: [] };
   globalThis.fetch = async (input, init = {}) => {
     const url = new URL(input);
     const pathname = url.pathname;
     if (pathname.endsWith("/git/ref/heads/main")) return json({ object: { sha: "a".repeat(40) } });
     if (pathname.endsWith("/git/commits/" + "a".repeat(40))) return json({ tree: { sha: "b".repeat(40) } });
-    if (pathname.endsWith("/git/blobs") && init.method === "POST") return json({ sha: "b".repeat(40) });
+    if (pathname.endsWith("/git/blobs") && init.method === "POST") { atomic.blobs.push(JSON.parse(init.body)); return json({ sha: "b".repeat(40) }); }
     if (pathname.includes("/git/blobs/")) return json({ encoding: "base64", content: Buffer.from("test image bytes").toString("base64") });
     if (pathname.endsWith("/git/trees") && init.method === "POST") { atomic.trees.push(JSON.parse(init.body)); return json({ sha: "c".repeat(40) }); }
     if (pathname.endsWith("/git/commits") && init.method === "POST") { atomic.commits.push(JSON.parse(init.body)); return json({ sha: "d".repeat(40) }); }
@@ -250,7 +250,7 @@ test("inquiry listing reports all stored counts while returning only the latest 
 
 
 test("site settings publish all changed public pages in one atomic Git commit", async () => {
-  const page = '<!doctype html><html><head><title>Test</title></head><body><a href="mailto:admin@theredsparrow.online">admin@theredsparrow.online</a><a href="mailto:hammad@theredsparrow.online">hammad@theredsparrow.online</a><p>Independent Unity game development.</p></body></html>';
+  const page = '<!doctype html><html><head><title>Test</title></head><body><section data-trs-section="hero"><h1>Hero stays</h1></section><section data-trs-section="intro">Intro stays</section><section data-trs-section="services">Services stay</section><section data-trs-section="workflow">Workflow stays</section><section data-trs-section="contact">Contact stays</section><a href="mailto:admin@theredsparrow.online">admin@theredsparrow.online</a><a href="mailto:hammad@theredsparrow.online">hammad@theredsparrow.online</a><p>Independent Unity game development.</p></body></html>';
   const pages = Object.fromEntries(["index.html", "about.html", "services.html", "contact.html", "privacy.html", "terms.html"].map(path => [path, page]));
   const github = installGitHubMock({ pages });
   const env = makeEnv();
@@ -471,4 +471,35 @@ test("public enquiries store an HMAC of the visitor IP instead of a plain hash",
   assert.equal(keys.length, 1);
   assert.match(keys[0], /^inquiry-rate:[a-f0-9]{64}:[0-9]{4}-[0-9]{2}-[0-9]{2}$/);
   assert.equal(keys[0].includes("203.0.113.44"), false);
+});
+
+test("website section visibility hides sections without removing their content", async () => {
+  const page = '<html><head></head><body><section data-trs-section="hero"><h1>Hero stays</h1></section><section data-trs-section="intro">Intro stays</section><section data-trs-section="services">Services stay</section><section data-trs-section="workflow">Workflow stays</section><section data-trs-section="contact">Contact stays</section><!-- ADMIN:projects:START --><!-- ADMIN:projects:END --><!-- ADMIN:social:START --><!-- ADMIN:social:END --><!-- ADMIN:brands:START --><!-- ADMIN:brands:END --></body></html>';
+  const github = installGitHubMock({ pages: { "index.html": page } });
+  const env = makeEnv();
+  const visibility = { hero: false, intro: true, services: false, projects: true, social: true, brands: true, workflow: true, contact: false };
+  const saved = await call("/site-settings", { method: "POST", body: {
+    contactEmail: "admin@theredsparrow.online", directEmail: "hammad@theredsparrow.online",
+    tagline: "Independent Unity game development.", sectionVisibility: visibility
+  } }, env);
+  assert.equal(saved.status, 200);
+  const published = await call("/publish/site-settings", { method: "POST", body: {} }, env);
+  assert.equal(published.status, 200);
+  const blob = github.atomic.blobs.find(item => Buffer.from(item.content || "", "base64").toString("utf8").includes("Hero stays"));
+  assert.ok(blob);
+  const html = Buffer.from(blob.content, "base64").toString("utf8");
+  assert.match(html, /data-trs-section="hero" style="display:none" hidden><h1>Hero stays<\/h1>/);
+  assert.match(html, /data-trs-section="intro">Intro stays<\/section>/);
+  assert.match(html, /data-trs-section="services" style="display:none" hidden>Services stay<\/section>/);
+  assert.match(html, /data-trs-section="contact" style="display:none" hidden>Contact stays<\/section>/);
+  assert.deepEqual((await env.DRAFTS.get("site-settings:live", "json")).sectionVisibility, visibility);
+});
+
+test("website section visibility rejects unknown keys and non-boolean values", async () => {
+  const env = makeEnv();
+  const invalid = await call("/site-settings", { method: "POST", body: {
+    contactEmail: "admin@theredsparrow.online", directEmail: "hammad@theredsparrow.online",
+    tagline: "Independent Unity game development.", sectionVisibility: { unknown: false }
+  } }, env);
+  assert.equal(invalid.status, 400);
 });
