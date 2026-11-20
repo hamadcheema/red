@@ -45,6 +45,16 @@ test("page and SEO drafts use the authenticated remote API without duplicate loc
   assert.match(features, /dataset\.pendingRemoteValue/);
 });
 
+test("Media Library supports safe bulk selection and trash operations", () => {
+  assert.match(features, /const selectedMediaPaths=new Set\(\)/);
+  assert.match(features, /Select all visible media files/);
+  assert.match(features, /Move selected to trash/);
+  assert.match(features, /await request\("\/media\/delete"/);
+  assert.match(features, /selectedMediaPaths\.forEach\(path=>\{if\(!availablePaths\.has\(path\)\)selectedMediaPaths\.delete\(path\)\}\)/);
+  assert.match(worker, /This image is still referenced by:/);
+  assert.match(controlCss, /\.media-bulk-toolbar/);
+});
+
 test("destructive admin actions use the shared accessible confirmation dialog", () => {
   assert.match(admin, /window\.trsConfirm = \(message, options = \{\}\) => new Promise/);
   assert.match(admin, /dialog\.showModal\(\)/);
