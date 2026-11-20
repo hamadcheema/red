@@ -92,6 +92,13 @@ test("page and SEO editor baselines update after successful saves and publishing
   assert.match(connection, /const syncSeoBaseline=/);
 });
 
+test("page and SEO draft resets require confirmation and lock the editors", () => {
+  assert.match(connection, /Delete the saved page draft and restore the published copy\?/);
+  assert.match(connection, /Delete the saved SEO draft and restore the published metadata\?/);
+  assert.match(connection, /reset\.disabled=true;pf\.inert=true/);
+  assert.match(connection, /reset\.disabled=true;sf\.inert=true/);
+});
+
 test("page and SEO editors are locked during asynchronous save and publish operations", () => {
   assert.match(connection, /pf\.inert=true/);
   assert.match(connection, /sf\.inert=true/);
