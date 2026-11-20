@@ -29,7 +29,7 @@
     });
     toolbar.append(selectLabel,count,bulkDelete);
     const panel=grid.parentElement;if(panel){let existing=$("media-bulk-toolbar");if(existing)existing.replaceWith(toolbar);else panel.insertBefore(toolbar,grid);toolbar.id="media-bulk-toolbar"}
-    if(!items.length){const empty=document.createElement("p");empty.className="editor-footnote";empty.textContent=mediaItems.length?"No files match your search.":"No uploaded images yet. Upload an image above to add it here.";grid.append(empty);return}
+    if(!items.length){const empty=document.createElement("p");empty.className="editor-footnote";empty.textContent=mediaItems.length?"No files match your filters.":"No uploaded images yet. Upload an image above to add it here.";grid.append(empty);if(mediaItems.length){const clear=document.createElement("button");clear.type="button";clear.className="secondary-button";clear.textContent="Clear filters";clear.addEventListener("click",()=>{mediaSearch="";mediaType="all";const search=$("media-search"),filter=$("media-type-filter");if(search)search.value="";if(filter)filter.value="all";renderMediaLibrary()});grid.append(clear)}return}
     for(const item of items){
       const card=document.createElement("article");card.className="asset-card";
       const select=document.createElement("input");select.type="checkbox";select.className="media-select";select.checked=selectedMediaPaths.has(item.path);select.setAttribute("aria-label","Select "+item.name);select.addEventListener("change",()=>{select.checked?selectedMediaPaths.add(item.path):selectedMediaPaths.delete(item.path);renderMediaLibrary()});card.append(select);
