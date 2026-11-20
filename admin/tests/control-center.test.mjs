@@ -169,3 +169,11 @@ test("successful admin sign-in and sign-out are recorded in the audit timeline",
   assert.match(worker, /audit\(env,who\.login,"logout","Admin session ended"\)/);
   assert.match(control, /\["security","Security actions"\]/);
 });
+
+
+test("activity timeline can retrieve up to 500 audit events with a bounded API limit", () => {
+  assert.match(worker, /searchParams\.get\("limit"\)/);
+  assert.match(worker, /Math\.min\(500/);
+  assert.match(worker, /slice\(0,limit\)/);
+  assert.match(control, /call\("\/audit\?limit=500"\)/);
+});
