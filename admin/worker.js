@@ -93,7 +93,7 @@ async function publishCollection(env,kind,items,actor="system",options={}){
  const previousItems=await env.DRAFTS.get("collection:"+kind,"json")||[];
  const path="index.html",old=await readFile(env,path),start="<!-- ADMIN:"+kind+":START -->",end="<!-- ADMIN:"+kind+":END -->",begin=old.content.indexOf(start),finish=old.content.indexOf(end,begin);
  if(begin<0||finish<0)throw Error("Homepage content markers are missing.");
- const next=old.content.slice(0,begin)+collectionMarkup(kind,items)+old.content.slice(finish+end.length);
+ const next=applySectionVisibility(old.content.slice(0,begin)+collectionMarkup(kind,items)+old.content.slice(finish+end.length), (await siteSettings(env)).sectionVisibility);
  const out=await writeFile(env,path,next,old.sha,"Publish "+kind+" collection from "+actor);
  if(Array.isArray(previousItems)&&previousItems.length&&JSON.stringify(previousItems)!==JSON.stringify(items)){const id=crypto.randomUUID(),snapshot={id,kind,items:previousItems,count:previousItems.length,deletedAt:new Date().toISOString()};await env.DRAFTS.put("trash:content:"+id,JSON.stringify(snapshot),{expirationTtl:604800})}
  await env.DRAFTS.put("collection:"+kind,JSON.stringify(items));
