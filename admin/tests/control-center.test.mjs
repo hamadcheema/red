@@ -53,6 +53,11 @@ test("homepage history restore errors are announced in the homepage history pane
   assert.match(connection, /say\(homepageHistoryList,"Could not restore homepage:/);
 });
 
+test("editing an existing content item resolves its relative media path to the Media Library URL", () => {
+  assert.match(features, /new URL\(item\.image,location\.origin\+"\/"\)\.href/);
+  assert.match(features, /option\.value\)\?selected:""/);
+});
+
 test("Media Library supports safe bulk selection and trash operations", () => {
   assert.match(features, /const selectedMediaPaths=new Set\(\)/);
   assert.match(features, /Select all visible media files/);
