@@ -177,6 +177,12 @@ test("admin HTML IDs remain unique and all admin scripts are loaded", () => {
   for (const script of ["admin.js", "features.js", "control-center.js", "connection.js"]) assert.ok(html.includes(script));
 });
 
+test("Control Center data modules show loading feedback before requests complete", () => {
+  for (const label of ["Loading dashboard data…","Loading scheduled publications…","Loading enquiries…","Loading activity events…","Loading notifications…","Running health checks…","Loading repository assets…","Loading active sessions…","Loading saved website settings…"]) {
+    assert.ok(control.includes(label), "missing loading state: " + label);
+  }
+});
+
 test("publishing calendar labels are explicitly associated with their controls", () => {
   assert.match(control, /kindLabel\.htmlFor=kind\.id/);
   assert.match(control, /dateLabel\.htmlFor=date\.id/);
