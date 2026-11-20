@@ -542,7 +542,7 @@ test("inquiry CSV export includes every active record and safely quotes spreadsh
   assert.match(response.headers.get("content-type"), /text\/csv; charset=utf-8/i);
   assert.match(response.headers.get("content-disposition"), /attachment; filename="the-red-sparrow-enquiries\.csv"/);
   assert.equal(response.headers.get("cache-control"), "no-store");
-  const csv = await response.text();
+  const csv = Buffer.from(await response.arrayBuffer()).toString("utf8");
   assert.ok(csv.startsWith("\uFEFFid,name,email,subject,message,status,createdAt,updatedAt\r\n"));
   assert.ok(csv.includes('"\'=1+1"'), "formula-like cells are prefixed with an apostrophe");
   assert.ok(csv.includes('"Quoted, ""subject"""'), "quotes and commas are escaped");
