@@ -341,3 +341,17 @@ test("unused media can be moved to trash and restored", async () => {
   assert.ok(github.deleted.includes("assets/trash/" + trash.items[0].id + "-unused.jpg"));
   assert.equal((await env.DRAFTS.get("trash:media:" + trash.items[0].id)), null);
 });
+
+
+test("publishing selected collection items preserves unselected draft items", async () => {
+  const github = installGitHubMock({ pages: { "index.html": '<!doctype html><!-- ADMIN:projects:START --><!-- ADMIN:projects:END -->' } });
+  const live = [{ id: "11111111-1111-4111-8111-111111111111", title: "Live", description: "Live item", image: "/assets/uploads/live.jpg", url: "" }];
+  const selected = [{ id: "22222222-2222-4222-8222-222222222222", title: "Selected", description: "Publish this", image: "/assets/uploads/selected.jpg", url: "" }];
+  const remaining = [{ id: "33333333-3333-4333-8333-333333333333", title: "Keep draft", description: "Do not publish yet", image: "/assets/uploads/draft.jpg", url: "" }];
+  const env = makeEnv({ "collection:projects": live, "collection-draft:projects": [...live, ...selected, ...remaining] });
+  const response = await call("/publish/content", { method: "POST", body: { kind: "projects", items: [...live, ...selected], preserveDraft: true, remainingDraft: remaining } }, env);
+  assert.equal(response.status, 200);
+  assert.deepEqual(await env.DRAFTS.get("collection:projects", "json"), [...live, ...selected]);
+  assert.deepEqual(await env.DRAFTS.get("collection-draft:projects", "json"), [...live, ...selected, ...remaining]);
+  assert.equal(github.updated.some(x => x.path === "index.html"), true);
+});
