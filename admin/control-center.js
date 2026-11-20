@@ -164,8 +164,10 @@
   async function updateInquiry(id,state,root){
     try{
       await call("/inquiries/update",{method:"POST",body:JSON.stringify({id,state})});
+      const item=inquiryItems.find(entry=>entry.id===id);
+      if(item){const oldState=item.status;item.status=state;if(oldState==="new"&&state==="read")inquiryData.unread=Math.max(0,(inquiryData.unread||0)-1);if(oldState==="archived"&&state!=="archived")inquiryData.archived=Math.max(0,(inquiryData.archived||0)-1);if(oldState!=="archived"&&state==="archived")inquiryData.archived=(inquiryData.archived||0)+1;}
       if(state==="archived"||(state==="read"&&inquiryFolder==="archived"))selectedInquiryId=null;
-      await loadInquiries();
+      renderInbox();
       status($("view-inquiries")?.querySelector(".control-content")||root,state==="archived"?"Enquiry archived.":inquiryFolder==="archived"?"Enquiry restored to Inbox.":"Enquiry marked as read.");
     }catch(e){status(root,e.message,true)}
   }

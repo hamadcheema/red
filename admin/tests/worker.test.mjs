@@ -16,15 +16,17 @@ class MockKV {
   constructor(initial = {}, { failAudit = false } = {}) {
     this.values = new Map(Object.entries(initial).map(([key, value]) => [key, typeof value === "string" ? value : JSON.stringify(value)]));
     this.failAudit = failAudit;
+    this.putOptions = new Map();
   }
   async get(key, type) {
     const value = this.values.get(key);
     if (value === undefined) return null;
     return type === "json" ? JSON.parse(value) : value;
   }
-  async put(key, value) {
+  async put(key, value, options) {
     if (this.failAudit && key.startsWith("audit:")) throw new Error("simulated KV audit outage");
     this.values.set(key, String(value));
+    if (options) this.putOptions.set(key, options);
   }
   async delete(key) { this.values.delete(key); }
   async list({ prefix = "", limit = 1000 } = {}) {
@@ -278,6 +280,7 @@ test("publishing a collection clears its stale draft snapshot", async () => {
   assert.equal(response.status, 200);
   assert.equal(await env.DRAFTS.get("collection-draft:projects", "json"), null);
   assert.deepEqual(await env.DRAFTS.get("collection:projects", "json"), items);
+  assert.equal(env.DRAFTS.putOptions.has("collection:projects"), false, "published collection snapshots must not expire");
 });
 
 test("inquiry pagination returns older records without losing total counts", async () => {
@@ -293,4 +296,24 @@ test("inquiry pagination returns older records without losing total counts", asy
   assert.equal(result.offset, 100);
   assert.equal(result.items.length, 5);
   assert.equal(result.hasMore, false);
+});
+
+
+test("malformed public enquiry JSON returns a 400 without leaking parser errors", async () => {
+  const env = makeEnv();
+  const request = new Request(ORIGIN + "/admin-api/inquiries", { method: "POST", headers: { origin: ORIGIN, "content-type": "application/json" }, body: "{" });
+  const response = await worker.__run(request, env);
+  const result = await response.json();
+  assert.equal(response.status, 400);
+  assert.equal(result.error, "Invalid JSON body.");
+});
+
+test("content endpoint reports whether the saved draft differs from published content", async () => {
+  const published = [{ title: "Live", description: "Live description", image: ORIGIN + "/assets/uploads/live.jpg", url: "" }];
+  const draft = [{ title: "Draft", description: "Changed description", image: ORIGIN + "/assets/uploads/live.jpg", url: "" }];
+  const env = makeEnv({ "collection:projects": published, "collection-draft:projects": draft });
+  const response = await call("/content?kind=projects", {}, env);
+  const result = await response.json();
+  assert.equal(response.status, 200);
+  assert.equal(result.draftChanged, true);
 });

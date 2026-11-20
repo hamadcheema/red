@@ -25,7 +25,7 @@
     if(pill)pill.textContent="CHECKING";
     try{
       const s=await call("/status");
-      if(!s.ok||s.admin!=="hamadcheema")throw new Error("The server returned an unexpected admin identity.");
+      if(!s.ok||!s.authorized)throw new Error("The server returned an unexpected admin identity.");
       const app=$("admin-app"),gate=$("auth-gate");
       if(app)app.hidden=false;
       if(gate)gate.hidden=true;
