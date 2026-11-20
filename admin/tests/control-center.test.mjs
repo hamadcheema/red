@@ -45,6 +45,10 @@ test("page and SEO drafts use the authenticated remote API without duplicate loc
   assert.match(features, /dataset\.pendingRemoteValue/);
 });
 
+test("activity enquiry category includes singular and plural enquiry audit actions", () => {
+  assert.match(control, /kind\.value==="inquiry"&&\/\(inquir\|enquir\)\/\.test\(action\)/);
+});
+
 test("homepage history restore errors are announced in the homepage history panel", () => {
   assert.match(connection, /say\(homepageHistoryList,"Could not restore homepage:/);
 });
