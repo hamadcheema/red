@@ -158,6 +158,12 @@ test("admin HTML IDs remain unique and all admin scripts are loaded", () => {
   for (const script of ["admin.js", "features.js", "control-center.js", "connection.js"]) assert.ok(html.includes(script));
 });
 
+test("inquiry pagination advances by the server-returned page size even when duplicate IDs are filtered", () => {
+  assert.match(control, /deletedOffset=offset\+pageItems\.length/);
+  assert.match(control, /inquiryOffset=offset\+pageItems\.length/);
+  assert.match(control, /pageItems\.filter\(x=>!seen\.has\(x\.id\)\)/);
+});
+
 test("inquiry Today filter uses Pakistan local calendar date", () => {
   assert.match(control, /timeZone:"Asia\/Karachi"/);
   assert.match(control, /karachiDate\(stamp\)===karachiDate\(now\)/);
