@@ -75,6 +75,8 @@ test("website settings preserve local edits and save them before publishing", ()
   assert.match(control, /form\.addEventListener\("input",\(\)=>\{window\.trsSiteSettingsDirty=true\}\)/);
   assert.match(control, /if\(window\.trsSiteSettingsDirty\)await saveSettingsDraft\(\)/);
   assert.match(control, /window\.trsSiteSettingsDirty=false/);
+  assert.match(control, /form\.inert=true/);
+  assert.match(control, /form\.inert=false/);
 });
 
 test("page and SEO editor baselines update after successful saves and publishing", () => {
