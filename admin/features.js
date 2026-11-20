@@ -5,13 +5,34 @@
   const showError=(el,error)=>{if(el)el.textContent="Could not load data: "+error.message};
   const sayMediaStatus=(message,bad=false)=>{const el=$("media-status");if(el){el.textContent=message;el.style.color=bad?"#f18b83":""}};
   let mediaItems=[],mediaSearch="",mediaSort="newest";
+  const selectedMediaPaths=new Set();
   function renderMediaLibrary(){
     const grid=$("media-library-grid");if(!grid)return;grid.replaceChildren();
     const items=mediaItems.filter(item=>item.name.toLowerCase().includes(mediaSearch));
     items.sort((a,b)=>mediaSort==="name"?a.name.localeCompare(b.name):mediaSort==="size"?b.size-a.size:mediaSort==="oldest"?a.name.localeCompare(b.name):b.name.localeCompare(a.name));
+    const toolbar=document.createElement("div");toolbar.className="media-bulk-toolbar";
+    const selectAll=document.createElement("input");selectAll.type="checkbox";selectAll.setAttribute("aria-label","Select all visible media files");
+    const selectLabel=document.createElement("label");selectLabel.append(selectAll,document.createTextNode(" Select visible"));
+    const count=document.createElement("span");count.className="editor-footnote";count.textContent=selectedMediaPaths.size+" selected";
+    const bulkDelete=document.createElement("button");bulkDelete.type="button";bulkDelete.className="manager-delete";bulkDelete.textContent="Move selected to trash";bulkDelete.disabled=selectedMediaPaths.size===0;
+    selectAll.checked=items.length>0&&items.every(item=>selectedMediaPaths.has(item.path));
+    selectAll.indeterminate=items.some(item=>selectedMediaPaths.has(item.path))&&!selectAll.checked;
+    selectAll.addEventListener("change",()=>{items.forEach(item=>selectAll.checked?selectedMediaPaths.add(item.path):selectedMediaPaths.delete(item.path));renderMediaLibrary()});
+    bulkDelete.addEventListener("click",async()=>{
+      const paths=[...selectedMediaPaths];if(!paths.length)return;
+      if(!await window.trsConfirm("Move "+paths.length+" selected image(s) to Recently deleted? Images still used by website content will be skipped.",{title:"Move selected images to trash",confirmLabel:"Move to trash"}))return;
+      bulkDelete.disabled=true;bulkDelete.textContent="Moving…";
+      let moved=0;const failed=[];
+      for(const path of paths){try{await request("/media/delete",{method:"POST",body:JSON.stringify({path})});selectedMediaPaths.delete(path);moved++}catch(error){const item=mediaItems.find(x=>x.path===path);failed.push((item?.name||path)+": "+error.message)}}
+      await loadMedia();await loadMediaTrash();window.dispatchEvent(new Event("trs:media-updated"));
+      sayMediaStatus(moved+" image(s) moved to trash."+(failed.length?" "+failed.length+" skipped: "+failed.slice(0,3).join("; ")+(failed.length>3?"…":""):""),failed.length>0);
+    });
+    toolbar.append(selectLabel,count,bulkDelete);
+    const panel=grid.parentElement;if(panel){let existing=$("media-bulk-toolbar");if(existing)existing.replaceWith(toolbar);else panel.insertBefore(toolbar,grid);toolbar.id="media-bulk-toolbar"}
     if(!items.length){const empty=document.createElement("p");empty.className="editor-footnote";empty.textContent=mediaItems.length?"No files match your search.":"No uploaded images yet. Upload an image above to add it here.";grid.append(empty);return}
     for(const item of items){
       const card=document.createElement("article");card.className="asset-card";
+      const select=document.createElement("input");select.type="checkbox";select.className="media-select";select.checked=selectedMediaPaths.has(item.path);select.setAttribute("aria-label","Select "+item.name);select.addEventListener("change",()=>{select.checked?selectedMediaPaths.add(item.path):selectedMediaPaths.delete(item.path);renderMediaLibrary()});card.append(select);
       const art=document.createElement("div");art.className="asset-art";const img=document.createElement("img");img.src=item.previewUrl||item.url;img.alt=item.name;img.loading="lazy";art.append(img);
       const info=document.createElement("div");info.className="asset-info";const name=document.createElement("strong");name.textContent=item.name;
       const meta=document.createElement("small");meta.textContent=(item.size/1024).toFixed(1)+" KB · assets/uploads/";
