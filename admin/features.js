@@ -4,12 +4,12 @@
   const request=async(path,options={})=>{const r=await fetch(API+path,{credentials:"include",...options,headers:{"content-type":"application/json",accept:"application/json",...(options.headers||{})}});const d=await r.json().catch(()=>({}));if(!r.ok)throw new Error(d.error||"Request failed ("+r.status+")");return d};
   const showError=(el,error)=>{if(el){el.textContent="Could not load data: "+error.message;el.setAttribute("role","alert");el.setAttribute("aria-live","assertive")}};
   const sayMediaStatus=(message,bad=false)=>{const el=$("media-status");if(el){el.textContent=message;el.style.color=bad?"#f18b83":""}};
-  let mediaItems=[],mediaSearch="",mediaSort="newest";
+  let mediaItems=[],mediaSearch="",mediaSort="name-za",mediaType="all";
   const selectedMediaPaths=new Set();
   function renderMediaLibrary(){
     const grid=$("media-library-grid");if(!grid)return;grid.replaceChildren();
-    const items=mediaItems.filter(item=>item.name.toLowerCase().includes(mediaSearch));
-    items.sort((a,b)=>mediaSort==="name-az"?a.name.localeCompare(b.name):mediaSort==="size"?b.size-a.size:b.name.localeCompare(a.name));
+    const items=mediaItems.filter(item=>{const name=item.name.toLowerCase(),ext=name.split(".").pop()||"";return name.includes(mediaSearch)&&(mediaType==="all"||(mediaType==="jpeg"?["jpg","jpeg"].includes(ext):ext===mediaType))});
+    items.sort((a,b)=>mediaSort==="name-az"?a.name.localeCompare(b.name):mediaSort==="size"?b.size-a.size:a.name.localeCompare(b.name)*-1);
     const toolbar=document.createElement("div");toolbar.className="media-bulk-toolbar";
     const selectAll=document.createElement("input");selectAll.type="checkbox";selectAll.setAttribute("aria-label","Select all visible media files");
     const selectLabel=document.createElement("label");selectLabel.append(selectAll,document.createTextNode(" Select visible"));
@@ -177,6 +177,7 @@
   $("media-library-refresh")?.addEventListener("click",loadMedia);
   $("media-search")?.addEventListener("input",event=>{mediaSearch=event.target.value.trim().toLowerCase();renderMediaLibrary()});
   $("media-sort")?.addEventListener("change",event=>{mediaSort=event.target.value;renderMediaLibrary()});
+  $("media-type-filter")?.addEventListener("change",event=>{mediaType=event.target.value;renderMediaLibrary()});
   $("media-trash-refresh")?.addEventListener("click",loadMediaTrash);
   $("clear-page-image")?.addEventListener("click",()=>{const picker=$("edit-image");if(picker){picker.value="";picker.dispatchEvent(new Event("change",{bubbles:true}))}});
   $("edit-image")?.addEventListener("change",()=>{const picker=$("edit-image"),url=picker.value,previewUrl=picker.selectedOptions[0]?.dataset.previewUrl||url,wrap=$("selected-image-preview"),img=$("selected-image");if(wrap)wrap.hidden=!url;if(img){img.src=previewUrl;img.hidden=!url}});
