@@ -148,6 +148,38 @@ if(req.method==="POST"&&r==="inquiries"){
 
 const who=await session(req,env);if(!who)return response({error:"Please sign in with the authorized GitHub account.",loginRequired:true},401);
 
+if(req.method==="GET"&&r==="search"){
+ const query=String(u.searchParams.get("q")||"").trim().toLowerCase();
+ if(query.length<2||query.length>100)return response({error:"Enter between 2 and 100 characters to search."},400);
+ const results=[];
+ const add=(type,title,description,detail,at,view)=>{
+  const haystack=[title,description,detail].filter(Boolean).join(" ").toLowerCase();
+  if(!haystack.includes(query))return;
+  results.push({type,title:String(title||"").slice(0,140),description:String(description||"").slice(0,240),detail:String(detail||"").slice(0,180),at:at||null,view});
+ };
+ let inquiryCursor,inquiryKeys=[];
+ do{const page=await env.DRAFTS.list({prefix:"inquiry:",limit:1000,...(inquiryCursor?{cursor:inquiryCursor}:{})});inquiryKeys.push(...page.keys);inquiryCursor=page.list_complete?null:page.cursor}while(inquiryCursor);
+ const inquiries=await Promise.all(inquiryKeys.map(k=>env.DRAFTS.get(k.name,"json")));
+ for(const item of inquiries){if(item&&item.status!=="deleted")add("Enquiry",item.subject||"Website enquiry",item.message,[item.name,item.email].join(" · "),item.createdAt,"inquiries")}
+ for(const kind of Object.keys(collectionKinds)){
+  const [published,draft]=await Promise.all([env.DRAFTS.get("collection:"+kind,"json"),env.DRAFTS.get("collection-draft:"+kind,"json")]);
+  const byId=new Map();
+  for(const item of [...(Array.isArray(published)?published:[]),...(Array.isArray(draft)?draft:[])])if(item&&item.id)byId.set(item.id,item);
+  for(const item of byId.values())add(kind==="projects"?"Project":kind==="social"?"Social preview":"Brand asset",item.title,item.description,item.image,null,"content-manager");
+ }
+ let auditCursor,auditKeys=[];
+ do{const page=await env.DRAFTS.list({prefix:"audit:",limit:1000,...(auditCursor?{cursor:auditCursor}:{})});auditKeys.push(...page.keys);auditCursor=page.list_complete?null:page.cursor}while(auditCursor);
+ const auditKeysRecent=auditKeys.sort((a,b)=>b.name.localeCompare(a.name)).slice(0,500);
+ const events=await Promise.all(auditKeysRecent.map(k=>env.DRAFTS.get(k.name,"json")));
+ for(const item of events)if(item)add("Activity",item.action||"Admin activity",item.detail||"",item.email||"",item.at,"audit");
+ try{
+  const media=await gh(env,filePath(env,"assets/uploads"));
+  for(const item of media)if(item.type==="file"&&/\.(png|jpe?g|webp|gif)$/i.test(item.name))add("Media",item.name,item.path||"",String(item.size||"")+" bytes",null,"media");
+ }catch(error){if(!String(error.message).includes("GitHub API 404"))throw error}
+ const score=item=>(item.title.toLowerCase().startsWith(query)?0:item.description.toLowerCase().includes(query)?1:2);
+ results.sort((a,b)=>score(a)-score(b)||String(b.at||"").localeCompare(String(a.at||"")));
+ return response({query,count:results.length,results:results.slice(0,50),truncated:results.length>50});
+}
 if(req.method==="GET"&&r==="inquiries"){
  let cursor,keys=[];do{const page=await env.DRAFTS.list({prefix:"inquiry:",limit:1000,...(cursor?{cursor}:{})});keys.push(...page.keys);cursor=page.list_complete?null:page.cursor}while(cursor);
  const all=(await Promise.all(keys.map(k=>env.DRAFTS.get(k.name,"json")))).filter(x=>x&&x.status!=="deleted").sort((a,b)=>String(b.createdAt).localeCompare(String(a.createdAt)));
