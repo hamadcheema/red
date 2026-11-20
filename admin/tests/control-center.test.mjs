@@ -153,3 +153,5 @@ test("personal activity timeline supports date and category filters plus safe CS
   assert.match(controlCss, /\.activity-event/);
   assert.match(worker, /r==="audit"/);
 });
+
+test("executive dashboard reports accurate enquiry activity windows", () => {\n  assert.match(worker, /periods:\\{newToday,newLast7Days,newLast30Days\\}/);\n  assert.match(worker, /Asia\\/Karachi/);\n  assert.match(control, /NEW TODAY/);\n  assert.match(control, /LAST 7 DAYS/);\n  assert.match(control, /LAST 30 DAYS/);\n});\n
