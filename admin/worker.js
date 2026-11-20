@@ -33,6 +33,32 @@ return html
 }
 
 const collectionKinds={projects:{heading:"Game project showcases",eyebrow:"SELECTED WORK"},social:{heading:"Social media previews",eyebrow:"FROM OUR CHANNELS"},brands:{heading:"Brand assets",eyebrow:"THE BRAND"}};
+const sectionVisibilityDefaults={hero:true,intro:true,services:true,projects:true,social:true,brands:true,workflow:true,contact:true};
+function cleanSectionVisibility(value,current=sectionVisibilityDefaults){
+ const result={...sectionVisibilityDefaults,...(current||{})};
+ if(value!==undefined){
+  if(!value||typeof value!=="object"||Array.isArray(value))throw new HttpError(400,"Invalid website section visibility settings.");
+  for(const [key,visible] of Object.entries(value)){
+   if(!Object.hasOwn(sectionVisibilityDefaults,key)||typeof visible!=="boolean")throw new HttpError(400,"Invalid website section visibility setting: "+key);
+   result[key]=visible;
+  }
+ }
+ return result;
+}
+function applySectionVisibility(html,visibility){
+ for(const [key,visible] of Object.entries(visibility)){
+  const marker='data-trs-section="'+key+'"',at=html.indexOf(marker);
+  if(at<0){if(["hero","intro","services","workflow","contact"].includes(key))throw new Error("Website section marker is missing: "+key);continue}
+  const start=html.lastIndexOf("<section",at),end=html.indexOf(">",at);
+  if(start<0||end<0)throw new Error("Invalid website section marker: "+key);
+  let tag=html.slice(start,end+1);
+  tag=tag.replace(/\s+hidden(?=[\s>])/i,"").replace(/\s+style="display:none;?"(?=[\s>])/i,"");
+  if(!visible)tag=tag.slice(0,-1)+' style="display:none" hidden>';
+  html=html.slice(0,start)+tag+html.slice(end+1);
+ }
+ return html;
+}
+
 function cleanCollectionItems(raw){if(!Array.isArray(raw)||raw.length>30)throw new HttpError(400,"Invalid content collection.");const items=[];for(const item of raw){const title=String(item?.title||"").trim(),description=String(item?.description||"").trim(),image=normalizeMediaPath(item?.image),url=String(item?.url||"").trim();if(!title||title.length>80||!description||description.length>300||!image)throw new HttpError(400,"Each item needs a valid image, title (80 characters max) and description (300 characters max).");let safeUrl="";if(url){let target;try{target=new URL(url)}catch{throw new HttpError(400,"Links must be valid HTTPS URLs.")}if(target.protocol!=="https:")throw new HttpError(400,"Links must use HTTPS.");safeUrl=target.href}const id=String(item?.id||"");items.push({id:/^[a-f0-9-]{36}$/i.test(id)?id:crypto.randomUUID(),title,description,image,url:safeUrl})}return items}
 function collectionMarkup(kind,items){
 const cfg=collectionKinds[kind],cards=items.map(item=>{
@@ -76,7 +102,7 @@ async function publishCollection(env,kind,items,actor="system",options={}){
  await audit(env,actor,"publish-collection",kind+":"+items.length);
  return out.commit?.sha||null;
 }
-const defaultSiteSettings={contactEmail:"admin@theredsparrow.online",directEmail:"hammad@theredsparrow.online",tagline:"Independent Unity game development.",announcementEnabled:false,announcement:""};
+const defaultSiteSettings={contactEmail:"admin@theredsparrow.online",directEmail:"hammad@theredsparrow.online",tagline:"Independent Unity game development.",announcementEnabled:false,announcement:"",sectionVisibility:sectionVisibilityDefaults};
 async function siteSettings(env){return {...defaultSiteSettings,...(await env.DRAFTS.get("site-settings:live","json")||{})}}
 async function writeFilesAtomic(env,files,message){
  const owner=env.GITHUB_OWNER,repo=env.GITHUB_REPO,branch=env.GITHUB_BRANCH||"main",base="/repos/"+owner+"/"+repo+"/git/";
@@ -90,7 +116,7 @@ async function writeFilesAtomic(env,files,message){
 }
 async function publishSiteSettings(env,v,actor){
  const previous=await siteSettings(env);
- const values={contactEmail:String(v.contactEmail||"").trim(),directEmail:String(v.directEmail||"").trim(),tagline:String(v.tagline||"").trim(),announcementEnabled:!!v.announcementEnabled,announcement:String(v.announcement||"").trim()};
+ const values={contactEmail:String(v.contactEmail||"").trim(),directEmail:String(v.directEmail||"").trim(),tagline:String(v.tagline||"").trim(),announcementEnabled:!!v.announcementEnabled,announcement:String(v.announcement||"").trim(),sectionVisibility:cleanSectionVisibility(v.sectionVisibility,previous.sectionVisibility)};
  for(const email of [values.contactEmail,values.directEmail])if(email.length>254||!EMAIL.test(email))throw Error("Enter valid contact email addresses.");
  if(!values.tagline||values.tagline.length>120||values.announcement.length>180)throw Error("Tagline or announcement is outside its character limit.");
  const files=[];
@@ -104,6 +130,7 @@ async function publishSiteSettings(env,v,actor){
   html=html.replaceAll("mailto:"+previous.contactEmail,"mailto:"+esc(values.contactEmail)).replaceAll(previous.contactEmail,esc(values.contactEmail));
   html=html.replaceAll("mailto:"+previous.directEmail,"mailto:"+esc(values.directEmail)).replaceAll(previous.directEmail,esc(values.directEmail));
   html=html.replaceAll(previous.tagline,esc(values.tagline));
+  if(path==="index.html")html=applySectionVisibility(html,values.sectionVisibility);
   const marker=/<!-- TRS-ANNOUNCEMENT:START -->[\s\S]*?<!-- TRS-ANNOUNCEMENT:END -->/g;html=html.replace(marker,"");
   if(values.announcementEnabled&&values.announcement){const bar='<!-- TRS-ANNOUNCEMENT:START --><aside class="trs-site-announcement" role="status">'+esc(values.announcement)+'</aside><!-- TRS-ANNOUNCEMENT:END -->';const skip=/(<a\b[^>]*class="skip-link"[^>]*>[\s\S]*?<\/a>)/i;if(skip.test(html))html=html.replace(skip,(_,anchor)=>anchor+bar);else html=html.replace(/(<body\b[^>]*>)/i,(_,body)=>body+bar)}
   if(html!==old.content)files.push({path,content:html});
@@ -284,7 +311,7 @@ if(req.method==="GET"&&r==="site-settings"){
  return response({settings:await siteSettings(env),draft:await env.DRAFTS.get("site-settings:draft","json")||null});
 }
 if(req.method==="POST"&&r==="site-settings"){
- const b=await readJson(req),v={contactEmail:String(b.contactEmail||"").trim(),directEmail:String(b.directEmail||"").trim(),tagline:String(b.tagline||"").trim(),announcementEnabled:!!b.announcementEnabled,announcement:String(b.announcement||"").trim()};
+ const b=await readJson(req),current=await siteSettings(env),v={contactEmail:String(b.contactEmail||"").trim(),directEmail:String(b.directEmail||"").trim(),tagline:String(b.tagline||"").trim(),announcementEnabled:!!b.announcementEnabled,announcement:String(b.announcement||"").trim(),sectionVisibility:cleanSectionVisibility(b.sectionVisibility,current.sectionVisibility)};
  for(const email of [v.contactEmail,v.directEmail])if(email.length>254||!EMAIL.test(email))return response({error:"Enter valid contact email addresses."},400);
  if(!v.tagline||v.tagline.length>120||v.announcement.length>180)return response({error:"Tagline or announcement is outside its character limit."},400);
  await env.DRAFTS.put("site-settings:draft",JSON.stringify(v),{expirationTtl:7776000});await audit(env,who.login,"save-site-settings","Website settings draft");return response({saved:true,settings:v});
