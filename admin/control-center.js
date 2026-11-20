@@ -199,11 +199,12 @@ const karachiDate=value=>new Intl.DateTimeFormat("en-CA",{timeZone:"Asia/Karachi
     const summary=el("div","inquiry-summary");p.append(summary);
     const timeline=el("div","activity-timeline");p.append(timeline);root.append(p);
     let events=[],filtered=[];
+    const karachiDate=value=>new Intl.DateTimeFormat("en-CA",{timeZone:"Asia/Karachi",year:"numeric",month:"2-digit",day:"2-digit"}).format(value);
     const render=()=>{
-      const start=from.value?new Date(from.value+"T00:00:00").getTime():-Infinity;
-      const end=to.value?new Date(to.value+"T23:59:59.999").getTime():Infinity;
+      const start=from.value?Date.parse(from.value+"T00:00:00+05:00"):-Infinity;
+      const end=to.value?Date.parse(to.value+"T23:59:59.999+05:00"):Infinity;
       filtered=events.filter(item=>{const stamp=Date.parse(item.at||"");if(!Number.isFinite(stamp)||stamp<start||stamp>end)return false;const action=String(item.action||"").toLowerCase();return kind.value==="all"||(kind.value==="content"&&/(project|social|brand|content|publish)/.test(action))||(kind.value==="website"&&/(site|setting|brand|section)/.test(action))||(kind.value==="inquiry"&&/inquiry/.test(action))||(kind.value==="media"&&/media|upload|delete/.test(action))||(kind.value==="security"&&/auth|session|security|login|logout/.test(action))});
-      summary.replaceChildren(card("MATCHING EVENTS",String(filtered.length),"In selected date range"),card("TODAY",String(events.filter(x=>new Date(x.at).toDateString()===new Date().toDateString()).length),"Recorded events today"),card("LAST 7 DAYS",String(events.filter(x=>Date.now()-Date.parse(x.at||"")<=604800000&&Date.now()>=Date.parse(x.at||"")).length),"Recorded events"));
+      summary.replaceChildren(card("MATCHING EVENTS",String(filtered.length),"In selected date range"),card("TODAY",String(events.filter(x=>karachiDate(Date.parse(x.at||""))===karachiDate(Date.now())).length),"Recorded events today"),card("LAST 7 DAYS",String(events.filter(x=>Date.now()-Date.parse(x.at||"")<=604800000&&Date.now()>=Date.parse(x.at||"")).length),"Recorded events"));
       timeline.replaceChildren();
       if(!filtered.length){timeline.append(el("p","inquiry-empty","No activity matches this filter and date range."));return}
       for(const item of filtered){const row=el("article","activity-event");const date=el("time","activity-event-date",formatDate(item.at));if(item.at)date.dateTime=item.at;const body=el("div","activity-event-body");body.append(el("strong","",String(item.action||"Admin event").replace(/-/g," ")),el("p","",item.detail||"No additional details."),el("small","",item.email||"Authorized admin"));row.append(date,body);timeline.append(row)}
