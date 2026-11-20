@@ -81,3 +81,15 @@ test("command palette supports meaningful aliases and descriptive search without
   assert.match(admin, /Search admin sections/);
   assert.doesNotMatch(admin, /global data search|search all records/i);
 });
+
+test("universal search endpoint searches protected enquiries, content, media and activity records", () => {
+  assert.match(worker, /r==="search"/);
+  assert.match(worker, /prefix:"inquiry:"/);
+  assert.match(worker, /collection-draft:/);
+  assert.match(worker, /prefix:"audit:"/);
+  assert.match(worker, /assets\/uploads/);
+  assert.match(worker, /results\.slice\(0,50\)/);
+  assert.match(admin, /Search your workspace/);
+  assert.match(admin, /fetch\("\/admin-api\/search\?q="/);
+  assert.match(adminCss, /\.global-search-dialog/);
+});
