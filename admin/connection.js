@@ -153,6 +153,7 @@
   const syncPageBaseline=()=>{pageBaseline=fieldSnapshot(pageEditorFields);pageBaselineWithoutImage=fieldSnapshot(pageEditorFields.filter(id=>id!=="edit-image"));pageImageDirty=false};
   const syncSeoBaseline=()=>{seoBaseline=fieldSnapshot(seoEditorFields)};
   $("edit-image")?.addEventListener("change",event=>{if(event.isTrusted)pageImageDirty=true});
+  $("clear-page-image")?.addEventListener("click",()=>{pageImageDirty=true});
   window.addEventListener("trs:media-picker-ready",()=>{if(!pageImageDirty&&fieldSnapshot(pageEditorFields.filter(id=>id!=="edit-image"))===pageBaselineWithoutImage)pageBaseline=fieldSnapshot(pageEditorFields)});
   const guardPageSelection=(select,ids,getBaseline,getActive,label)=>{
     if(!select)return;
