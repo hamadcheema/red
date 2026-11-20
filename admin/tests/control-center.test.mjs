@@ -96,15 +96,16 @@ test("universal search endpoint searches protected enquiries, content, media and
 
 test("enquiry CSV export is authenticated, complete, formula-safe and excludes deleted records", () => {
   assert.ok(worker.includes('r==="inquiries/export"'));
-  assert.match(worker, /prefix:"inquiry:"/);
-  assert.match(worker, /status!=="deleted"/);
-  assert.match(worker, /const columns=\["id","name","email","subject","message","status","createdAt","updatedAt"\]/);
-  assert.match(worker, /replace\(\/"/g,'""'\)/);
-  assert.match(worker, /\[\\s\]\*\[=\+\\-@\]/);
-  assert.match(worker, /text\/csv; charset=utf-8/);
-  assert.match(worker, /content-disposition/);
-  assert.match(worker, /cache-control":"no-store"/);
+  assert.ok(worker.includes('prefix:"inquiry:"'));
+  assert.ok(worker.includes('status!=="deleted"'));
+  assert.ok(worker.includes('const columns=["id","name","email","subject","message","status","createdAt","updatedAt"]'));
+  assert.ok(worker.includes('text.replace(/"/g,\'""\')'));
+  assert.ok(worker.includes('if(/^[\\s]*[=+\\-@]/.test(text)'));
+  assert.ok(worker.includes('const body="\\uFEFF"+lines.join("\\r\\n")+"\\r\\n"'));
+  assert.ok(worker.includes('text/csv; charset=utf-8'));
+  assert.ok(worker.includes('content-disposition'));
+  assert.ok(worker.includes('cache-control":"no-store"'));
   assert.match(control, /Export CSV/);
-  assert.match(control, /fetch\("\/admin-api\/inquiries\/export",\{credentials:"include"\}\)/);
-  assert.match(control, /URL\.createObjectURL/);
+  assert.match(control, /fetch\\("\\/admin-api\\/inquiries\\/export",\\{credentials:"include"\\}\\)/);
+  assert.match(control, /URL\\.createObjectURL/);
 });
