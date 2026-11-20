@@ -35,10 +35,10 @@
   async function loadDashboard(){
     const view=$("view-overview");if(!view)return;
     let root=view.querySelector(".dashboard-live");if(!root){root=el("div","dashboard-live control-content");view.append(root)}root.replaceChildren();
-    const p=panel("Enquiry & activity overview","Live figures from your private Cloudflare KV workspace.");
-    root.append(p);
+    const p=panel("Enquiry & activity overview","Live figures from your private Cloudflare KV workspace."),loading=el("p","editor-footnote","Loading dashboard data…");
+    p.append(loading);root.append(p);
     try{
-      const data=await call("/dashboard"),grid=el("div","inquiry-summary dashboard-metrics");
+      const data=await call("/dashboard");loading.remove();const grid=el("div","inquiry-summary dashboard-metrics");
       grid.append(card("TOTAL ENQUIRIES",String(data.inquiries?.total??0),"Active enquiries"),card("UNREAD",String(data.inquiries?.unread??0),"Awaiting review"),card("PUBLISHED PROJECTS",String(data.published?.projects??0),"Showcase projects"),card("RECENTLY DELETED",String(data.inquiries?.deleted??0),"Recoverable for 30 days"));
       grid.append(card("NEW TODAY",String(data.periods?.newToday??0),"Enquiries received today · Pakistan time"),card("LAST 7 DAYS",String(data.periods?.newLast7Days??0),"New enquiries · rolling 7 days"),card("LAST 30 DAYS",String(data.periods?.newLast30Days??0),"New enquiries · rolling 30 days"));
       p.append(grid);
@@ -47,7 +47,7 @@
       if(!events.length)p.append(el("p","inquiry-empty","No activity has been recorded yet."));
       for(const event of events){const row=el("article","notification-row");row.append(el("strong","",String(event.action||"Admin event").replace(/-/g," ")),el("p","",event.detail||""),el("small","",formatDate(event.at)+" · "+(event.email||"admin")));p.append(row)}
       p.append(button("Open inquiry inbox",()=>window.showAdminView?.("inquiries")));
-    }catch(e){status(p,"Could not load dashboard data: "+e.message,true)}
+    }catch(e){loading.remove();status(p,"Could not load dashboard data: "+e.message,true)}
   }
 
   async function loadAnalytics(){
@@ -70,11 +70,10 @@
     form.append(kindLabel,kind,dateLabel,date,submit);
     form.addEventListener("submit",async e=>{e.preventDefault();submit.disabled=true;try{const scheduledAt=new Date(date.value).toISOString();const r=await call("/schedule",{method:"POST",body:JSON.stringify({kind:kind.value,scheduledAt})});const scheduledFor=r.scheduledAt;date.value="";await loadCalendar();status(root,"Publication scheduled for "+formatDate(scheduledFor))}catch(err){status(p,err.message,true)}finally{submit.disabled=false}});
     p.append(form);root.append(p);
-    const list=panel("Upcoming publications","Scheduled collection publishes waiting to run.");
-    try{const data=await call("/schedule");if(!data.items?.length)list.append(el("p","editor-footnote","No publications scheduled."));
+    const list=panel("Upcoming publications","Scheduled collection publishes waiting to run."),loading=el("p","editor-footnote","Loading scheduled publications…");list.append(loading);root.append(list);
+    try{const data=await call("/schedule");loading.remove();if(!data.items?.length)list.append(el("p","editor-footnote","No publications scheduled."));
       for(const item of data.items){const row=el("div","control-row");const detail=el("div");detail.append(el("strong","",({projects:"Game projects",social:"Social previews",brands:"Company assets"}[item.kind]||item.kind)),el("small","",formatDate(item.scheduledAt)+" · "+item.status));if(item.error)detail.append(el("small","",item.error));row.append(detail);if(item.status==="scheduled")row.append(button("Cancel",async()=>{if(!await window.trsConfirm("Cancel this scheduled publication?"))return;try{await call("/schedule?id="+encodeURIComponent(item.id),{method:"DELETE"});await loadCalendar();status(root,"Scheduled publication cancelled.")}catch(e){status(list,e.message,true)}}));if(item.status==="failed")row.append(button("Retry in 2 minutes",async()=>{try{const r=await call("/schedule/retry",{method:"POST",body:JSON.stringify({id:item.id})});await loadCalendar();status(root,"Publication rescheduled for "+formatDate(r.scheduledAt))}catch(e){status(list,e.message,true)}}));list.append(row)}
-    }catch(e){status(list,"Could not load schedule: "+e.message,true)}
-    root.append(list);
+    }catch(e){loading.remove();status(list,"Could not load schedule: "+e.message,true)}
   }
   let inquiryItems=[],deletedInquiryItems=[],inquiryData={total:0,unread:0,archived:0},deletedInquiryTotal=0,inquiryHasMore=false,deletedHasMore=false,inquiryOffset=0,deletedOffset=0,inquiryFolder="inbox",selectedInquiryId=null,inquirySearch="",inquiryDateFilter="any",selectedInquiryIds=new Set();
   async function loadInquiries(){
@@ -96,16 +95,16 @@
     const bulk=el("div","inquiry-bulk-toolbar");p.append(bulk);
     const shell=el("div","inquiry-shell"),folders=el("nav","inquiry-folders"),listPane=el("section","inquiry-list-pane"),reader=el("section","inquiry-reader");
     folders.setAttribute("aria-label","Inbox folders");listPane.setAttribute("aria-label","Inquiry messages");reader.setAttribute("aria-label","Selected inquiry");
-    shell.append(folders,listPane,reader);p.append(shell);root.append(p);
+    shell.append(folders,listPane,reader);p.append(shell);root.append(p);const loading=el("p","inquiry-empty","Loading enquiries…");listPane.append(loading);
     search.addEventListener("input",()=>{inquirySearch=search.value;renderInbox()});
     dateFilter.addEventListener("change",()=>{inquiryDateFilter=dateFilter.value;renderInbox()});
     try{
       const [active,deleted]=await Promise.all([call("/inquiries?offset=0&limit=100"),call("/inquiries/deleted?offset=0&limit=100")]);
-      inquiryData=active;inquiryItems=active.items||[];deletedInquiryItems=deleted.items||[];deletedInquiryTotal=deleted.total||0;inquiryOffset=inquiryItems.length;deletedOffset=deletedInquiryItems.length;inquiryHasMore=!!active.hasMore;deletedHasMore=!!deleted.hasMore;
+      loading.remove();inquiryData=active;inquiryItems=active.items||[];deletedInquiryItems=deleted.items||[];deletedInquiryTotal=deleted.total||0;inquiryOffset=inquiryItems.length;deletedOffset=deletedInquiryItems.length;inquiryHasMore=!!active.hasMore;deletedHasMore=!!deleted.hasMore;
       const pool=inquiryFolder==="deleted"?deletedInquiryItems:inquiryItems;
       if(!selectedInquiryId||!pool.some(x=>x.id===selectedInquiryId))selectedInquiryId=pool[0]?.id||null;
       renderInbox();
-    }catch(e){status(p,"Could not load enquiries: "+e.message,true)}
+    }catch(e){loading.remove();status(p,"Could not load enquiries: "+e.message,true)}
     function renderInbox(){
       const unread=inquiryItems.filter(x=>x.status==="new").length,archived=inquiryItems.filter(x=>x.status==="archived").length;
       summary.replaceChildren(card("TOTAL",String(inquiryData.total??inquiryItems.length),"Active enquiries"),card("UNREAD",String(inquiryData.unread??unread),"Awaiting review"),card("ARCHIVED",String(inquiryData.archived??archived),"Filed enquiries"),card("RECENTLY DELETED",String(deletedInquiryTotal),"Recoverable for 30 days"));
@@ -198,7 +197,7 @@ const karachiDate=value=>new Intl.DateTimeFormat("en-CA",{timeZone:"Asia/Karachi
     const exportButton=button("Export CSV",()=>{const rows=filtered.map(item=>[item.at,item.email,item.action,item.detail]);const cell=value=>{let text=String(value??"");if(/^[\s]*[=+\-@]/.test(text)||/^[\t\r]/.test(text))text="'"+text;return '"'+text.replace(/"/g,'""')+'"'};const csv="\uFEFF"+[["Date","Admin","Action","Details"],...rows].map(row=>row.map(cell).join(",")).join("\r\n")+"\r\n";const url=URL.createObjectURL(new Blob([csv],{type:"text/csv;charset=utf-8"}));const a=el("a");a.href=url;a.download="the-red-sparrow-activity.csv";a.hidden=true;document.body.append(a);a.click();a.remove();setTimeout(()=>URL.revokeObjectURL(url),1000);status(p,"Activity report exported.")});
     toolbar.append(from,to,kind,refresh,exportButton);p.append(toolbar);
     const summary=el("div","inquiry-summary");p.append(summary);
-    const timeline=el("div","activity-timeline");p.append(timeline);root.append(p);
+    const timeline=el("div","activity-timeline"),loading=el("p","editor-footnote","Loading activity events…");timeline.append(loading);p.append(timeline);root.append(p);
     let events=[],filtered=[];
     const karachiDate=value=>new Intl.DateTimeFormat("en-CA",{timeZone:"Asia/Karachi",year:"numeric",month:"2-digit",day:"2-digit"}).format(value);
     const isKarachiToday=value=>Number.isFinite(value)&&karachiDate(value)===karachiDate(Date.now());
@@ -212,23 +211,22 @@ const karachiDate=value=>new Intl.DateTimeFormat("en-CA",{timeZone:"Asia/Karachi
       for(const item of filtered){const row=el("article","activity-event");const date=el("time","activity-event-date",formatDate(item.at));if(item.at)date.dateTime=item.at;const body=el("div","activity-event-body");body.append(el("strong","",String(item.action||"Admin event").replace(/-/g," ")),el("p","",item.detail||"No additional details."),el("small","",item.email||"Authorized admin"));row.append(date,body);timeline.append(row)}
     };
     [from,to,kind].forEach(input=>input.addEventListener("change",render));
-    try{const data=await call("/audit?limit=500");events=(data.events||[]).filter(item=>item&&item.at).sort((a,b)=>Date.parse(b.at)-Date.parse(a.at));render();status(p,"Loaded "+events.length+" recent audit events. The timeline reflects the audit retention window.");}
-    catch(e){status(p,"Could not load activity: "+e.message,true)}
+    try{const data=await call("/audit?limit=500");loading.remove();events=(data.events||[]).filter(item=>item&&item.at).sort((a,b)=>Date.parse(b.at)-Date.parse(a.at));render();status(p,"Loaded "+events.length+" recent audit events. The timeline reflects the audit retention window.");}
+    catch(e){loading.remove();status(p,"Could not load activity: "+e.message,true)}
   }
   async function loadNotifications(){
     const root=mount("view-notifications")?.querySelector(".control-content");if(!root)return;
-    const p=panel("Recent notifications","A combined feed of new enquiries, upcoming publications and recent admin activity.");p.append(button("Refresh notifications",loadNotifications));
-    try{const data=await call("/notifications");if(!data.items?.length)p.append(el("p","editor-footnote","You're all caught up. No new notifications."));
+    const p=panel("Recent notifications","A combined feed of new enquiries, upcoming publications and recent admin activity."),loading=el("p","editor-footnote","Loading notifications…");p.append(button("Refresh notifications",loadNotifications),loading);root.append(p);
+    try{const data=await call("/notifications");loading.remove();if(!data.items?.length)p.append(el("p","editor-footnote","You're all caught up. No new notifications."));
       for(const item of data.items||[]){const row=el("article","notification-row");row.append(el("strong","",item.title),el("p","",item.detail||""),el("small","",formatDate(item.at)));if(item.href){const destination=item.href.includes("calendar")?"calendar":"inquiries";row.append(button("Open",()=>window.showAdminView?.(destination)))}p.append(row)}
-    }catch(e){status(p,"Could not load notifications: "+e.message,true)}
-    root.append(p);
+    }catch(e){loading.remove();status(p,"Could not load notifications: "+e.message,true)}
   }
   async function loadHealth(){
     const root=mount("view-health")?.querySelector(".control-content");if(!root)return;
     const p=panel("Health checks","Checks are read-only and do not change your website or account settings.");
-    const refresh=button("Run checks",loadHealth);p.append(refresh);root.append(p);
-    try{const data=await call("/system/health");const grid=el("div","stats-grid");for(const check of data.checks||[]){const c=card(check.label,check.ok?"Healthy":"Attention needed",check.detail||"");c.classList.add(check.ok?"health-good":"health-warn");grid.append(c)}p.append(grid);status(p,"Last checked "+formatDate(data.checkedAt))}
-    catch(e){status(p,"Health check failed: "+e.message,true)}
+    const refresh=button("Run checks",loadHealth),loading=el("p","editor-footnote","Running health checks…");p.append(refresh,loading);root.append(p);
+    try{const data=await call("/system/health");loading.remove();const grid=el("div","stats-grid");for(const check of data.checks||[]){const c=card(check.label,check.ok?"Healthy":"Attention needed",check.detail||"");c.classList.add(check.ok?"health-good":"health-warn");grid.append(c)}p.append(grid);status(p,"Last checked "+formatDate(data.checkedAt))}
+    catch(e){loading.remove();status(p,"Health check failed: "+e.message,true)}
   }
   async function loadPreview(){
     const root=mount("view-preview")?.querySelector(".control-content");if(!root)return;
@@ -243,12 +241,12 @@ const karachiDate=value=>new Intl.DateTimeFormat("en-CA",{timeZone:"Asia/Karachi
     const root=mount("view-files")?.querySelector(".control-content");if(!root)return;
     const p=panel("Repository assets","Uploaded images are stored in assets/uploads/. The usage check helps prevent removing referenced files.");
     const search=el("input");search.type="search";search.placeholder="Filter by filename…";search.setAttribute("aria-label","Filter uploaded assets");
-    const list=el("div","control-list");p.append(search,list);root.append(p);
-    try{const data=await call("/media/list");const items=data.items||[];
+    const list=el("div","control-list"),loading=el("p","editor-footnote","Loading repository assets…");list.append(loading);p.append(search,list);root.append(p);
+    try{const data=await call("/media/list");loading.remove();const items=data.items||[];
       const render=()=>{list.replaceChildren();const filtered=items.filter(x=>x.name.toLowerCase().includes(search.value.trim().toLowerCase()));if(!filtered.length){list.append(el("p","editor-footnote","No matching files."));return}
         filtered.forEach(item=>{const row=el("article","file-row");const info=el("div");info.append(el("strong","",item.name),el("small","",(item.size/1024).toFixed(1)+" KB · "+item.path));const actions=el("div","control-actions");const open=el("a","small-button","Open");open.href=item.siteUrl||item.url;open.target="_blank";open.rel="noopener";actions.append(open,button("Check usage",async()=>{try{const u=await call("/media/usage?path="+encodeURIComponent(item.path));status(row,u.usedBy?.length?"Used by: "+u.usedBy.join(", "):"No current references detected.")}catch(e){status(row,e.message,true)}}));row.append(info,actions);list.append(row)});
       };search.addEventListener("input",render);render();
-    }catch(e){status(p,"Could not load files: "+e.message,true)}
+    }catch(e){loading.remove();status(p,"Could not load files: "+e.message,true)}
   }
   async function loadSecurity(){
     const root=mount("view-security")?.querySelector(".control-content");if(!root)return;
