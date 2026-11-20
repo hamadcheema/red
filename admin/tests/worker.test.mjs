@@ -71,7 +71,7 @@ function installGitHubMock({ pages = {}, deleted = [], updated = [] } = {}) {
 
 function makeEnv(values = {}, options = {}) {
   const kv = new MockKV({ ["session:" + SESSION]: { login: "hamadcheema", created: Date.now() }, ...values }, options);
-  return { DRAFTS: kv, GITHUB_TOKEN: "test-token", GITHUB_OWNER: "hamadcheema", GITHUB_REPO: "red", GITHUB_BRANCH: "main" };
+  return { DRAFTS: kv, GITHUB_TOKEN: "test-token", IP_RATE_LIMIT_SECRET: "test-hmac-secret-for-unit-tests", GITHUB_OWNER: "hamadcheema", GITHUB_REPO: "red", GITHUB_BRANCH: "main" };
 }
 
 async function call(path, { method = "GET", body } = {}, env) {
