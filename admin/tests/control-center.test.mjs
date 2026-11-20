@@ -52,6 +52,7 @@ test("destructive admin actions use the shared accessible confirmation dialog", 
   assert.match(admin, /dialog\.returnValue === "confirm"/);
   assert.doesNotMatch(control, /!confirm\(/);
   assert.doesNotMatch(features, /!confirm\(/);
+  assert.doesNotMatch(connection, /!confirm\(/);
   assert.doesNotMatch(features, /alert\(/);
   assert.match(controlCss, /\.admin-confirm-dialog::backdrop/);
   assert.match(controlCss, /\.admin-confirm-dialog button:focus-visible/);
