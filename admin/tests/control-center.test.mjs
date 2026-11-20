@@ -93,3 +93,18 @@ test("universal search endpoint searches protected enquiries, content, media and
   assert.match(admin, /fetch\("\/admin-api\/search\?q="/);
   assert.match(adminCss, /\.global-search-dialog/);
 });
+
+test("enquiry CSV export is authenticated, complete, formula-safe and excludes deleted records", () => {
+  assert.ok(worker.includes('r==="inquiries/export"'));
+  assert.match(worker, /prefix:"inquiry:"/);
+  assert.match(worker, /status!=="deleted"/);
+  assert.match(worker, /const columns=\["id","name","email","subject","message","status","createdAt","updatedAt"\]/);
+  assert.match(worker, /replace\(\/"/g,'""'\)/);
+  assert.match(worker, /\[\\s\]\*\[=\+\\-@\]/);
+  assert.match(worker, /text\/csv; charset=utf-8/);
+  assert.match(worker, /content-disposition/);
+  assert.match(worker, /cache-control":"no-store"/);
+  assert.match(control, /Export CSV/);
+  assert.match(control, /fetch\("\/admin-api\/inquiries\/export",\{credentials:"include"\}\)/);
+  assert.match(control, /URL\.createObjectURL/);
+});
