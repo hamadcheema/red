@@ -60,7 +60,7 @@ Known limitations to verify:
 - [x] Centralized brand identity controls for accent colour, typography and Media Library logo.
 
 ### Phase 3 — Security and recovery
-- [ ] Detailed login/session event history.
+- [x] Successful admin login and logout events in the audit timeline (failed/expired attempts remain unrecorded).
 - [ ] Individual session revocation.
 - [ ] Stronger CSRF/origin and rate-limit review.
 - [ ] Security alerts and exportable audit history.
