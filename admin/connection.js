@@ -190,8 +190,8 @@
         restore.addEventListener("click",async()=>{if(!await window.trsConfirm("Restore this version of "+path+"? This creates a new GitHub commit."))return;restore.disabled=true;try{const result=await call("/rollback",{method:"POST",body:JSON.stringify({path,sha:item.sha})});say(ps,"Previous version restored. Commit: "+(result.commit||"created").slice(0,7));historyButton.click()}catch(e){say(ps,e.message,true);restore.disabled=false}});
         row.append(detail,restore);historyList.append(row);
       }
-    }catch(e){historyList.textContent=e.message}
-    finally{historyButton.disabled=false;historyButton.textContent="Load history"}
+    }catch(e){historyList.replaceChildren();const error=document.createElement("p");error.className="editor-footnote";error.setAttribute("role","alert");error.textContent="Could not load page history: "+e.message;historyList.append(error)}
+    finally{historyButton.disabled=false;selector.disabled=false;historyButton.textContent="Load history"}
   });
   const homepageHistoryButton=$("load-homepage-history"),homepageHistoryList=$("homepage-history-list");
   if(homepageHistoryButton&&homepageHistoryList)homepageHistoryButton.addEventListener("click",async()=>{
@@ -207,7 +207,7 @@
         restore.addEventListener("click",async()=>{if(!await window.trsConfirm("Restore the entire homepage (index.html) to this version? This may roll back all homepage content and showcase sections."))return;restore.disabled=true;restore.textContent="Restoring…";try{const result=await call("/rollback",{method:"POST",body:JSON.stringify({path:"index.html",sha:item.sha})});restore.textContent="Restored";meta.textContent+=" · New commit "+(result.commit||"created").slice(0,7)}catch(e){restore.disabled=false;restore.textContent="Restore homepage";say(homepageHistoryList,"Could not restore homepage: "+e.message,true)}});
         row.append(detail,restore);homepageHistoryList.append(row);
       }
-    }catch(e){homepageHistoryList.textContent=e.message}
+    }catch(e){homepageHistoryList.replaceChildren();const error=document.createElement("p");error.className="editor-footnote";error.setAttribute("role","alert");error.textContent="Could not load homepage history: "+e.message;homepageHistoryList.append(error)}
     finally{homepageHistoryButton.disabled=false;homepageHistoryButton.textContent="Load history"}
   });
   window.addEventListener("beforeunload",event=>{if(selectedFiles.length){event.preventDefault();event.returnValue=""}});
