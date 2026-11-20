@@ -187,14 +187,28 @@
         </section>
 <section class="view" id="view-add-content">
           <div class="section-heading"><div><h2>Add Content</h2><p>Create new game project showcases, social previews and company assets. Manage existing items separately in Content Manager.</p></div></div>
-          <div class="section-heading collection-forms-heading"><div><h2>Add or edit content</h2><p>Use these forms to add new showcase items or update an existing item selected above.</p></div></div>
+          <div class="section-heading collection-forms-heading"><div><h2>Create new content</h2><p>Add a new game project, social preview or company asset. Existing items are managed in Content Manager.</p></div></div>
           <div class="collection-grid">
             <section class="panel collection-panel" data-collection="projects">
               <div class="panel-heading"><div><h2>Game project showcases</h2><p>Showcase completed or approved game projects.</p></div><span class="local-badge" id="projects-count">0 ITEMS</span></div>
               <form class="collection-form" id="projects-form"><label for="projects-title">Project title</label><input id="projects-title" maxlength="80" required><label for="projects-description">Description</label><textarea id="projects-description" rows="3" maxlength="300" required></textarea><label for="projects-image">Project image</label><select id="projects-image" required><option value="">Choose from Media Library</option></select><label for="projects-url">Project link <span class="field-optional">Optional</span></label><input id="projects-url" type="url" placeholder="https://…"><button class="primary-button" type="submit">Add project</button></form>
-              <div class="collection-actions"><button class="secondary-button" type="button" data-save-draft="projects">Save draft</button><button class="secondary-button collection-publish" type="button" data-publish="projects">Publish</button></div><p class="editor-footnote collection-inline-note">Manage existing items in the Content Manager above.</p><p class="editor-status" id="projects-status" role="status" aria-live="polite">No changes yet.</p>
+              <div class="collection-actions"><button class="secondary-button" type="button" data-save-draft="projects">Save draft</button><button class="secondary-button collection-publish" type="button" data-publish="projects">Publish</button></div><p class="editor-footnote collection-inline-note">Manage existing items in the Content Manager section.</p><p class="editor-status" id="projects-status" role="status" aria-live="polite">No changes yet.</p>
             </section>
-<section class="view" id="view-seo">
+
+            <section class="panel collection-panel" data-collection="social">
+              <div class="panel-heading"><div><h2>Social media previews</h2><p>Add promotional preview cards and link them to their destination.</p></div><span class="local-badge" id="social-count">0 ITEMS</span></div>
+              <form class="collection-form" id="social-form"><label for="social-title">Preview title</label><input id="social-title" maxlength="80" required><label for="social-description">Description</label><textarea id="social-description" rows="3" maxlength="300" required></textarea><label for="social-image">Preview image</label><select id="social-image" required><option value="">Choose from Media Library</option></select><label for="social-url">Destination URL <span class="field-optional">Optional</span></label><input id="social-url" type="url" placeholder="https://…"><button class="primary-button" type="submit">Add social preview</button></form>
+              <div class="collection-actions"><button class="secondary-button" type="button" data-save-draft="social">Save draft</button><button class="secondary-button collection-publish" type="button" data-publish="social">Publish</button></div><p class="editor-footnote collection-inline-note">Manage existing items in the Content Manager section.</p><p class="editor-status" id="social-status" role="status" aria-live="polite">No changes yet.</p>
+            </section>
+            <section class="panel collection-panel" data-collection="brands">
+              <div class="panel-heading"><div><h2>Company assets</h2><p>Add approved logos, icons and other downloadable brand files.</p></div><span class="local-badge" id="brands-count">0 ITEMS</span></div>
+              <form class="collection-form" id="brands-form"><label for="brands-title">Asset name</label><input id="brands-title" maxlength="80" required><label for="brands-description">Description</label><textarea id="brands-description" rows="3" maxlength="300" required></textarea><label for="brands-image">Asset image</label><select id="brands-image" required><option value="">Choose from Media Library</option></select><label for="brands-url">Download or destination URL <span class="field-optional">Optional</span></label><input id="brands-url" type="url" placeholder="https://…"><button class="primary-button" type="submit">Add company asset</button></form>
+              <div class="collection-actions"><button class="secondary-button" type="button" data-save-draft="brands">Save draft</button><button class="secondary-button collection-publish" type="button" data-publish="brands">Publish</button></div><p class="editor-footnote collection-inline-note">Manage existing items in the Content Manager section.</p><p class="editor-status" id="brands-status" role="status" aria-live="polite">No changes yet.</p>
+            </section>
+          </div>
+          <p class="editor-footnote">New items are saved in the secure admin workspace. Publishing updates the homepage on GitHub Pages. Existing items are managed separately in Content Manager.</p>
+        </section>
+        <section class="view" id="view-seo">
           <div class="section-heading"><div><h2>SEO settings</h2><p>Search metadata and social-sharing previews for your website.</p></div></div>
           <section class="seo-workspace" aria-labelledby="seo-editor-title">
   <div class="editor-heading"><div><p class="eyebrow">SECURE SEO WORKSPACE</p><h2 id="seo-editor-title">Search & social metadata</h2><p>Edit metadata for each public page and inspect how it may appear when shared.</p></div><span class="local-badge">REMOTE DRAFT</span></div>
