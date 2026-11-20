@@ -178,9 +178,9 @@
   if($("seo-page"))$("seo-page").addEventListener("change",async()=>{await loadRemoteDraft("seo",$("seo-page").value,{title:"seo-title",description:"seo-description",canonical:"seo-canonical",ogTitle:"seo-og-title",ogDescription:"seo-og-description",ogImage:"seo-og-image",ogImageAlt:"seo-og-image-alt"},ss);activeSeoPage=$("seo-page").value;syncSeoBaseline()});
   const historyButton=$("load-history"),historyList=$("history-list");
   if(historyButton&&historyList)historyButton.addEventListener("click",async()=>{
-    const slug=$("edit-page").value,path=pageFiles[slug];historyButton.disabled=true;historyButton.textContent="Loading…";
-    try{
-      const data=await call("/history?path="+encodeURIComponent(path));historyList.replaceChildren();
+    const selector=$("edit-page"),slug=selector.value,path=pageFiles[slug];historyButton.disabled=true;selector.disabled=true;historyButton.textContent="Loading…";historyList.replaceChildren();const loading=document.createElement("p");loading.className="editor-footnote";loading.setAttribute("role","status");loading.textContent="Loading page version history…";historyList.append(loading);
+     try{
+       const data=await call("/history?path="+encodeURIComponent(path));if(selector.value!==slug)return;historyList.replaceChildren();
       if(!data.history.length){historyList.textContent="No history found.";return}
       for(const item of data.history){
         const row=document.createElement("div");row.style.cssText="display:flex;justify-content:space-between;align-items:center;gap:12px;padding:10px 0;border-top:1px solid var(--line)";
@@ -195,9 +195,9 @@
   });
   const homepageHistoryButton=$("load-homepage-history"),homepageHistoryList=$("homepage-history-list");
   if(homepageHistoryButton&&homepageHistoryList)homepageHistoryButton.addEventListener("click",async()=>{
-    homepageHistoryButton.disabled=true;homepageHistoryButton.textContent="Loading…";
-    try{
-      const data=await call("/history?path=index.html");homepageHistoryList.replaceChildren();
+    homepageHistoryButton.disabled=true;homepageHistoryButton.textContent="Loading…";homepageHistoryList.replaceChildren();const loading=document.createElement("p");loading.className="editor-footnote";loading.setAttribute("role","status");loading.textContent="Loading homepage version history…";homepageHistoryList.append(loading);
+     try{
+       const data=await call("/history?path=index.html");homepageHistoryList.replaceChildren();
       if(!data.history.length){homepageHistoryList.textContent="No homepage history found.";return}
       for(const item of data.history){
         const row=document.createElement("div");row.className="homepage-history-row";
