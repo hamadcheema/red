@@ -140,3 +140,15 @@ test("centralized brand identity controls cover accent, typography and Media Lib
   assert.match(control, /data\.settings\?\.brand/);
   assert.match(controlCss, /\.brand-comparison-grid/);
 });
+
+\ntest("personal activity timeline supports date and category filters plus safe CSV export", () => {
+  assert.match(control, /activity: \["Personal activity timeline"/);
+  assert.match(control, /async function loadActivityTimeline/);
+  assert.match(control, /call\("\/audit"\)/);
+  assert.match(control, /Activity start date/);
+  assert.match(control, /Filter activity type/);
+  assert.match(control, /the-red-sparrow-activity\.csv/);
+  assert.match(control, /activity:loadActivityTimeline/);
+  assert.match(controlCss, /\.activity-event/);
+  assert.match(worker, /r==="audit"/);
+});
