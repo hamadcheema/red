@@ -64,9 +64,9 @@
     const p=panel("Schedule a collection","Choose a saved collection and a future publication time. The Worker publishes it automatically when due.");
     const form=el("form","control-form");
     const kind=el("select");kind.innerHTML='<option value="projects">Game projects</option><option value="social">Social previews</option><option value="brands">Company assets</option>';
-    const date=el("input");date.type="datetime-local";date.required=true;
+    const date=el("input");date.type="datetime-local";date.required=true;const now=new Date();date.min=new Date(now.getTime()-now.getTimezoneOffset()*60000).toISOString().slice(0,16);const timeZone=Intl.DateTimeFormat().resolvedOptions().timeZone||"device local time";
     const submit=el("button","primary-button","Schedule publication");submit.type="submit";
-    form.append(el("label","","Collection"),kind,el("label","","Publish at"),date,submit);
+    form.append(el("label","","Collection"),kind,el("label","","Publish at ("+timeZone+")"),date,submit);
     form.addEventListener("submit",async e=>{e.preventDefault();submit.disabled=true;try{const scheduledAt=new Date(date.value).toISOString();const r=await call("/schedule",{method:"POST",body:JSON.stringify({kind:kind.value,scheduledAt})});const scheduledFor=r.scheduledAt;date.value="";await loadCalendar();status(root,"Publication scheduled for "+formatDate(scheduledFor))}catch(err){status(p,err.message,true)}finally{submit.disabled=false}});
     p.append(form);root.append(p);
     const list=panel("Upcoming publications","Scheduled collection publishes waiting to run.");
