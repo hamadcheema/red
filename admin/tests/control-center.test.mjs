@@ -134,4 +134,9 @@ test("centralized brand identity controls cover accent, typography and Media Lib
   assert.match(control, /updateBrandPreview/);
   assert.match(control, /previewImage\.src=logo\.value/);
   assert.match(controlCss, /\.brand-preview/);
+  assert.match(control, /Published vs editing/);
+  assert.match(control, /Currently published/);
+  assert.match(control, /Editing \/ draft/);
+  assert.match(control, /data\.settings\?\.brand/);
+  assert.match(controlCss, /\.brand-comparison-grid/);
 });
