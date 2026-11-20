@@ -86,6 +86,7 @@ test("page and SEO editors confirm before discarding unsaved changes when switch
   assert.match(connection, /pageBaseline=fieldSnapshot\(pageEditorFields\)/);
   assert.match(connection, /seoBaseline=fieldSnapshot\(seoEditorFields\)/);
   assert.match(connection, /trs:media-picker-ready/);
+  assert.match(connection, /clear-page-image.*pageImageDirty=true/);
 });
 
 test("Content Manager preserves unsaved collection edits during navigation and confirms destructive refresh", () => {
