@@ -104,7 +104,8 @@ test("inquiry Today filter uses Pakistan local calendar date", () => {
   assert.match(control, /karachiDate\(stamp\)===karachiDate\(now\)/);
   assert.match(control, /T00:00:00\+05:00/);
   assert.match(control, /T23:59:59\.999\+05:00/);
-  assert.match(control, /karachiDate\(Date\.parse\(x\.at\|\|""\)\)/);
+  assert.match(control, /isKarachiToday\(Date\.parse\(x\.at\|\|""\)\)/);
+  assert.match(control, /Number\.isFinite\(value\)&&karachiDate\(value\)===karachiDate\(Date\.now\(\)\)/);
 });
 
 test("inquiry inbox provides Gmail-style folders, search, responsive reading and Gmail reply links", () => {
