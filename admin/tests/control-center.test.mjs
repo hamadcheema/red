@@ -58,6 +58,13 @@ test("editing an existing content item resolves its relative media path to the M
   assert.match(features, /some\(o=>o\.value===selected\)\?selected:""/);
 });
 
+test("page and SEO editor baselines update after successful saves and publishing", () => {
+  assert.match(connection, /saveRemoteDraft\("page:"[^;]+syncPageBaseline\(\)/);
+  assert.match(connection, /saveRemoteDraft\("seo:"[^;]+syncSeoBaseline\(\)/);
+  assert.match(connection, /const syncPageBaseline=/);
+  assert.match(connection, /const syncSeoBaseline=/);
+});
+
 test("page and SEO editors confirm before discarding unsaved changes when switching pages", () => {
   assert.match(connection, /event\.isTrusted/);
   assert.match(connection, /Discard unsaved /);
