@@ -145,9 +145,13 @@ test("Content Manager draft save handles its reported failure without an unhandl
   assert.match(features, /Draft could not be saved: /);
 });
 
-test("Recently Deleted media and collection history show loading feedback", () => {
+test("Recently Deleted loading and error feedback is announced to assistive technology", () => {
   assert.match(features, /Loading recently deleted images…/);
   assert.match(features, /Loading previous collection versions…/);
+  assert.match(features, /loading\.setAttribute\("role","status"\)/);
+  assert.match(features, /loading\.setAttribute\("aria-live","polite"\)/);
+  assert.match(features, /el\.setAttribute\("role","alert"\)/);
+  assert.match(features, /el\.setAttribute\("aria-live","assertive"\)/);
   assert.match(features, /loading\.remove\(\);showError\(grid,e\)/);
   assert.match(features, /loading\.remove\(\);showError\(list,e\)/);
 });
