@@ -361,3 +361,14 @@ test("activity timeline can retrieve up to 500 audit events with a bounded API l
   assert.match(worker, /slice\(0,limit\)/);
   assert.match(control, /call\("\/audit\?limit=500"\)/);
 });
+
+
+test("page and homepage version history expose accessible loading and error feedback", () => {
+  assert.match(connection, /Loading page version history…/);
+  assert.match(connection, /Loading homepage version history…/);
+  assert.match(connection, /Could not load page history:/);
+  assert.match(connection, /Could not load homepage history:/);
+  assert.match(connection, /error\.setAttribute\("role","alert"\)/);
+  assert.match(connection, /selector\.disabled=true/);
+  assert.match(connection, /if\(selector\.value!==slug\)return/);
+});
