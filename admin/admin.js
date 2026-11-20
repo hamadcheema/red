@@ -33,7 +33,7 @@
     breadcrumb.textContent = label;
     description.textContent = descriptions[selected];
     window.closeAdminSidebar?.();
-    if (["analytics","calendar","inquiries","notifications","health","preview","files","security","site-settings"].includes(selected)) window.dispatchEvent(new CustomEvent("trs:control-view",{detail:selected}));
+    if (["overview","analytics","calendar","inquiries","notifications","health","preview","files","security","site-settings"].includes(selected)) window.dispatchEvent(new CustomEvent("trs:control-view",{detail:selected}));
   }
   window.showAdminView = showView;
 
