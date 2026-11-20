@@ -77,3 +77,11 @@
 .section-visibility-row input{accent-color:var(--red);width:16px;height:16px;flex:0 0 auto}
 .section-visibility-fieldset .field-hint{grid-column:1/-1;margin:2px 0 0}
 @media(max-width:600px){.section-visibility-fieldset{grid-template-columns:1fr}}
+
+.brand-settings-fieldset{border:1px solid var(--line);border-radius:12px;padding:14px;margin:4px 0 12px;display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:12px}
+.brand-settings-fieldset legend{padding:0 7px;font-weight:700;color:var(--text)}
+.brand-setting-row{display:grid;gap:7px;color:var(--text);font-size:12px;font-weight:600}
+.brand-setting-row input[type=color]{width:100%;height:40px;padding:4px;border:1px solid var(--line);border-radius:8px;background:var(--panel2);cursor:pointer}
+.brand-setting-row select{width:100%;min-width:0}
+.brand-settings-fieldset .field-hint{grid-column:1/-1;margin:0}
+@media(max-width:600px){.brand-settings-fieldset{grid-template-columns:1fr}}
