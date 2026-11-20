@@ -3,7 +3,7 @@ const API="/admin-api";
 const FILES={home:"index.html",about:"about.html",services:"services.html",contact:"contact.html",privacy:"privacy.html",terms:"terms.html"};
 const response=(data,status=200,headers={})=>new Response(JSON.stringify(data),{status,headers:{"content-type":"application/json; charset=utf-8","cache-control":"no-store","access-control-allow-origin":ORIGIN,"access-control-allow-credentials":"true","vary":"Origin",...headers}});
 class HttpError extends Error{constructor(status,message){super(message);this.status=status}}
-const readJson=async req=>{try{return await readJson(req)}catch{throw new HttpError(400,"Invalid JSON body.")}};
+const readJson=async req=>{try{return await req.json()}catch{throw new HttpError(400,"Invalid JSON body.")}};
 const EMAIL=/^[A-Za-z0-9._%+-]+@[A-Za-z0-9-]+(?:\.[A-Za-z0-9-]+)*\.[A-Za-z]{2,}$/;
 const esc=s=>String(s??"").replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
 function enc(s){const b=new TextEncoder().encode(s);let x="";for(let i=0;i<b.length;i+=8192)x+=String.fromCharCode(...b.subarray(i,i+8192));return btoa(x)}
