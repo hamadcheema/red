@@ -40,7 +40,7 @@ Known limitations to verify:
 - [ ] Verify backups and recovery procedures.
 - [ ] Establish release/rollback checklists.
 
-### Phase 1 — Admin experience\n- [x] Personal activity timeline with date-range and category filters, daily/weekly event counts, and formula-safe CSV export (latest 50 audit events).
+### Phase 1 — Admin experience\n- [x] Daily and rolling 7-day / 30-day enquiry summaries on the executive dashboard, using Pakistan-local calendar dates for today.\n- [x] Personal activity timeline with date-range and category filters, daily/weekly event counts, and formula-safe CSV export (latest 50 audit events).
 - [x] Gmail-style inquiry workspace with Inbox, Unread and Archived folders.
 - [x] Inquiry search and message reading pane.
 - [x] Per-inquiry Gmail compose/reply action.
