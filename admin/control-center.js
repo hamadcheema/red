@@ -114,9 +114,9 @@
       const params=new URLSearchParams({view:"cm",fs:"1",to:item.email||"",su:subject,body});
       reply.href="https://mail.google.com/mail/?"+params.toString();reply.target="_blank";reply.rel="noopener noreferrer";reply.setAttribute("aria-label","Open Gmail to reply to "+(item.name||"the sender"));
       actions.append(reply);
-      if(item.status!=="archived")actions.append(button("Archive",()=>updateInquiry(id,"archived",p)));
-      else actions.append(button("Restore to inbox",()=>updateInquiry(id,"read",p)));
-      actions.append(button("Delete",async()=>{if(!confirm("Permanently delete this enquiry?"))return;try{await call("/inquiries?id="+encodeURIComponent(id),{method:"DELETE"});selectedInquiryId=null;await loadInquiries();status(root,"Enquiry permanently deleted.")}catch(e){status(p,e.message,true)}}));
+      if(item.status!=="archived")actions.append(button("Archive",()=>updateInquiry(item.id,"archived",p)));
+      else actions.append(button("Restore to inbox",()=>updateInquiry(item.id,"read",p)));
+      actions.append(button("Delete",async()=>{if(!confirm("Permanently delete this enquiry?"))return;try{await call("/inquiries?id="+encodeURIComponent(item.id),{method:"DELETE"});selectedInquiryId=null;await loadInquiries();status(p,"Enquiry permanently deleted.")}catch(e){status(p,e.message,true)}}));
       const head=el("div","inquiry-reader-heading");head.append(el("h3","",item.subject||"Website enquiry"),el("span",item.status==="new"?"status-new":"status-read",item.status==="new"?"UNREAD":item.status.toUpperCase()));
       const sender=el("div","inquiry-sender-details");const avatar=el("span","inquiry-avatar",(item.name||"V").trim().charAt(0).toUpperCase());const meta=el("div");meta.append(el("strong","",item.name||"Website visitor"),el("a","",item.email||"No sender email"));if(item.email){const emailLink=meta.querySelector("a");emailLink.href="mailto:"+item.email}meta.append(el("small","",formatDate(item.createdAt)));sender.append(avatar,meta);
       const message=el("div","inquiry-reader-body",item.message||"");
