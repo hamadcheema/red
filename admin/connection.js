@@ -41,7 +41,7 @@
       window.dispatchEvent(new CustomEvent("trs:control-view",{detail:"overview"}));
       const stat=document.querySelector("#view-overview .stats-grid .stat-card:nth-child(3) .stat-word");
       if(stat)stat.textContent=s.githubConnected?"Ready":"Pending";
-      if($("edit-page")){await loadRemoteDraft("page",$("edit-page").value,{title:"edit-title",description:"edit-description",heading:"edit-heading",intro:"edit-intro",image:"edit-image",imageAlt:"edit-image-alt"},ps);activePage=$("edit-page").value;pageBaseline=fieldSnapshot(pageEditorFields)}
+      if($("edit-page")){await loadRemoteDraft("page",$("edit-page").value,{title:"edit-title",description:"edit-description",heading:"edit-heading",intro:"edit-intro",image:"edit-image",imageAlt:"edit-image-alt"},ps);activePage=$("edit-page").value;pageImageDirty=false;pageBaseline=fieldSnapshot(pageEditorFields);pageBaselineWithoutImage=fieldSnapshot(pageEditorFields.filter(id=>id!=="edit-image"))}
       if($("seo-page")){await loadRemoteDraft("seo",$("seo-page").value,{title:"seo-title",description:"seo-description",canonical:"seo-canonical",ogTitle:"seo-og-title",ogDescription:"seo-og-description",ogImage:"seo-og-image",ogImageAlt:"seo-og-image-alt"},ss);activeSeoPage=$("seo-page").value;seoBaseline=fieldSnapshot(seoEditorFields)}
     }catch(e){
       if(logout)logout.hidden=true;
@@ -150,7 +150,9 @@
   const seoEditorFields=["seo-title","seo-description","seo-canonical","seo-og-title","seo-og-description","seo-og-image","seo-og-image-alt"];
   const fieldSnapshot=ids=>JSON.stringify(ids.map(id=>$(id)?.value??""));
   let activePage=$("edit-page")?.value||"home",activeSeoPage=$("seo-page")?.value||"home";
-  let pageBaseline=fieldSnapshot(pageEditorFields),seoBaseline=fieldSnapshot(seoEditorFields);
+  let pageBaseline=fieldSnapshot(pageEditorFields),seoBaseline=fieldSnapshot(seoEditorFields),pageBaselineWithoutImage=fieldSnapshot(pageEditorFields.filter(id=>id!=="edit-image")),pageImageDirty=false;
+  $("edit-image")?.addEventListener("change",event=>{if(event.isTrusted)pageImageDirty=true});
+  window.addEventListener("trs:media-picker-ready",()=>{if(!pageImageDirty&&fieldSnapshot(pageEditorFields.filter(id=>id!=="edit-image"))===pageBaselineWithoutImage)pageBaseline=fieldSnapshot(pageEditorFields)});
   const guardPageSelection=(select,ids,getBaseline,getActive,label)=>{
     if(!select)return;
     select.addEventListener("change",event=>{
@@ -170,7 +172,7 @@
     try{const d=await call("/draft?key="+encodeURIComponent(kind+":"+slug));if(!d.draft)return;for(const [key,id] of Object.entries(fields))if($(id)&&d.draft[key]!==undefined){let value=d.draft[key];if(key==="heading"){const legacy={home:["Ideas into interactive worlds.","Ideas into\n*interactive worlds.*"],about:["Built around the joy of play.","Built around\nthe joy of play."],services:["Our services.","Our *services.*"],contact:["Let’s start a conversation.","Let’s start\n*a conversation.*"]}[slug];if(legacy&&value===legacy[0])value=legacy[1]}if(key==="image"&&$(id).tagName==="SELECT"&&![...$(id).options].some(option=>option.value===value))$(id).dataset.pendingRemoteValue=value;else $(id).value=value;$(id).dispatchEvent(new Event(key==="image"?"change":"input",{bubbles:true}))}say(status,"Remote draft restored from Cloudflare KV.");}
     catch(e){say(status,"Could not load remote draft: "+e.message,true)}
   }
-  if($("edit-page"))$("edit-page").addEventListener("change",async()=>{await loadRemoteDraft("page",$("edit-page").value,{title:"edit-title",description:"edit-description",heading:"edit-heading",intro:"edit-intro",image:"edit-image",imageAlt:"edit-image-alt"},ps);activePage=$("edit-page").value;pageBaseline=fieldSnapshot(pageEditorFields)});
+  if($("edit-page"))$("edit-page").addEventListener("change",async()=>{await loadRemoteDraft("page",$("edit-page").value,{title:"edit-title",description:"edit-description",heading:"edit-heading",intro:"edit-intro",image:"edit-image",imageAlt:"edit-image-alt"},ps);activePage=$("edit-page").value;pageImageDirty=false;pageBaseline=fieldSnapshot(pageEditorFields);pageBaselineWithoutImage=fieldSnapshot(pageEditorFields.filter(id=>id!=="edit-image"))});
   if($("seo-page"))$("seo-page").addEventListener("change",async()=>{await loadRemoteDraft("seo",$("seo-page").value,{title:"seo-title",description:"seo-description",canonical:"seo-canonical",ogTitle:"seo-og-title",ogDescription:"seo-og-description",ogImage:"seo-og-image",ogImageAlt:"seo-og-image-alt"},ss);activeSeoPage=$("seo-page").value;seoBaseline=fieldSnapshot(seoEditorFields)});
   const historyButton=$("load-history"),historyList=$("history-list");
   if(historyButton&&historyList)historyButton.addEventListener("click",async()=>{
