@@ -50,6 +50,7 @@ function installGitHubMock({ pages = {}, deleted = [], updated = [] } = {}) {
     if (pathname.includes("/git/blobs/")) return json({ encoding: "base64", content: Buffer.from("test image bytes").toString("base64") });
     if (pathname.endsWith("/git/trees") && init.method === "POST") { atomic.trees.push(JSON.parse(init.body)); return json({ sha: "c".repeat(40) }); }
     if (pathname.endsWith("/git/commits") && init.method === "POST") { atomic.commits.push(JSON.parse(init.body)); return json({ sha: "d".repeat(40) }); }
+    if (pathname.endsWith("/commits") && url.searchParams.has("path")) return json([]);
     if (pathname.endsWith("/git/refs/heads/main") && init.method === "PATCH") { atomic.refs.push(JSON.parse(init.body)); return json({ object: { sha: "d".repeat(40) } }); }
     const prefix = "/repos/hamadcheema/red/contents/";
     const path = decodeURIComponent(url.pathname.slice(prefix.length));
@@ -393,4 +394,18 @@ test("GitHub OAuth callback rejects state copied into a different browser", asyn
   assert.equal(response.status, 400);
   assert.match(await response.text(), /restart sign-in/);
   assert.equal(await env.DRAFTS.get("oauth-state:" + state), null);
+});
+
+
+test("rollback rejects a commit that is not in the selected file history", async () => {
+  const github = installGitHubMock();
+  const env = makeEnv();
+  const response = await call("/rollback", {
+    method: "POST",
+    body: { path: "index.html", sha: "f".repeat(40) }
+  }, env);
+  const result = await response.json();
+  assert.equal(response.status, 400);
+  assert.match(result.error, /verified history/);
+  assert.deepEqual(github.updated, []);
 });
