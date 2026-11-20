@@ -60,7 +60,7 @@ test("admin HTML IDs remain unique and all admin scripts are loaded", () => {
 
 test("inquiry inbox provides Gmail-style folders, search, responsive reading and Gmail reply links", () => {
   assert.match(control, /inquiryFolder/);
-  assert.match(control, /Search mail/);
+  assert.match(control, /Search name, email, subject or message/);
   assert.match(control, /Reply in Gmail/);
   assert.match(control, /https:\/\/mail\.google\.com\/mail\//);
   assert.match(control, /URLSearchParams\(\{view:"cm",fs:"1",to:item\.email/);
