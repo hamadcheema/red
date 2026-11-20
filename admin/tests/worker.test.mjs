@@ -252,6 +252,7 @@ test("inquiry listing reports all stored counts while returning only the latest 
 test("site settings publish all changed public pages in one atomic Git commit", async () => {
   const page = '<!doctype html><html><head><title>Test</title></head><body><section data-trs-section="hero"><h1>Hero stays</h1></section><section data-trs-section="intro">Intro stays</section><section data-trs-section="services">Services stay</section><section data-trs-section="workflow">Workflow stays</section><section data-trs-section="contact">Contact stays</section><a href="mailto:admin@theredsparrow.online">admin@theredsparrow.online</a><a href="mailto:hammad@theredsparrow.online">hammad@theredsparrow.online</a><p>Independent Unity game development.</p></body></html>';
   const pages = Object.fromEntries(["index.html", "about.html", "services.html", "contact.html", "privacy.html", "terms.html"].map(path => [path, page]));
+  pages["styles.css"] = ':root{--red:#ed4b45;--bg:#101116}body{font-family:system-ui,-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;color:var(--red);background:rgba(237,75,69,.13)}';
   const github = installGitHubMock({ pages });
   const env = makeEnv();
   const settings = {
@@ -259,19 +260,30 @@ test("site settings publish all changed public pages in one atomic Git commit", 
     directEmail: "hammad@theredsparrow.online",
     tagline: "Independent interactive game development.",
     announcementEnabled: true,
-    announcement: "New work is coming soon."
+    announcement: "New work is coming soon.",
+    brand: { accentColor: "#2b6cb0", fontFamily: "georgia", logoPath: "/assets/uploads/brand.png" }
   };
   const saved = await call("/site-settings", { method: "POST", body: settings }, env);
   assert.equal(saved.status, 200);
   const published = await call("/publish/site-settings", { method: "POST", body: {} }, env);
   const result = await published.json();
   assert.equal(published.status, 200);
-  assert.equal(result.files, 6);
+  assert.equal(result.files, 7);
   assert.equal(github.atomic.trees.length, 1);
-  assert.equal(github.atomic.trees[0].tree.length, 6);
+  assert.equal(github.atomic.trees[0].tree.length, 7);
   assert.equal(github.atomic.commits.length, 1);
   assert.equal(github.atomic.refs.length, 1);
   assert.equal(await env.DRAFTS.get("site-settings:draft", "json"), null);
+  const cssBlob = github.atomic.blobs.find(item => String(item.content || "").includes("--red-rgb:"));
+  assert.ok(cssBlob);
+  assert.match(cssBlob.content, /--red:#2b6cb0/);
+  assert.match(cssBlob.content, /--brand-font:Georgia/);
+  assert.match(cssBlob.content, /rgba\\(var\\(--red-rgb\\),/);
+  const pageBlob = github.atomic.blobs.find(item => String(item.content || "").includes("class=\\"brand-logo\\""));
+  assert.ok(pageBlob);
+  assert.match(pageBlob.content, /src=\\"\\/assets\\/uploads\\/brand\\.png\\"/);
+  assert.deepEqual((await env.DRAFTS.get("site-settings:live", "json")).brand, settings.brand);
+
 });
 
 test("publishing a collection clears its stale draft snapshot", async () => {
@@ -496,4 +508,17 @@ test("website section visibility rejects unknown keys and non-boolean values", a
     tagline: "Independent Unity game development.", sectionVisibility: { unknown: false }
   } }, env);
   assert.equal(invalid.status, 400);
+});
+
+test("brand settings reject unsafe colours, fonts and external logo URLs", async () => {
+  const env = makeEnv();
+  const base = { contactEmail: "admin@theredsparrow.online", directEmail: "hammad@theredsparrow.online", tagline: "Independent Unity game development." };
+  for (const brand of [
+    { accentColor: "red", fontFamily: "system", logoPath: "/favicon.svg" },
+    { accentColor: "#123456", fontFamily: "remote-font", logoPath: "/favicon.svg" },
+    { accentColor: "#123456", fontFamily: "system", logoPath: "https://example.com/logo.png" }
+  ]) {
+    const response = await call("/site-settings", { method: "POST", body: { ...base, brand } }, env);
+    assert.equal(response.status, 400);
+  }
 });
