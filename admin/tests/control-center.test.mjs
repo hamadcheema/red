@@ -171,6 +171,12 @@ test("admin HTML IDs remain unique and all admin scripts are loaded", () => {
   for (const script of ["admin.js", "features.js", "control-center.js", "connection.js"]) assert.ok(html.includes(script));
 });
 
+test("publishing calendar shows its timezone and blocks past local schedule times", () => {
+  assert.match(control, /date\.min=new Date\(now\.getTime\(\)-now\.getTimezoneOffset\(\)\*60000\)\.toISOString\(\)\.slice\(0,16\)/);
+  assert.match(control, /resolvedOptions\(\)\.timeZone/);
+  assert.match(control, /Publish at \("\+timeZone\+"\)/);
+});
+
 test("inquiry pagination advances by the server-returned page size even when duplicate IDs are filtered", () => {
   assert.match(control, /deletedOffset=offset\+pageItems\.length/);
   assert.match(control, /inquiryOffset=offset\+pageItems\.length/);
