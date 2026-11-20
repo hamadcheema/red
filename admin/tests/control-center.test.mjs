@@ -401,6 +401,9 @@ test("Media Library filters supported image formats and labels filename sorting 
   assert.match(features, /mediaType==="all"/);
   assert.match(features, /mediaType==="jpeg"\?\["jpg","jpeg"\]\.includes\(ext\)/);
   assert.match(features, /media-type-filter/);
+  assert.match(features, /No files match your filters\./);
+  assert.match(features, /clear\.textContent="Clear filters"/);
+  assert.match(features, /mediaSearch="";mediaType="all"/);
   assert.match(features, /mediaSort==="name-az"\?a\.name\.localeCompare\(b\.name\)/);
   assert.match(html, /id="media-type-filter" aria-label="Filter media by format"/);
   assert.match(html, /value="jpeg">JPEG images/);
