@@ -58,6 +58,13 @@ test("editing an existing content item resolves its relative media path to the M
   assert.match(features, /some\(o=>o\.value===selected\)\?selected:""/);
 });
 
+test("Content Manager preserves unsaved collection edits during navigation and confirms destructive refresh", () => {
+  assert.match(features, /collectionDirty\[kind\]&&!force/);
+  assert.match(features, /Unsaved local changes are being kept/);
+  assert.match(features, /Discard unsaved local collection changes and reload saved drafts\?/);
+  assert.match(features, /loadCollection\(kind,true\)/);
+});
+
 test("Content Manager draft save handles its reported failure without an unhandled rejection", () => {
   assert.match(features, /saveCollectionDraft\(kind\)\.catch\(\(\)=>\{\}\)/);
   assert.match(features, /Draft could not be saved: /);
