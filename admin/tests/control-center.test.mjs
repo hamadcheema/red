@@ -58,6 +58,12 @@ test("editing an existing content item resolves its relative media path to the M
   assert.match(features, /some\(o=>o\.value===selected\)\?selected:""/);
 });
 
+test("partial Media Library uploads refresh the visible library and report completed files", () => {
+  assert.match(connection, /let uploaded=0/);
+  assert.match(connection, /if\(uploaded\)window\.dispatchEvent\(new Event\("trs:media-updated"\)\)/);
+  assert.match(connection, /\(uploaded\?uploaded\+" image\(s\) uploaded\. ":""\)/);
+});
+
 test("Media Library supports safe bulk selection and trash operations", () => {
   assert.match(features, /const selectedMediaPaths=new Set\(\)/);
   assert.match(features, /Select all visible media files/);
