@@ -47,6 +47,8 @@ function cleanBrandSettings(value,current=brandDefaults){
  return result;
 }
 function applyBrandStyles(css,brand){
+ css=css.replace(/#ed4b45/gi,"var(--red)").replace(/rgba\\(237,75,69,/gi,"rgba(var(--red-rgb),").replace(/#ff5b54/gi,"var(--red)");
+ css=css.replace(/system-ui,-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif/g,"var(--brand-font)");
  const match=css.match(/:root\\s*\\{([^}]*)\\}/);if(!match)throw new Error("Public stylesheet root variables were not found.");
  const rgb=brand.accentColor.slice(1).match(/.{2}/g).map(x=>parseInt(x,16)).join(",");
  let root=match[1];
@@ -55,11 +57,7 @@ function applyBrandStyles(css,brand){
  if(!root.includes("--red-rgb:"))root+=";--red-rgb:"+rgb;
  root=root.replace(/--brand-font\\s*:[^;]+;/,"--brand-font:"+brandFontStacks[brand.fontFamily]+";");
  if(!root.includes("--brand-font:"))root+=";--brand-font:"+brandFontStacks[brand.fontFamily];
- css=css.replace(match[0],":root{"+root+"}");
- css=css.replace(/system-ui,-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif/g,"var(--brand-font)");
- css=css.replace(/#ed4b45/gi,"var(--red)").replace(/rgba\\(237,75,69,/gi,"rgba(var(--red-rgb),");
- css=css.replace(/#ff5b54/gi,"var(--red)");
- return css;
+ return css.replace(match[0],":root{"+root+"}");
 }
 
 function cleanSectionVisibility(value,current=sectionVisibilityDefaults){
