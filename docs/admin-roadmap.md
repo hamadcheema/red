@@ -46,7 +46,9 @@ Known limitations to verify:
 - [x] Per-inquiry Gmail compose/reply action.
 - [x] Universal data search across enquiries, content collections, media and recent audit activity (50-result cap; latest 500 audit entries).
 - [x] Ctrl/Cmd+K command palette for keyboard-accessible quick navigation across registered admin sections, with common aliases and descriptive matching.\n- [x] Universal data search across enquiries, projects, social previews, brand assets, media and the latest 500 activity entries (separate from navigation search); capped at 50 results per query.
-- [ ] Accessible universal confirmations and undo for safe draft actions.
+- [x] Shared accessible confirmation dialog for destructive admin actions, including keyboard dismissal and focus handling.
+- [x] Undo removal for pending Content Manager draft items; published collection versions remain recoverable for 7 days.
+- [ ] General undo for other safe draft actions.
 - [ ] Bulk actions and consistent empty/loading/error states.\n- [x] Authenticated CSV export for all active enquiries with spreadsheet formula-injection protection.
 
 ### Phase 2 — Content operations
