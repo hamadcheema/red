@@ -38,6 +38,46 @@
   }
   window.showAdminView = showView;
 
+  let confirmSequence = 0;
+  window.trsConfirm = (message, options = {}) => new Promise(resolve => {
+    const dialog = document.createElement("dialog");
+    dialog.className = "admin-confirm-dialog";
+    const card = document.createElement("div");
+    card.className = "admin-confirm-card";
+    const heading = document.createElement("h2");
+    heading.id = "admin-confirm-title-" + (++confirmSequence);
+    heading.textContent = options.title || "Please confirm";
+    dialog.setAttribute("aria-labelledby", heading.id);
+    const copy = document.createElement("p");
+    copy.textContent = String(message || "Are you sure you want to continue?");
+    const actions = document.createElement("div");
+    actions.className = "admin-confirm-actions";
+    const cancel = document.createElement("button");
+    cancel.type = "button";
+    cancel.className = "secondary-button";
+    cancel.textContent = options.cancelLabel || "Cancel";
+    const accept = document.createElement("button");
+    accept.type = "button";
+    accept.className = options.destructive === false ? "primary-button" : "manager-delete";
+    accept.textContent = options.confirmLabel || "Continue";
+    cancel.addEventListener("click", () => dialog.close("cancel"));
+    accept.addEventListener("click", () => dialog.close("confirm"));
+    dialog.addEventListener("click", event => {
+      if (event.target === dialog) dialog.close("cancel");
+    });
+    dialog.addEventListener("close", () => {
+      const accepted = dialog.returnValue === "confirm";
+      dialog.remove();
+      resolve(accepted);
+    }, { once: true });
+    actions.append(cancel, accept);
+    card.append(heading, copy, actions);
+    dialog.append(card);
+    document.body.append(dialog);
+    dialog.showModal();
+    cancel.focus();
+  });
+
   const pageDefaults = {
     home: {image:"",imageAlt:"",title:"The Red Sparrow — Unity Game Development",description:"The Red Sparrow develops Unity gameplay systems, integrates supplied 3D assets and prepares mobile-focused game builds.",heading:"Ideas into\n*interactive worlds.*",intro:"We develop gameplay experiences with Unity, integrate supplied 3D assets and prepare builds for agreed platforms."},
     about: {image:"",imageAlt:"",title:"About — The Red Sparrow",description:"Learn about The Red Sparrow, an independent game-development brand focused on Unity and interactive experiences.",heading:"Built around\nthe joy of play.",intro:"The Red Sparrow is an independent creative brand focused on developing games and interactive experiences with Unity."},
