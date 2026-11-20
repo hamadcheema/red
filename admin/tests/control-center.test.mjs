@@ -119,3 +119,15 @@ test("website settings expose independent homepage section visibility controls",
   assert.match(worker, /sectionVisibilityDefaults/);
   assert.match(worker, /applySectionVisibility/);
 });
+
+test("centralized brand identity controls cover accent, typography and Media Library logo", () => {
+  assert.match(control, /Brand identity/);
+  assert.match(control, /Accent colour/);
+  assert.match(control, /Typography/);
+  assert.match(control, /Website logo/);
+  assert.match(control, /call\("\/media\/list"\)/);
+  assert.match(control, /brand:\{accentColor:accent\.value,fontFamily:font\.value,logoPath:logo\.value\}/);
+  assert.match(worker, /function cleanBrandSettings/);
+  assert.match(worker, /function applyBrandStyles/);
+  assert.match(worker, /brandFontStacks/);
+});
