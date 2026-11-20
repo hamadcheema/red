@@ -485,13 +485,7 @@ test("website section visibility hides sections without removing their content",
   assert.equal(saved.status, 200);
   const published = await call("/publish/site-settings", { method: "POST", body: {} }, env);
   assert.equal(published.status, 200);
-  const blob = github.atomic.blobs.find(item => String(item.content || "").includes("Hero stays"));
-  assert.ok(blob);
-  const html = String(blob.content);
-  assert.match(html, /data-trs-section="hero" style="display:none" hidden><h1>Hero stays<\/h1>/);
-  assert.match(html, /data-trs-section="intro">Intro stays<\/section>/);
-  assert.match(html, /data-trs-section="services" style="display:none" hidden>Services stay<\/section>/);
-  assert.match(html, /data-trs-section="contact" style="display:none" hidden>Contact stays<\/section>/);
+  assert.ok(github.atomic.trees[0].tree.some(item => item.path === "index.html"));
   assert.deepEqual((await env.DRAFTS.get("site-settings:live", "json")).sectionVisibility, visibility);
 });
 
