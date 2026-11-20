@@ -145,6 +145,13 @@ test("Content Manager draft save handles its reported failure without an unhandl
   assert.match(features, /Draft could not be saved: /);
 });
 
+test("Recently Deleted media and collection history show loading feedback", () => {
+  assert.match(features, /Loading recently deleted images…/);
+  assert.match(features, /Loading previous collection versions…/);
+  assert.match(features, /loading\.remove\(\);showError\(grid,e\)/);
+  assert.match(features, /loading\.remove\(\);showError\(list,e\)/);
+});
+
 test("partial Media Library uploads refresh the visible library and report completed files", () => {
   assert.match(connection, /let uploaded=0/);
   assert.match(connection, /if\(uploaded\)window\.dispatchEvent\(new Event\("trs:media-updated"\)\)/);
