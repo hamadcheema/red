@@ -101,6 +101,12 @@ test("Content Manager preserves unsaved collection edits during navigation and c
   assert.match(features, /loadCollection\(kind,true\)/);
 });
 
+test("Content Manager navigation reuses loaded collections so edit selection is not reset", () => {
+  assert.match(features, /collectionLoaded\[kind\]&&!force\)return/);
+  assert.match(features, /collectionLoaded\[kind\]=true/);
+  assert.match(features, /collectionEditing\[kind\]=index/);
+});
+
 test("in-flight collection reloads cannot overwrite edits made while the request is pending", () => {
   assert.match(features, /await request\("\/content\?kind="\+kind\);if\(collectionDirty\[kind\]\)/);
   assert.match(features, /collectionDirty\[kind\]=false;loadCollection\(kind,true\)/);
