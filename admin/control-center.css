@@ -108,3 +108,14 @@
 .brand-comparison-colour{display:block;width:100%;max-width:100px;height:10px;border:1px solid var(--line);border-radius:20px}
 .brand-comparison-font{font-weight:600;color:var(--text)}
 @media(max-width:600px){.brand-comparison-grid{grid-template-columns:1fr}}
+
+/* Personal activity timeline and export filters */
+.activity-toolbar{display:grid;grid-template-columns:repeat(3,minmax(0,1fr)) auto auto;gap:9px;align-items:center;margin-bottom:14px}
+.activity-toolbar input,.activity-toolbar select{min-width:0;width:100%;background:#101116;color:var(--text);border:1px solid var(--line);border-radius:7px;padding:10px;font:inherit}
+.activity-timeline{display:grid;gap:0;border-top:1px solid var(--line)}
+.activity-event{display:grid;grid-template-columns:minmax(145px,190px) minmax(0,1fr);gap:16px;padding:15px 4px;border-bottom:1px solid var(--line)}
+.activity-event-date{font-size:11px;color:var(--muted);font-variant-numeric:tabular-nums}
+.activity-event-body strong{display:block;text-transform:capitalize;font-size:13px}
+.activity-event-body p{margin:5px 0;color:var(--muted);font-size:12px;overflow-wrap:anywhere}
+.activity-event-body small{font-size:10px;color:#858791}
+@media(max-width:760px){.activity-toolbar{grid-template-columns:1fr 1fr}.activity-event{grid-template-columns:1fr;gap:5px}}
