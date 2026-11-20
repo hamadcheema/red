@@ -355,3 +355,13 @@ test("publishing selected collection items preserves unselected draft items", as
   assert.deepEqual(await env.DRAFTS.get("collection-draft:projects", "json"), [...live, ...selected, ...remaining]);
   assert.equal(github.updated.some(x => x.path === "index.html"), true);
 });
+
+
+test("scheduled cleanup permanently removes media trash after seven days", async () => {
+  const github = installGitHubMock();
+  const id = "44444444-4444-4444-8444-444444444444";
+  const env = makeEnv({ ["trash:media:" + id]: { id, name: "old.jpg", path: "assets/uploads/old.jpg", trashPath: "assets/trash/" + id + "-old.jpg", size: 10, deletedAt: new Date(Date.now() - 8 * 86400000).toISOString() } });
+  await worker.default.scheduled({}, env);
+  assert.equal(await env.DRAFTS.get("trash:media:" + id), null);
+  assert.ok(github.deleted.includes("assets/trash/" + id + "-old.jpg"));
+});
