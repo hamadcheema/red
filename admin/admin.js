@@ -185,4 +185,124 @@
       menuToggle.focus();
     }
   });
+  // Keyboard-accessible quick navigation across every registered admin module.
+  const commandDialog = document.createElement("dialog");
+  commandDialog.className = "command-palette";
+  commandDialog.setAttribute("aria-labelledby", "command-palette-title");
+  const commandTitle = document.createElement("h2");
+  commandTitle.id = "command-palette-title";
+  commandTitle.textContent = "Go to a workspace";
+  const commandHint = document.createElement("p");
+  commandHint.className = "command-palette-hint";
+  commandHint.textContent = "Search admin sections · ↑ ↓ to move · Enter to open · Esc to close";
+  const commandInput = document.createElement("input");
+  commandInput.type = "search";
+  commandInput.placeholder = "Search pages, content, SEO, inquiries…";
+  commandInput.setAttribute("aria-label", "Search admin sections");
+  commandInput.setAttribute("role", "combobox");
+  commandInput.setAttribute("aria-autocomplete", "list");
+  commandInput.setAttribute("aria-expanded", "true");
+  const commandResults = document.createElement("div");
+  commandResults.className = "command-palette-results";
+  commandResults.id = "command-palette-results";
+  commandResults.setAttribute("role", "listbox");
+  commandInput.setAttribute("aria-controls", commandResults.id);
+  commandDialog.append(commandTitle, commandHint, commandInput, commandResults);
+  document.getElementById("admin-app")?.append(commandDialog);
+  let commandItems = [];
+  let commandIndex = 0;
+  let commandReturnFocus = null;
+  function renderCommandResults() {
+    const query = commandInput.value.trim().toLowerCase();
+    commandItems = links().map(link => ({
+      view: link.dataset.view,
+      label: (link.dataset.label || link.textContent || "").replace(/^[^A-Za-z0-9]+/, "").trim()
+    })).filter(item => item.view && item.label && item.label.toLowerCase().includes(query));
+    commandIndex = Math.min(commandIndex, Math.max(0, commandItems.length - 1));
+    commandResults.replaceChildren();
+    if (!commandItems.length) {
+      const empty = document.createElement("p");
+      empty.className = "command-palette-empty";
+      empty.textContent = "No matching workspace sections.";
+      commandResults.append(empty);
+      commandInput.removeAttribute("aria-activedescendant");
+      return;
+    }
+    commandItems.forEach((item, index) => {
+      const option = document.createElement("button");
+      option.type = "button";
+      option.className = "command-palette-option";
+      option.id = "command-option-" + index;
+      option.setAttribute("role", "option");
+      option.setAttribute("aria-selected", String(index === commandIndex));
+      const label = document.createElement("span");
+      label.textContent = item.label;
+      const hint = document.createElement("small");
+      hint.textContent = "Open section";
+      option.append(label, hint);
+      option.addEventListener("mouseenter", () => {
+        commandIndex = index;
+        updateCommandSelection();
+      });
+      option.addEventListener("click", () => {
+        commandDialog.close();
+        showView(item.view);
+      });
+      commandResults.append(option);
+    });
+    commandInput.setAttribute("aria-activedescendant", "command-option-" + commandIndex);
+  }
+  function updateCommandSelection() {
+    [...commandResults.querySelectorAll('[role="option"]')].forEach((option, index) => {
+      option.setAttribute("aria-selected", String(index === commandIndex));
+    });
+    if (commandItems.length) commandInput.setAttribute("aria-activedescendant", "command-option-" + commandIndex);
+  }
+  function openCommandPalette() {
+    if (!commandDialog.isConnected || document.getElementById("admin-app")?.hidden) return;
+    commandReturnFocus = document.activeElement;
+    commandInput.value = "";
+    commandIndex = 0;
+    renderCommandResults();
+    if (!commandDialog.open) commandDialog.showModal();
+    commandInput.focus();
+  }
+  commandDialog.addEventListener("close", () => {
+    if (commandReturnFocus && typeof commandReturnFocus.focus === "function") commandReturnFocus.focus();
+  });
+  commandInput.addEventListener("input", () => {
+    commandIndex = 0;
+    renderCommandResults();
+  });
+  commandInput.addEventListener("keydown", event => {
+    if (event.key === "ArrowDown" && commandItems.length) {
+      event.preventDefault();
+      commandIndex = (commandIndex + 1) % commandItems.length;
+      updateCommandSelection();
+    } else if (event.key === "ArrowUp" && commandItems.length) {
+      event.preventDefault();
+      commandIndex = (commandIndex - 1 + commandItems.length) % commandItems.length;
+      updateCommandSelection();
+    } else if (event.key === "Enter" && commandItems.length) {
+      event.preventDefault();
+      commandDialog.close();
+      showView(commandItems[commandIndex].view);
+    }
+  });
+  commandDialog.addEventListener("click", event => {
+    if (event.target === commandDialog) commandDialog.close();
+  });
+  const commandTrigger = document.createElement("button");
+  commandTrigger.type = "button";
+  commandTrigger.className = "button button-quiet command-palette-trigger";
+  commandTrigger.textContent = "Search workspace  Ctrl K";
+  commandTrigger.addEventListener("click", openCommandPalette);
+  document.querySelector(".topbar-right")?.prepend(commandTrigger);
+  document.addEventListener("keydown", event => {
+    if ((event.ctrlKey || event.metaKey) && event.key.toLowerCase() === "k") {
+      event.preventDefault();
+      openCommandPalette();
+    }
+  });
+
 })();

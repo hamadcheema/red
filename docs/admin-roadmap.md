@@ -1,6 +1,6 @@
 # The Red Sparrow Admin — Long-term Roadmap
 
-Last reviewed: 2026-11-19
+Last reviewed: 2026-11-20
 Repository: https://github.com/hamadcheema/red
 Baseline: main commit e2eaf29ac5480c22b7b6fc2d453ca8224c29f684
 
@@ -45,7 +45,7 @@ Known limitations to verify:
 - [x] Inquiry search and message reading pane.
 - [x] Per-inquiry Gmail compose/reply action.
 - [ ] Global search across all modules.
-- [ ] Ctrl/Cmd+K command palette.
+- [x] Ctrl/Cmd+K command palette for keyboard-accessible quick navigation across registered admin sections.
 - [ ] Accessible universal confirmations and undo for safe draft actions.
 - [ ] Bulk actions and consistent empty/loading/error states.
 

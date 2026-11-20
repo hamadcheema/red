@@ -285,3 +285,16 @@ h2{font:700 16px 'Manrope',sans-serif;margin-bottom:3px;letter-spacing:-.25px}
 .content-recovery-panel{margin-top:16px}
 
 @media(max-width:650px){.sidebar{height:100dvh;min-height:100dvh;overflow-y:auto;padding-bottom:24px}.sidebar-bottom{margin-top:22px}.nav-link{min-height:44px}.menu-toggle:focus-visible,.sidebar-backdrop:focus-visible{outline:2px solid var(--red);outline-offset:2px}}
+
+/* Accessible workspace command palette */
+.command-palette{width:min(560px,calc(100vw - 28px));max-height:min(78vh,680px);padding:22px;border:1px solid var(--line);border-radius:14px;background:#171920;color:var(--text);box-shadow:0 24px 80px rgba(0,0,0,.55)}
+.command-palette::backdrop{background:rgba(5,6,10,.76);backdrop-filter:blur(3px)}
+.command-palette h2{margin:0;font-size:18px}.command-palette-hint{margin:6px 0 16px;color:var(--muted);font-size:11px;line-height:1.6}
+.command-palette input{box-sizing:border-box;width:100%;min-height:46px;padding:11px 14px;border:1px solid var(--line);border-radius:8px;background:#101116;color:var(--text);font:inherit;outline-offset:3px}
+.command-palette-results{display:grid;gap:5px;max-height:48vh;overflow:auto;margin-top:12px}
+.command-palette-option{display:flex;justify-content:space-between;align-items:center;gap:12px;width:100%;min-height:44px;padding:10px 12px;border:1px solid transparent;border-radius:7px;background:transparent;color:var(--text);text-align:left;cursor:pointer}
+.command-palette-option:hover,.command-palette-option[aria-selected="true"]{border-color:rgba(237,75,69,.3);background:rgba(237,75,69,.11)}
+.command-palette-option small,.command-palette-empty{color:var(--muted);font-size:10px}.command-palette-empty{padding:12px}
+.command-palette-trigger{white-space:nowrap}
+@media(max-width:650px){.command-palette{padding:17px}.command-palette-trigger{font-size:0;min-width:38px}.command-palette-trigger::before{content:"⌕";font-size:18px}.command-palette-hint{max-width:38ch}}
+@media(prefers-reduced-motion:reduce){.command-palette::backdrop{backdrop-filter:none}}
