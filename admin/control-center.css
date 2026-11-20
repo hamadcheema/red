@@ -70,3 +70,10 @@
  .inquiry-summary .stat-card>strong{font-size:18px}
  .inquiry-bulk-toolbar button{flex:1 1 100%}
 }
+
+.section-visibility-fieldset{border:1px solid var(--line);border-radius:12px;padding:14px;margin:4px 0 12px;display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:10px}
+.section-visibility-fieldset legend{padding:0 7px;font-weight:700;color:var(--text)}
+.section-visibility-row{display:flex;align-items:center;gap:9px;min-height:36px;color:var(--text);cursor:pointer}
+.section-visibility-row input{accent-color:var(--red);width:16px;height:16px;flex:0 0 auto}
+.section-visibility-fieldset .field-hint{grid-column:1/-1;margin:2px 0 0}
+@media(max-width:600px){.section-visibility-fieldset{grid-template-columns:1fr}}
