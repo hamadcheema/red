@@ -178,7 +178,7 @@
   if($("seo-page"))$("seo-page").addEventListener("change",async()=>{await loadRemoteDraft("seo",$("seo-page").value,{title:"seo-title",description:"seo-description",canonical:"seo-canonical",ogTitle:"seo-og-title",ogDescription:"seo-og-description",ogImage:"seo-og-image",ogImageAlt:"seo-og-image-alt"},ss);activeSeoPage=$("seo-page").value;syncSeoBaseline()});
   const historyButton=$("load-history"),historyList=$("history-list");
   if(historyButton&&historyList)historyButton.addEventListener("click",async()=>{
-    const selector=$("edit-page"),slug=selector.value,path=pageFiles[slug];historyButton.disabled=true;selector.disabled=true;historyButton.textContent="Loading…";historyList.replaceChildren();const loading=document.createElement("p");loading.className="editor-footnote";loading.setAttribute("role","status");loading.textContent="Loading page version history…";historyList.append(loading);
+    const selector=$("edit-page"),slug=selector.value,path=pageFiles[slug];historyButton.disabled=true;selector.disabled=true;historyButton.textContent="Loading…";historyButton.setAttribute("aria-busy","true");historyList.setAttribute("aria-busy","true");historyList.replaceChildren();const loading=document.createElement("p");loading.className="editor-footnote";loading.setAttribute("role","status");loading.setAttribute("aria-live","polite");loading.textContent="Loading page version history…";historyList.append(loading);
      try{
        const data=await call("/history?path="+encodeURIComponent(path));if(selector.value!==slug)return;historyList.replaceChildren();
       if(!data.history.length){historyList.textContent="No history found.";return}
@@ -190,12 +190,12 @@
         restore.addEventListener("click",async()=>{if(!await window.trsConfirm("Restore this version of "+path+"? This creates a new GitHub commit."))return;restore.disabled=true;try{const result=await call("/rollback",{method:"POST",body:JSON.stringify({path,sha:item.sha})});say(ps,"Previous version restored. Commit: "+(result.commit||"created").slice(0,7));historyButton.click()}catch(e){say(ps,e.message,true);restore.disabled=false}});
         row.append(detail,restore);historyList.append(row);
       }
-    }catch(e){historyList.replaceChildren();const error=document.createElement("p");error.className="editor-footnote";error.setAttribute("role","alert");error.textContent="Could not load page history: "+e.message;historyList.append(error)}
-    finally{historyButton.disabled=false;selector.disabled=false;historyButton.textContent="Load history"}
+    }catch(e){historyList.replaceChildren();const error=document.createElement("p");error.className="editor-footnote";error.setAttribute("role","alert");error.setAttribute("aria-live","assertive");error.textContent="Could not load page history: "+e.message;historyList.append(error)}
+    finally{historyButton.disabled=false;selector.disabled=false;historyButton.textContent="Load history";historyButton.removeAttribute("aria-busy");historyList.removeAttribute("aria-busy")}
   });
   const homepageHistoryButton=$("load-homepage-history"),homepageHistoryList=$("homepage-history-list");
   if(homepageHistoryButton&&homepageHistoryList)homepageHistoryButton.addEventListener("click",async()=>{
-    homepageHistoryButton.disabled=true;homepageHistoryButton.textContent="Loading…";homepageHistoryList.replaceChildren();const loading=document.createElement("p");loading.className="editor-footnote";loading.setAttribute("role","status");loading.textContent="Loading homepage version history…";homepageHistoryList.append(loading);
+    homepageHistoryButton.disabled=true;homepageHistoryButton.textContent="Loading…";homepageHistoryButton.setAttribute("aria-busy","true");homepageHistoryList.setAttribute("aria-busy","true");homepageHistoryList.replaceChildren();const loading=document.createElement("p");loading.className="editor-footnote";loading.setAttribute("role","status");loading.setAttribute("aria-live","polite");loading.textContent="Loading homepage version history…";homepageHistoryList.append(loading);
      try{
        const data=await call("/history?path=index.html");homepageHistoryList.replaceChildren();
       if(!data.history.length){homepageHistoryList.textContent="No homepage history found.";return}
@@ -207,8 +207,8 @@
         restore.addEventListener("click",async()=>{if(!await window.trsConfirm("Restore the entire homepage (index.html) to this version? This may roll back all homepage content and showcase sections."))return;restore.disabled=true;restore.textContent="Restoring…";try{const result=await call("/rollback",{method:"POST",body:JSON.stringify({path:"index.html",sha:item.sha})});restore.textContent="Restored";meta.textContent+=" · New commit "+(result.commit||"created").slice(0,7)}catch(e){restore.disabled=false;restore.textContent="Restore homepage";say(homepageHistoryList,"Could not restore homepage: "+e.message,true)}});
         row.append(detail,restore);homepageHistoryList.append(row);
       }
-    }catch(e){homepageHistoryList.replaceChildren();const error=document.createElement("p");error.className="editor-footnote";error.setAttribute("role","alert");error.textContent="Could not load homepage history: "+e.message;homepageHistoryList.append(error)}
-    finally{homepageHistoryButton.disabled=false;homepageHistoryButton.textContent="Load history"}
+    }catch(e){homepageHistoryList.replaceChildren();const error=document.createElement("p");error.className="editor-footnote";error.setAttribute("role","alert");error.setAttribute("aria-live","assertive");error.textContent="Could not load homepage history: "+e.message;homepageHistoryList.append(error)}
+    finally{homepageHistoryButton.disabled=false;homepageHistoryButton.textContent="Load history";homepageHistoryButton.removeAttribute("aria-busy");homepageHistoryList.removeAttribute("aria-busy")}
   });
   window.addEventListener("beforeunload",event=>{if(selectedFiles.length){event.preventDefault();event.returnValue=""}});
   const logout=$("admin-logout");
