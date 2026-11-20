@@ -109,3 +109,13 @@ test("enquiry CSV export is authenticated, complete, formula-safe and excludes d
   assert.ok(control.includes('fetch("/admin-api/inquiries/export",{credentials:"include"})'));
   assert.ok(control.includes("URL.createObjectURL"));
 });
+
+test("website settings expose independent homepage section visibility controls", () => {
+  assert.match(control, /Homepage section visibility/);
+  assert.match(control, /Game project showcases/);
+  assert.match(control, /Social media previews/);
+  assert.match(control, /sectionVisibility:Object\.fromEntries/);
+  assert.match(control, /can be shown again at any time/);
+  assert.match(worker, /sectionVisibilityDefaults/);
+  assert.match(worker, /applySectionVisibility/);
+});
