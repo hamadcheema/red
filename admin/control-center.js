@@ -56,71 +56,90 @@
     }catch(e){status(list,"Could not load schedule: "+e.message,true)}
     root.append(list);
   }
-  let inquiryItems=[],inquiryData={total:0,unread:0},inquiryFolder="inbox",selectedInquiryId=null,inquirySearch="";
+  let inquiryItems=[],deletedInquiryItems=[],inquiryData={total:0,unread:0,archived:0},inquiryFolder="inbox",selectedInquiryId=null,inquirySearch="",inquiryDateFilter="any",selectedInquiryIds=new Set();
   async function loadInquiries(){
     const root=mount("view-inquiries")?.querySelector(".control-content");if(!root)return;
-    const p=panel("Inbox","A private, Gmail-style workspace for messages submitted through your website contact form.");
-    const toolbar=el("div","inquiry-toolbar"),search=el("input");search.type="search";search.placeholder="Search mail";search.setAttribute("aria-label","Search enquiries by sender, subject or message");search.value=inquirySearch;
-    const refresh=button("Refresh",loadInquiries);toolbar.append(search,refresh);p.append(toolbar);
+    const p=panel("Inquiry inbox","Search, filter, archive, recover and manage website enquiries.");
+    const toolbar=el("div","inquiry-toolbar"),search=el("input");search.type="search";search.placeholder="Search name, email, subject or message";search.setAttribute("aria-label","Search enquiries");search.value=inquirySearch;
+    const dateFilter=el("select");dateFilter.setAttribute("aria-label","Filter enquiries by date");dateFilter.innerHTML='<option value="any">Any date</option><option value="today">Today</option><option value="7">Last 7 days</option><option value="30">Last 30 days</option>';dateFilter.value=inquiryDateFilter;
+    const refresh=button("Refresh",loadInquiries);toolbar.append(search,dateFilter,refresh);p.append(toolbar);
     const summary=el("div","inquiry-summary");p.append(summary);
+    const bulk=el("div","inquiry-bulk-toolbar");p.append(bulk);
     const shell=el("div","inquiry-shell"),folders=el("nav","inquiry-folders"),listPane=el("section","inquiry-list-pane"),reader=el("section","inquiry-reader");
     folders.setAttribute("aria-label","Inbox folders");listPane.setAttribute("aria-label","Inquiry messages");reader.setAttribute("aria-label","Selected inquiry");
     shell.append(folders,listPane,reader);p.append(shell);root.append(p);
     search.addEventListener("input",()=>{inquirySearch=search.value;renderInbox()});
+    dateFilter.addEventListener("change",()=>{inquiryDateFilter=dateFilter.value;renderInbox()});
     try{
-      inquiryData=await call("/inquiries");inquiryItems=inquiryData.items||[];
-      if(!selectedInquiryId||!inquiryItems.some(x=>x.id===selectedInquiryId))selectedInquiryId=inquiryItems[0]?.id||null;
+      const [active,deleted]=await Promise.all([call("/inquiries"),call("/inquiries/deleted")]);
+      inquiryData=active;inquiryItems=active.items||[];deletedInquiryItems=deleted.items||[];
+      const pool=inquiryFolder==="deleted"?deletedInquiryItems:inquiryItems;
+      if(!selectedInquiryId||!pool.some(x=>x.id===selectedInquiryId))selectedInquiryId=pool[0]?.id||null;
       renderInbox();
     }catch(e){status(p,"Could not load enquiries: "+e.message,true)}
     function renderInbox(){
       const unread=inquiryItems.filter(x=>x.status==="new").length,archived=inquiryItems.filter(x=>x.status==="archived").length;
-      summary.replaceChildren(card("TOTAL",String(inquiryData.total??inquiryItems.length),"Stored enquiries"),card("UNREAD",String(inquiryData.unread??unread),"Awaiting review"),card("ARCHIVED",String(archived),"Filed enquiries"));
-      const folderDefs=[["inbox","Inbox",inquiryItems.filter(x=>x.status!=="archived").length],["unread","Unread",unread],["archived","Archived",archived]];
+      summary.replaceChildren(card("TOTAL",String(inquiryData.total??inquiryItems.length),"Active enquiries"),card("UNREAD",String(inquiryData.unread??unread),"Awaiting review"),card("ARCHIVED",String(inquiryData.archived??archived),"Filed enquiries"),card("RECENTLY DELETED",String(deletedInquiryItems.length),"Recoverable for 30 days"));
+      const folderDefs=[["inbox","Inbox",inquiryItems.filter(x=>x.status!=="archived"&&x.status!=="deleted").length],["unread","Unread",unread],["read","Read",inquiryItems.filter(x=>x.status==="read").length],["archived","Archived",archived],["deleted","Recently deleted",deletedInquiryItems.length]];
       folders.replaceChildren();
-      for(const [id,label,count] of folderDefs){const f=button(label+"  "+count,()=>{inquiryFolder=id;selectedInquiryId=null;renderInbox()},"inquiry-folder"+(inquiryFolder===id?" active":""));f.setAttribute("aria-current",inquiryFolder===id?"page":"false");folders.append(f)}
-      const term=inquirySearch.trim().toLowerCase();
-      const visible=inquiryItems.filter(item=>{
-        const inFolder=inquiryFolder==="archived"?item.status==="archived":inquiryFolder==="unread"?item.status==="new":item.status!=="archived";
-        const matches=!term||(item.name+" "+item.email+" "+item.subject+" "+item.message).toLowerCase().includes(term);
-        return inFolder&&matches;
+      for(const [id,label,count] of folderDefs){const f=button(label+"  "+count,()=>{inquiryFolder=id;selectedInquiryId=null;selectedInquiryIds.clear();renderInbox()}, "inquiry-folder"+(inquiryFolder===id?" active":""));f.setAttribute("aria-current",inquiryFolder===id?"page":"false");folders.append(f)}
+      const source=inquiryFolder==="deleted"?deletedInquiryItems:inquiryItems,term=inquirySearch.trim().toLowerCase(),now=Date.now();
+      const visible=source.filter(item=>{
+        const inFolder=inquiryFolder==="deleted"?item.status==="deleted":inquiryFolder==="archived"?item.status==="archived":inquiryFolder==="unread"?item.status==="new":inquiryFolder==="read"?item.status==="read":inquiryFolder==="inbox"?item.status!=="archived":true;
+        const matches=!term||[item.name,item.email,item.subject,item.message].join(" ").toLowerCase().includes(term);
+        const stamp=Date.parse(item.createdAt||"");const days=inquiryDateFilter==="today"?1:Number(inquiryDateFilter);
+        const dateOk=inquiryDateFilter==="any"||(Number.isFinite(stamp)&&(inquiryDateFilter==="today"?new Date(stamp).toDateString()===new Date().toDateString():now-stamp<=days*86400000));
+        return inFolder&&matches&&dateOk;
       }).sort((a,b)=>String(b.createdAt).localeCompare(String(a.createdAt)));
+      const validIds=new Set(visible.map(x=>x.id));selectedInquiryIds=new Set([...selectedInquiryIds].filter(id=>validIds.has(id)));
       listPane.replaceChildren();
-      const listHeading=el("div","inquiry-list-heading");listHeading.append(el("strong","","Messages"),el("small","",visible.length+" shown · latest 100 available"));listPane.append(listHeading);
+      const listHeading=el("div","inquiry-list-heading");const selectAll=el("input");selectAll.type="checkbox";selectAll.setAttribute("aria-label","Select all visible enquiries");selectAll.checked=visible.length>0&&visible.every(x=>selectedInquiryIds.has(x.id));selectAll.addEventListener("change",()=>{if(selectAll.checked)visible.forEach(x=>selectedInquiryIds.add(x.id));else visible.forEach(x=>selectedInquiryIds.delete(x.id));renderInbox()});
+      listHeading.append(selectAll,el("strong","","Messages"),el("small","",visible.length+" shown · latest 100 available"));listPane.append(listHeading);
       if(!visible.length)listPane.append(el("p","inquiry-empty",term?"No messages match your search.":"This folder is empty."));
       for(const item of visible){
-        const row=button("",()=>openInquiry(item.id),"inquiry-message-row"+(selectedInquiryId===item.id?" selected":"")+(item.status==="new"?" unread":""));
-        row.setAttribute("aria-pressed",selectedInquiryId===item.id?"true":"false");
+        const row=el("div","inquiry-select-row"),check=el("input");check.type="checkbox";check.checked=selectedInquiryIds.has(item.id);check.setAttribute("aria-label","Select enquiry from "+(item.name||"visitor"));check.addEventListener("change",()=>{if(check.checked)selectedInquiryIds.add(item.id);else selectedInquiryIds.delete(item.id);renderBulk()});
+        const open=button("",()=>openInquiry(item.id),"inquiry-message-row"+(selectedInquiryId===item.id?" selected":"")+(item.status==="new"?" unread":""));open.setAttribute("aria-pressed",selectedInquiryId===item.id?"true":"false");
         const top=el("span","inquiry-row-top");top.append(el("strong","inquiry-sender",item.name||"Website visitor"),el("time","inquiry-date",new Date(item.createdAt).toLocaleDateString()));
-        const subject=el("span","inquiry-subject",item.subject||"Website enquiry");
-        const snippet=el("span","inquiry-snippet",String(item.message||"").replace(/\\s+/g," ").slice(0,115));
-        row.append(top,subject,snippet);listPane.append(row);
+        open.append(top,el("span","inquiry-subject",item.subject||"Website enquiry"),el("span","inquiry-snippet",String(item.message||"").replace(/\\s+/g," ").slice(0,115)));
+        row.append(check,open);listPane.append(row);
       }
-      renderReader();
-      shell.classList.toggle("has-selection",!!selectedInquiryId);
+      renderBulk();renderReader();shell.classList.toggle("has-selection",!!selectedInquiryId);
+    }
+    function renderBulk(){
+      bulk.replaceChildren();const count=selectedInquiryIds.size;bulk.append(el("strong","","Selected: "+count));
+      if(inquiryFolder==="deleted"){
+        bulk.append(button("Permanently delete selected",async()=>{if(!count)return;if(!confirm("Permanently delete "+count+" selected enquiry/enquiries? This cannot be undone."))return;try{const result=await call("/inquiries/purge",{method:"POST",body:JSON.stringify({ids:[...selectedInquiryIds]})});selectedInquiryIds.clear();selectedInquiryId=null;await loadInquiries();status(p,"Permanently deleted "+result.deleted+" enquiry/enquiries.")}catch(e){status(p,e.message,true)}}));
+      }else{
+        bulk.append(button("Mark read",()=>bulkAction("read")),button("Archive",()=>bulkAction("archive")),button("Move to Recently deleted",()=>bulkAction("delete")));
+      }
+    }
+    async function bulkAction(action){
+      if(!selectedInquiryIds.size)return;
+      const ids=[...selectedInquiryIds];if(action==="delete"&&!confirm("Move "+ids.length+" selected enquiry/enquiries to Recently deleted? You can recover them for 30 days."))return;
+      try{const result=await call("/inquiries/bulk",{method:"POST",body:JSON.stringify({ids,action})});selectedInquiryIds.clear();selectedInquiryId=null;await loadInquiries();status(p,"Updated "+result.updated+" enquiry/enquiries.")}catch(e){status(p,e.message,true)}
     }
     function openInquiry(id){
-      selectedInquiryId=id;const item=inquiryItems.find(x=>x.id===id);
+      selectedInquiryId=id;const item=(inquiryFolder==="deleted"?deletedInquiryItems:inquiryItems).find(x=>x.id===id);
       if(item?.status==="new")updateInquiry(id,"read",p);
       renderInbox();
     }
     function renderReader(){
-      reader.replaceChildren();const item=inquiryItems.find(x=>x.id===selectedInquiryId);
+      reader.replaceChildren();const pool=inquiryFolder==="deleted"?deletedInquiryItems:inquiryItems,item=pool.find(x=>x.id===selectedInquiryId);
       if(!item){reader.append(el("div","inquiry-reader-empty","Select a message to read it"));return}
       const back=button("← Back to messages",()=>{selectedInquiryId=null;renderInbox()},"inquiry-back");
-      const actions=el("div","inquiry-reader-actions");
-      const reply=el("a","small-button gmail-reply","Reply in Gmail ↗");
-      const subject="Re: "+(item.subject||"Website enquiry");
-      const body="Hi "+(item.name||"there")+",\\n\\nThank you for contacting The Red Sparrow.\\n\\n\\nBest regards,\\nThe Red Sparrow";
-      const params=new URLSearchParams({view:"cm",fs:"1",to:item.email||"",su:subject,body});
-      reply.href="https://mail.google.com/mail/?"+params.toString();reply.target="_blank";reply.rel="noopener noreferrer";reply.setAttribute("aria-label","Open Gmail to reply to "+(item.name||"the sender"));
-      actions.append(reply);
-      if(item.status!=="archived")actions.append(button("Archive",()=>updateInquiry(item.id,"archived",p)));
-      else actions.append(button("Restore to inbox",()=>updateInquiry(item.id,"read",p)));
-      actions.append(button("Delete",async()=>{if(!confirm("Permanently delete this enquiry?"))return;try{await call("/inquiries?id="+encodeURIComponent(item.id),{method:"DELETE"});selectedInquiryId=null;await loadInquiries();status(p,"Enquiry permanently deleted.")}catch(e){status(p,e.message,true)}}));
-      const head=el("div","inquiry-reader-heading");head.append(el("h3","",item.subject||"Website enquiry"),el("span",item.status==="new"?"status-new":"status-read",item.status==="new"?"UNREAD":item.status.toUpperCase()));
-      const sender=el("div","inquiry-sender-details");const avatar=el("span","inquiry-avatar",(item.name||"V").trim().charAt(0).toUpperCase());const meta=el("div");meta.append(el("strong","",item.name||"Website visitor"),el("a","",item.email||"No sender email"));if(item.email){const emailLink=meta.querySelector("a");emailLink.href="mailto:"+item.email}meta.append(el("small","",formatDate(item.createdAt)));sender.append(avatar,meta);
-      const message=el("div","inquiry-reader-body",item.message||"");
-      reader.append(back,actions,head,sender,message);
+      const actions=el("div","inquiry-reader-actions"),reply=el("a","small-button gmail-reply","Reply in Gmail ↗");
+      const params=new URLSearchParams({view:"cm",fs:"1",to:item.email||"",su:"Re: "+(item.subject||"Website enquiry"),body:"Hi "+(item.name||"there")+",\\n\\nThank you for contacting The Red Sparrow.\\n\\nBest regards,\\nThe Red Sparrow"});
+      reply.href="https://mail.google.com/mail/?"+params.toString();reply.target="_blank";reply.rel="noopener noreferrer";actions.append(reply);
+      if(item.status==="deleted"){
+        actions.append(button("Restore",async()=>{try{await call("/inquiries/restore",{method:"POST",body:JSON.stringify({id:item.id})});selectedInquiryId=null;await loadInquiries();status(p,"Enquiry restored to its previous folder.")}catch(e){status(p,e.message,true)}}));
+        actions.append(button("Permanently delete",async()=>{if(!confirm("Permanently delete this enquiry? This cannot be undone."))return;try{await call("/inquiries/purge",{method:"POST",body:JSON.stringify({ids:[item.id]})});selectedInquiryId=null;await loadInquiries();status(p,"Enquiry permanently deleted.")}catch(e){status(p,e.message,true)}}));
+      }else{
+        if(item.status!=="archived")actions.append(button("Archive",()=>updateInquiry(item.id,"archived",p)));else actions.append(button("Restore to inbox",()=>updateInquiry(item.id,"read",p)));
+        actions.append(button("Move to Recently deleted",async()=>{if(!confirm("Move this enquiry to Recently deleted? It can be restored for 30 days."))return;try{await call("/inquiries?id="+encodeURIComponent(item.id),{method:"DELETE"});selectedInquiryId=null;await loadInquiries();status(p,"Enquiry moved to Recently deleted.")}catch(e){status(p,e.message,true)}}));
+      }
+      const head=el("div","inquiry-reader-heading");head.append(el("h3","",item.subject||"Website enquiry"),el("span",item.status==="new"?"status-new":"status-read",item.status==="deleted"?"DELETED":item.status.toUpperCase()));
+      const sender=el("div","inquiry-sender-details"),avatar=el("span","inquiry-avatar",(item.name||"V").trim().charAt(0).toUpperCase()),meta=el("div");meta.append(el("strong","",item.name||"Website visitor"),el("a","",item.email||"No sender email"));if(item.email)meta.querySelector("a").href="mailto:"+item.email;meta.append(el("small","",formatDate(item.createdAt)));if(item.deletedAt)meta.append(el("small","","Deleted "+formatDate(item.deletedAt)));sender.append(avatar,meta);
+      reader.append(back,actions,head,sender,el("div","inquiry-reader-body",item.message||""));
     }
   }
   async function updateInquiry(id,state,root){
