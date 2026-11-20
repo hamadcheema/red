@@ -58,6 +58,11 @@ test("editing an existing content item resolves its relative media path to the M
   assert.match(features, /some\(o=>o\.value===selected\)\?selected:""/);
 });
 
+test("Content Manager draft save handles its reported failure without an unhandled rejection", () => {
+  assert.match(features, /saveCollectionDraft\(kind\)\.catch\(\(\)=>\{\}\)/);
+  assert.match(features, /Draft could not be saved: /);
+});
+
 test("partial Media Library uploads refresh the visible library and report completed files", () => {
   assert.match(connection, /let uploaded=0/);
   assert.match(connection, /if\(uploaded\)window\.dispatchEvent\(new Event\("trs:media-updated"\)\)/);
