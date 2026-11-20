@@ -487,7 +487,7 @@ test("public enquiries store an HMAC of the visitor IP instead of a plain hash",
 
 test("website section visibility hides sections without removing their content", async () => {
   const page = '<html><head></head><body><section data-trs-section="hero"><h1>Hero stays</h1></section><section data-trs-section="intro">Intro stays</section><section data-trs-section="services">Services stay</section><section data-trs-section="workflow">Workflow stays</section><section data-trs-section="contact">Contact stays</section><!-- ADMIN:projects:START --><!-- ADMIN:projects:END --><!-- ADMIN:social:START --><!-- ADMIN:social:END --><!-- ADMIN:brands:START --><!-- ADMIN:brands:END --></body></html>';
-  const github = installGitHubMock({ pages: { "index.html": page } });
+  const github = installGitHubMock({ pages: { "index.html": page, "styles.css": ':root{--red:#ed4b45;--bg:#101116}body{font-family:system-ui,-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif}'} });
   const env = makeEnv();
   const visibility = { hero: false, intro: true, services: false, projects: true, social: true, brands: true, workflow: true, contact: false };
   const saved = await call("/site-settings", { method: "POST", body: {
