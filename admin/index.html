@@ -159,8 +159,8 @@
   <div class="panel asset-panel"><div class="panel-heading"><div><h2>Recently deleted</h2><p>Deleted images stay recoverable for 7 days.</p></div><button class="secondary-button" id="media-trash-refresh" type="button">Refresh trash</button></div><div class="asset-grid" id="media-trash-grid"><p class="editor-footnote">Loading recently deleted images…</p></div></div>
   <div class="panel upload-panel">
     <div class="panel-heading"><div><h2>Upload images</h2><p>Choose images, then upload them to the website repository. Filenames and extensions are generated automatically.</p></div></div>
-    <input id="media-file-input" class="visually-hidden" type="file" accept="image/png,image/jpeg,image/webp,image/gif" multiple>
-    <div class="drop-zone" id="media-drop-zone" tabindex="0" role="button" aria-controls="media-file-input" aria-label="Choose image files or drop them here">
+    <input id="media-file-input" class="visually-hidden" type="file" accept="image/png,image/jpeg,image/webp,image/gif" aria-label="Choose image files to upload" multiple>
+    <div class="drop-zone" id="media-drop-zone" role="group" aria-label="Image upload drop zone">
       <span class="upload-symbol">↑</span><strong>Drop images here</strong><span>or choose files from your device</span><small>PNG, JPG, WebP or GIF · up to 5 MB per image · 20 MB total</small>
       <button class="primary-button" type="button" id="media-choose">Choose images</button>
     </div>
