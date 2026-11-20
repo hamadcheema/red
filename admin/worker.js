@@ -116,16 +116,55 @@ const who=await session(req,env);if(!who)return response({error:"Please sign in 
 
 if(req.method==="GET"&&r==="inquiries"){
  let cursor,keys=[];do{const page=await env.DRAFTS.list({prefix:"inquiry:",limit:1000,...(cursor?{cursor}:{})});keys.push(...page.keys);cursor=page.list_complete?null:page.cursor}while(cursor);
- const all=(await Promise.all(keys.map(k=>env.DRAFTS.get(k.name,"json")))).filter(Boolean).sort((a,b)=>String(b.createdAt).localeCompare(String(a.createdAt)));
+ const all=(await Promise.all(keys.map(k=>env.DRAFTS.get(k.name,"json")))).filter(x=>x&&x.status!=="deleted").sort((a,b)=>String(b.createdAt).localeCompare(String(a.createdAt)));
  const items=all.slice(0,100);
- return response({items,total:all.length,unread:all.filter(x=>x.status==="new").length});
+ return response({items,total:all.length,unread:all.filter(x=>x.status==="new").length,archived:all.filter(x=>x.status==="archived").length});
+}
+if(req.method==="GET"&&r==="inquiries/deleted"){
+ let cursor,keys=[];do{const page=await env.DRAFTS.list({prefix:"inquiry:",limit:1000,...(cursor?{cursor}:{})});keys.push(...page.keys);cursor=page.list_complete?null:page.cursor}while(cursor);
+ const all=(await Promise.all(keys.map(k=>env.DRAFTS.get(k.name,"json")))).filter(x=>x&&x.status==="deleted").sort((a,b)=>String(b.deletedAt).localeCompare(String(a.deletedAt)));
+ return response({items:all.slice(0,100),total:all.length});
 }
 if(req.method==="POST"&&r==="inquiries/update"){
  const b=await req.json(),id=String(b.id||""),state=String(b.state||"");if(!/^[a-f0-9-]{36}$/i.test(id)||!["read","archived"].includes(state))return response({error:"Invalid enquiry update."},400);
- const key="inquiry:"+id,item=await env.DRAFTS.get(key,"json");if(!item)return response({error:"Enquiry not found."},404);item.status=state;item.updatedAt=new Date().toISOString();await env.DRAFTS.put(key,JSON.stringify(item),{expirationTtl:7776000});await audit(env,who.login,"update-inquiry",state);return response({updated:true});
+ const key="inquiry:"+id,item=await env.DRAFTS.get(key,"json");if(!item||item.status==="deleted")return response({error:"Enquiry not found."},404);item.status=state;item.updatedAt=new Date().toISOString();await env.DRAFTS.put(key,JSON.stringify(item),{expirationTtl:7776000});await audit(env,who.login,state==="archived"?"archive-inquiry":"mark-inquiry-read",id);return response({updated:true});
+}
+if(req.method==="POST"&&r==="inquiries/restore"){
+ const b=await req.json(),id=String(b.id||"");if(!/^[a-f0-9-]{36}$/i.test(id))return response({error:"Invalid enquiry ID."},400);
+ const key="inquiry:"+id,item=await env.DRAFTS.get(key,"json");if(!item||item.status!=="deleted")return response({error:"Deleted enquiry not found."},404);
+ item.status=item.previousStatus&&["new","read","archived"].includes(item.previousStatus)?item.previousStatus:"read";delete item.previousStatus;delete item.deletedAt;item.updatedAt=new Date().toISOString();
+ await env.DRAFTS.put(key,JSON.stringify(item),{expirationTtl:7776000});await audit(env,who.login,"restore-inquiry",id);return response({restored:true});
+}
+if(req.method==="POST"&&r==="inquiries/bulk"){
+ const b=await req.json(),ids=Array.isArray(b.ids)?[...new Set(b.ids.map(String))]:[],action=String(b.action||"");
+ if(!ids.length||ids.length>100||ids.some(id=>!/^[a-f0-9-]{36}$/i.test(id))||!["archive","delete","read"].includes(action))return response({error:"Choose up to 100 enquiries and a valid bulk action."},400);
+ let changed=0;const now=new Date().toISOString();
+ for(const id of ids){const key="inquiry:"+id,item=await env.DRAFTS.get(key,"json");if(!item||item.status==="deleted")continue;
+  if(action==="delete"){item.previousStatus=item.status;item.status="deleted";item.deletedAt=now;await env.DRAFTS.put(key,JSON.stringify(item),{expirationTtl:2592000})}
+  else{item.status=action==="archive"?"archived":"read";item.updatedAt=now;await env.DRAFTS.put(key,JSON.stringify(item),{expirationTtl:7776000})}
+  changed++;
+ }
+ await audit(env,who.login,"bulk-"+action+"-inquiries",String(changed));return response({updated:changed,action});
+}
+if(req.method==="POST"&&r==="inquiries/purge"){
+ const b=await req.json(),ids=Array.isArray(b.ids)?[...new Set(b.ids.map(String))]:[];
+ if(!ids.length||ids.length>100||ids.some(id=>!/^[a-f0-9-]{36}$/i.test(id)))return response({error:"Choose up to 100 deleted enquiries."},400);
+ let deleted=0;for(const id of ids){const key="inquiry:"+id,item=await env.DRAFTS.get(key,"json");if(item?.status==="deleted"){await env.DRAFTS.delete(key);deleted++}}
+ await audit(env,who.login,"permanently-delete-inquiries",String(deleted));return response({deleted});
 }
 if(req.method==="DELETE"&&r==="inquiries"){
- const id=u.searchParams.get("id")||"";if(!/^[a-f0-9-]{36}$/i.test(id))return response({error:"Invalid enquiry ID."},400);await env.DRAFTS.delete("inquiry:"+id);await audit(env,who.login,"delete-inquiry","Enquiry removed");return response({deleted:true});
+ const id=u.searchParams.get("id")||"";if(!/^[a-f0-9-]{36}$/i.test(id))return response({error:"Invalid enquiry ID."},400);
+ const key="inquiry:"+id,item=await env.DRAFTS.get(key,"json");if(!item||item.status==="deleted")return response({error:"Enquiry not found."},404);
+ item.previousStatus=item.status;item.status="deleted";item.deletedAt=new Date().toISOString();await env.DRAFTS.put(key,JSON.stringify(item),{expirationTtl:2592000});
+ await audit(env,who.login,"delete-inquiry",id);return response({deleted:true,recoverable:true,retentionDays:30});
+}
+if(req.method==="GET"&&r==="dashboard"){
+ let cursor,keys=[];do{const page=await env.DRAFTS.list({prefix:"inquiry:",limit:1000,...(cursor?{cursor}:{})});keys.push(...page.keys);cursor=page.list_complete?null:page.cursor}while(cursor);
+ const records=(await Promise.all(keys.map(k=>env.DRAFTS.get(k.name,"json")))).filter(Boolean),active=records.filter(x=>x.status!=="deleted"),deleted=records.filter(x=>x.status==="deleted");
+ const [projects,social,brands,auditPage]=await Promise.all(["projects","social","brands"].map(k=>env.DRAFTS.get("collection:"+k,"json")||[]).concat([env.DRAFTS.list({prefix:"audit:",limit:100})]));
+ const recentKeys=auditPage.keys.sort((a,b)=>b.name.localeCompare(a.name)).slice(0,12);
+ const recent=(await Promise.all(recentKeys.map(k=>env.DRAFTS.get(k.name,"json")))).filter(Boolean).sort((a,b)=>String(b.at).localeCompare(String(a.at)));
+ return response({inquiries:{total:active.length,unread:active.filter(x=>x.status==="new").length,archived:active.filter(x=>x.status==="archived").length,deleted:deleted.length},published:{projects:projects.length,social:social.length,brands:brands.length,total:projects.length+social.length+brands.length},recentActivity:recent});
 }
 if(req.method==="GET"&&r==="notifications"){
  const [inquiries,scheduled,auditPage]=await Promise.all([
@@ -221,6 +260,9 @@ if(req.method==="POST"&&r==="rollback"){const b=await req.json(),p=String(b.path
 return response({error:"Not found."},404)}
 export default {async fetch(req,env){try{return await run(req,env)}catch(e){console.error(JSON.stringify({message:"admin request failed",error:e?.message||String(e),path:new URL(req.url).pathname}));return response({error:e?.message||"Unexpected server error."},500)}},
  async scheduled(controller,env){
+  let inquiryCursor,deletedKeys=[];do{const page=await env.DRAFTS.list({prefix:"inquiry:",limit:1000,...(inquiryCursor?{cursor:inquiryCursor}:{})});deletedKeys.push(...page.keys);inquiryCursor=page.list_complete?null:page.cursor}while(inquiryCursor);
+  const cutoff=Date.now()-30*24*60*60*1000;
+  for(const key of deletedKeys){const item=await env.DRAFTS.get(key.name,"json");if(item?.status==="deleted"&&Date.parse(item.deletedAt||0)<=cutoff)await env.DRAFTS.delete(key.name)}
   let cursor,keys=[];do{const page=await env.DRAFTS.list({prefix:"scheduled:",limit:1000,...(cursor?{cursor}:{})});keys.push(...page.keys);cursor=page.list_complete?null:page.cursor}while(cursor);
   for(const key of keys){
    const job=await env.DRAFTS.get(key.name,"json");
