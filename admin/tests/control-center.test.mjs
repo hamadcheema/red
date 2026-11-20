@@ -58,6 +58,11 @@ test("editing an existing content item resolves its relative media path to the M
   assert.match(features, /some\(o=>o\.value===selected\)\?selected:""/);
 });
 
+test("Media Library queue detects filenames that collide after extension normalization", () => {
+  assert.match(connection, /const candidate=\{file,name:file\.name\},normalizedName=uploadFilename\(candidate\)\.toLowerCase\(\)/);
+  assert.match(connection, /uploadFilename\(item\)\.toLowerCase\(\)===normalizedName/);
+});
+
 test("media upload controls use non-nested accessible semantics", () => {
   assert.match(html, /id="media-file-input"[^>]*aria-label="Choose image files to upload"/);
   assert.match(html, /id="media-drop-zone" role="group"/);
