@@ -94,7 +94,7 @@
   let managerFilter="all",managerSearch="",managerStatus="all",managerSort="newest";
   const selectedManagerItems=new Set();
   const updateBulkControls=()=>{const count=selectedManagerItems.size;const label=$("manager-selected-count");if(label)label.textContent=count+" selected";const publish=$("manager-publish-selected"),del=$("manager-delete-selected");if(publish)publish.disabled=!count;if(del)del.disabled=!count};
-  const editCollectionItem=(kind,index)=>{const item=collections[kind][index];if(!item)return;$(kind+"-title").value=item.title;$(kind+"-description").value=item.description;$(kind+"-image").value=item.image.startsWith("http")?item.image:location.origin+item.image;$(kind+"-url").value=item.url||"";collectionEditing[kind]=index;formSubmitLabel(kind,"Update item");collectionStatus(kind,"Editing this item. Submit the form, then save draft and publish.");$(kind+"-form").scrollIntoView({behavior:"smooth",block:"center"});$(kind+"-title").focus({preventScroll:true})};
+  const editCollectionItem=(kind,index)=>{const item=collections[kind][index];if(!item)return;window.showAdminView?.("add-content");$(kind+"-title").value=item.title;$(kind+"-description").value=item.description;$(kind+"-image").value=item.image.startsWith("http")?item.image:location.origin+item.image;$(kind+"-url").value=item.url||"";collectionEditing[kind]=index;formSubmitLabel(kind,"Update item");collectionStatus(kind,"Editing this item. Submit the form, then save draft and publish.");$(kind+"-form").scrollIntoView({behavior:"smooth",block:"center"});$(kind+"-title").focus({preventScroll:true})};
   const isPublishedItem=(kind,item)=>publishedCollections[kind].some(p=>p.title===item.title&&p.description===item.description&&p.image===item.image&&(p.url||"")===(item.url||""));
   const renderManager=()=>{
     const grid=$("content-manager-grid"),count=$("content-manager-count");if(!grid)return;grid.replaceChildren();
@@ -142,7 +142,8 @@
     loadCollection(kind);
   });
   const populateCollectionImages=async()=>{try{const data=await request("/media/list");for(const kind of collectionKinds){const select=$(kind+"-image");if(!select)continue;const chosen=select.value;select.replaceChildren(new Option("Choose from Media Library",""));data.items.forEach(item=>select.add(new Option(item.name,item.siteUrl||item.url)));select.value=chosen}}catch(e){collectionKinds.forEach(kind=>collectionStatus(kind,"Media library unavailable: "+e.message,true))}};
-  populateCollectionImages();window.addEventListener("trs:media-updated",populateCollectionImages);document.querySelector('[data-view="showcase"]')?.addEventListener("click",()=>{collectionKinds.forEach(loadCollection);populateCollectionImages();loadContentTrash()});
+  populateCollectionImages();window.addEventListener("trs:media-updated",populateCollectionImages);document.querySelector('[data-view="content-manager"]')?.addEventListener("click",()=>{collectionKinds.forEach(loadCollection);loadContentTrash()});
+  document.querySelector('[data-view="add-content"]')?.addEventListener("click",()=>{collectionKinds.forEach(loadCollection);populateCollectionImages()});
   $("content-history-refresh")?.addEventListener("click",loadContentTrash);
   document.querySelectorAll("[data-manager-filter]").forEach(button=>button.addEventListener("click",()=>{managerFilter=button.dataset.managerFilter;document.querySelectorAll("[data-manager-filter]").forEach(x=>x.classList.toggle("active",x===button));renderManager()}));
   $("content-manager-search")?.addEventListener("input",event=>{managerSearch=event.target.value.trim().toLowerCase();renderManager()});
