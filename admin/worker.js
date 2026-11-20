@@ -184,9 +184,9 @@ if(req.method==="GET"&&r==="inquiries/export"){
  let cursor,keys=[];do{const page=await env.DRAFTS.list({prefix:"inquiry:",limit:1000,...(cursor?{cursor}:{})});keys.push(...page.keys);cursor=page.list_complete?null:page.cursor}while(cursor);
  const all=(await Promise.all(keys.map(k=>env.DRAFTS.get(k.name,"json")))).filter(x=>x&&x.status!=="deleted").sort((a,b)=>String(b.createdAt).localeCompare(String(a.createdAt)));
  const columns=["id","name","email","subject","message","status","createdAt","updatedAt"];
- const cell=value=>{let text=String(value??"");if(/^[\\s]*[=+\\-@]/.test(text)||/^[\\t\\r]/.test(text))text="'"+text;return '"'+text.replace(/"/g,'""')+'"'};
+ const cell=value=>{let text=String(value??"");if(/^[\s]*[=+\-@]/.test(text)||/^[\t\r]/.test(text))text="'"+text;return '"'+text.replace(/"/g,'""')+'"'};
  const lines=[columns.join(","),...all.map(item=>columns.map(key=>cell(item[key])).join(","))];
- const body="\\uFEFF"+lines.join("\\r\\n")+"\\r\\n";
+ const body="\uFEFF"+lines.join("\r\n")+"\r\n";
  return new Response(body,{status:200,headers:{"content-type":"text/csv; charset=utf-8","content-disposition":'attachment; filename="the-red-sparrow-enquiries.csv"',"cache-control":"no-store","x-content-type-options":"nosniff","access-control-allow-origin":ORIGIN,"access-control-allow-credentials":"true","vary":"Origin"}});
 }
 if(req.method==="GET"&&r==="inquiries"){
