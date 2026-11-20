@@ -58,6 +58,13 @@ test("editing an existing content item resolves its relative media path to the M
   assert.match(features, /some\(o=>o\.value===selected\)\?selected:""/);
 });
 
+test("media upload controls use non-nested accessible semantics", () => {
+  assert.match(html, /id="media-file-input"[^>]*aria-label="Choose image files to upload"/);
+  assert.match(html, /id="media-drop-zone" role="group"/);
+  assert.doesNotMatch(html, /id="media-drop-zone"[^>]*role="button"/);
+  assert.doesNotMatch(connection, /dropZone\.addEventListener\("keydown"/);
+});
+
 test("website settings preserve local edits and save them before publishing", () => {
   assert.match(control, /Unsaved website settings are being kept/);
   assert.match(control, /form\.addEventListener\("input",\(\)=>\{window\.trsSiteSettingsDirty=true\}\)/);
