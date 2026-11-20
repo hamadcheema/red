@@ -406,5 +406,5 @@ test("Media Library filters supported image formats and labels filename sorting 
   assert.match(html, /value="jpeg">JPEG images/);
   assert.match(html, /value="name-za">Name Z–A/);
   assert.match(html, /value="name-az">Name A–Z/);
-  assert.doesNotMatch(html.match(/<select id="media-sort"[^>]*>([\\s\\S]*?)<\\/select>/)?.[0]||"", /value="newest">/);
+  assert.ok(!(html.split('<select id="media-sort"')[1]?.split("</select>")[0]||"").includes('value="newest"'));
 });
