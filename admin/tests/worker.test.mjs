@@ -274,7 +274,7 @@ test("site settings publish all changed public pages in one atomic Git commit", 
 });
 
 test("publishing a collection clears its stale draft snapshot", async () => {
-  const items = [{ title: "Published game", description: "A published showcase", image: ORIGIN + "/assets/uploads/game.jpg", url: "" }];
+  const items = [{ id: "11111111-1111-4111-8111-111111111111", title: "Published game", description: "A published showcase", image: "assets/uploads/game.jpg", url: "" }];
   const index = '<!doctype html><html><head></head><body><!-- ADMIN:projects:START --><!-- ADMIN:projects:END --><!-- ADMIN:social:START --><!-- ADMIN:social:END --><!-- ADMIN:brands:START --><!-- ADMIN:brands:END --></body></html>';
   installGitHubMock({ pages: { "index.html": index } });
   const env = makeEnv({ "collection-draft:projects": items });
@@ -345,9 +345,9 @@ test("unused media can be moved to trash and restored", async () => {
 
 test("publishing selected collection items preserves unselected draft items", async () => {
   const github = installGitHubMock({ pages: { "index.html": '<!doctype html><!-- ADMIN:projects:START --><!-- ADMIN:projects:END -->' } });
-  const live = [{ id: "11111111-1111-4111-8111-111111111111", title: "Live", description: "Live item", image: "/assets/uploads/live.jpg", url: "" }];
-  const selected = [{ id: "22222222-2222-4222-8222-222222222222", title: "Selected", description: "Publish this", image: "/assets/uploads/selected.jpg", url: "" }];
-  const remaining = [{ id: "33333333-3333-4333-8333-333333333333", title: "Keep draft", description: "Do not publish yet", image: "/assets/uploads/draft.jpg", url: "" }];
+  const live = [{ id: "11111111-1111-4111-8111-111111111111", title: "Live", description: "Live item", image: "assets/uploads/live.jpg", url: "" }];
+  const selected = [{ id: "22222222-2222-4222-8222-222222222222", title: "Selected", description: "Publish this", image: "assets/uploads/selected.jpg", url: "" }];
+  const remaining = [{ id: "33333333-3333-4333-8333-333333333333", title: "Keep draft", description: "Do not publish yet", image: "assets/uploads/draft.jpg", url: "" }];
   const env = makeEnv({ "collection:projects": live, "collection-draft:projects": [...live, ...selected, ...remaining] });
   const response = await call("/publish/content", { method: "POST", body: { kind: "projects", items: [...live, ...selected], preserveDraft: true, remainingDraft: remaining } }, env);
   assert.equal(response.status, 200);
