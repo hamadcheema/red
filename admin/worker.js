@@ -182,6 +182,7 @@ const cookie=(v,max=28800)=>"trs_admin_session="+v+"; Path=/admin-api; Max-Age="
 const oauthCookie=(v,max=600)=>"trs_oauth_browser="+v+"; Path=/admin-api; Max-Age="+max+"; HttpOnly; Secure; SameSite=Lax";
 function getNamedCookie(req,name){const prefix=name+"=";return (req.headers.get("cookie")||"").split(";").map(x=>x.trim()).find(x=>x.startsWith(prefix))?.slice(prefix.length)||""}
 function getCookie(req){return getNamedCookie(req,"trs_admin_session")}
+async function sessionFingerprint(key){const digest=await crypto.subtle.digest("SHA-256",new TextEncoder().encode(key));return [...new Uint8Array(digest)].slice(0,12).map(x=>x.toString(16).padStart(2,"0")).join("")}
 async function session(req,env){const token=getCookie(req);if(!token||!/^[a-f0-9-]{36}$/.test(token))return null;const s=await env.DRAFTS.get("session:"+token,"json");const allowed=String(env.ALLOWED_GITHUB_LOGIN||"hamadcheema").trim().toLowerCase();if(!s||String(s.login||"").toLowerCase()!==allowed)return null;return s}
 async function run(req,env){const u=new URL(req.url),r=u.pathname.replace(/^\/admin-api\/?/,"");
 if(req.method==="OPTIONS")return new Response(null,{status:204,headers:{"access-control-allow-origin":ORIGIN,"access-control-allow-credentials":"true","access-control-allow-methods":"GET,POST,DELETE,OPTIONS","access-control-allow-headers":"content-type","vary":"Origin"}});
@@ -328,8 +329,14 @@ if(req.method==="GET"&&r==="media/usage"){
 }
 if(req.method==="GET"&&r==="security/sessions"){
  const sid=getCookie(req);let cursor,keys=[];do{const page=await env.DRAFTS.list({prefix:"session:",limit:1000,...(cursor?{cursor}:{})});keys.push(...page.keys);cursor=page.list_complete?null:page.cursor}while(cursor);
- const items=(await Promise.all(keys.map(async k=>({key:k.name,session:await env.DRAFTS.get(k.name,"json")})))).filter(x=>x.session).map(x=>({created:x.session.created||null,current:x.key==="session:"+sid,login:x.session.login}));
+ const items=(await Promise.all(keys.map(async k=>{const value=await env.DRAFTS.get(k.name,"json");return value?{sessionRef:await sessionFingerprint(k.name),created:value.created||null,current:k.name==="session:"+sid,login:value.login}:null}))).filter(Boolean);
  return response({items,total:items.length});
+}
+if(req.method==="POST"&&r==="security/revoke-session"){
+ const body=await readJson(req),ref=String(body.sessionRef||"");if(!/^[a-f0-9]{24}$/.test(ref))return response({error:"Invalid session reference."},400);
+ const sid=getCookie(req);let cursor,keys=[];do{const page=await env.DRAFTS.list({prefix:"session:",limit:1000,...(cursor?{cursor}:{})});keys.push(...page.keys);cursor=page.list_complete?null:page.cursor}while(cursor);
+ for(const key of keys){if(key.name==="session:"+sid)continue;if(await sessionFingerprint(key.name)===ref){await env.DRAFTS.delete(key.name);await audit(env,who.login,"revoke-session","Revoked another admin session");return response({revoked:true})}}
+ return response({error:"Session not found or already expired."},404);
 }
 if(req.method==="POST"&&r==="security/revoke-sessions"){
  const sid=getCookie(req);let cursor,keys=[];do{const page=await env.DRAFTS.list({prefix:"session:",limit:1000,...(cursor?{cursor}:{})});keys.push(...page.keys);cursor=page.list_complete?null:page.cursor}while(cursor);
