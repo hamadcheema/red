@@ -311,7 +311,7 @@ if(req.method==="GET"&&r==="site-settings"){
  return response({settings:await siteSettings(env),draft:await env.DRAFTS.get("site-settings:draft","json")||null});
 }
 if(req.method==="POST"&&r==="site-settings"){
- const b=await readJson(req),current=await siteSettings(env),v={contactEmail:String(b.contactEmail||"").trim(),directEmail:String(b.directEmail||"").trim(),tagline:String(b.tagline||"").trim(),announcementEnabled:!!b.announcementEnabled,announcement:String(b.announcement||"").trim(),sectionVisibility:cleanSectionVisibility(b.sectionVisibility,current.sectionVisibility)};
+ const b=await readJson(req),current=await siteSettings(env);let sectionVisibility;try{sectionVisibility=cleanSectionVisibility(b.sectionVisibility,current.sectionVisibility)}catch(error){return response({error:error.message},400)}const v={contactEmail:String(b.contactEmail||"").trim(),directEmail:String(b.directEmail||"").trim(),tagline:String(b.tagline||"").trim(),announcementEnabled:!!b.announcementEnabled,announcement:String(b.announcement||"").trim(),sectionVisibility};
  for(const email of [v.contactEmail,v.directEmail])if(email.length>254||!EMAIL.test(email))return response({error:"Enter valid contact email addresses."},400);
  if(!v.tagline||v.tagline.length>120||v.announcement.length>180)return response({error:"Tagline or announcement is outside its character limit."},400);
  await env.DRAFTS.put("site-settings:draft",JSON.stringify(v),{expirationTtl:7776000});await audit(env,who.login,"save-site-settings","Website settings draft");return response({saved:true,settings:v});
