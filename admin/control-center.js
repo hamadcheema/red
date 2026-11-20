@@ -117,7 +117,7 @@
         const row=el("div","inquiry-select-row"),check=el("input");check.type="checkbox";check.checked=selectedInquiryIds.has(item.id);check.setAttribute("aria-label","Select enquiry from "+(item.name||"visitor"));check.addEventListener("change",()=>{if(check.checked)selectedInquiryIds.add(item.id);else selectedInquiryIds.delete(item.id);renderBulk()});
         const open=button("",()=>openInquiry(item.id),"inquiry-message-row"+(selectedInquiryId===item.id?" selected":"")+(item.status==="new"?" unread":""));open.setAttribute("aria-pressed",selectedInquiryId===item.id?"true":"false");
         const top=el("span","inquiry-row-top");top.append(el("strong","inquiry-sender",item.name||"Website visitor"),el("time","inquiry-date",new Date(item.createdAt).toLocaleDateString()));
-        open.append(top,el("span","inquiry-subject",item.subject||"Website enquiry"),el("span","inquiry-snippet",String(item.message||"").replace(/\\s+/g," ").slice(0,115)));
+        open.append(top,el("span","inquiry-subject",item.subject||"Website enquiry"),el("span","inquiry-snippet",String(item.message||"").replace(/\s+/g," ").slice(0,115)));
         row.append(check,open);listPane.append(row);
       }
       const more=inquiryFolder==="deleted"?deletedHasMore:inquiryHasMore;
@@ -147,7 +147,7 @@
       if(!item){reader.append(el("div","inquiry-reader-empty","Select a message to read it"));return}
       const back=button("← Back to messages",()=>{selectedInquiryId=null;renderInbox()},"inquiry-back");
       const actions=el("div","inquiry-reader-actions"),reply=el("a","small-button gmail-reply","Reply in Gmail ↗");
-      const params=new URLSearchParams({view:"cm",fs:"1",to:item.email||"",su:"Re: "+(item.subject||"Website enquiry"),body:"Hi "+(item.name||"there")+",\\n\\nThank you for contacting The Red Sparrow.\\n\\nBest regards,\\nThe Red Sparrow"});
+      const params=new URLSearchParams({view:"cm",fs:"1",to:item.email||"",su:"Re: "+(item.subject||"Website enquiry"),body:"Hi "+(item.name||"there")+",\n\nThank you for contacting The Red Sparrow.\n\nBest regards,\nThe Red Sparrow"});
       reply.href="https://mail.google.com/mail/?"+params.toString();reply.target="_blank";reply.rel="noopener noreferrer";actions.append(reply);
       if(item.status==="deleted"){
         actions.append(button("Restore",async()=>{try{await call("/inquiries/restore",{method:"POST",body:JSON.stringify({id:item.id})});selectedInquiryId=null;await loadInquiries();status(p,"Enquiry restored to its previous folder.")}catch(e){status(p,e.message,true)}}));
@@ -157,7 +157,7 @@
         actions.append(button("Move to Recently deleted",async()=>{if(!confirm("Move this enquiry to Recently deleted? It can be restored for 30 days."))return;try{await call("/inquiries?id="+encodeURIComponent(item.id),{method:"DELETE"});selectedInquiryId=null;await loadInquiries();status(p,"Enquiry moved to Recently deleted.")}catch(e){status(p,e.message,true)}}));
       }
       const head=el("div","inquiry-reader-heading");head.append(el("h3","",item.subject||"Website enquiry"),el("span",item.status==="new"?"status-new":"status-read",item.status==="deleted"?"DELETED":item.status.toUpperCase()));
-      const sender=el("div","inquiry-sender-details"),avatar=el("span","inquiry-avatar",(item.name||"V").trim().charAt(0).toUpperCase()),meta=el("div");meta.append(el("strong","",item.name||"Website visitor"),el("a","",item.email||"No sender email"));if(item.email)meta.querySelector("a").href="mailto:"+item.email;meta.append(el("small","",formatDate(item.createdAt)));if(item.deletedAt)meta.append(el("small","","Deleted "+formatDate(item.deletedAt)));sender.append(avatar,meta);
+      const sender=el("div","inquiry-sender-details"),avatar=el("span","inquiry-avatar",(item.name||"V").trim().charAt(0).toUpperCase()),meta=el("div");meta.append(el("strong","",item.name||"Website visitor"),el("a","",item.email||"No sender email"));if(item.email)meta.querySelector("a").href="mailto:"+encodeURIComponent(item.email);meta.append(el("small","",formatDate(item.createdAt)));if(item.deletedAt)meta.append(el("small","","Deleted "+formatDate(item.deletedAt)));sender.append(avatar,meta);
       reader.append(back,actions,head,sender,el("div","inquiry-reader-body",item.message||""));
     }
   }

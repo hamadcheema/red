@@ -51,8 +51,8 @@ async function publishCollection(env,kind,items,actor="system"){
  if(begin<0||finish<0)throw Error("Homepage content markers are missing.");
  const next=old.content.slice(0,begin)+collectionMarkup(kind,items)+old.content.slice(finish+end.length);
  const out=await writeFile(env,path,next,old.sha,"Publish "+kind+" collection from "+actor);
- await env.DRAFTS.put("collection:"+kind,JSON.stringify(items),{expirationTtl:7776000});
- await env.DRAFTS.put("collection-published-at:"+kind,new Date().toISOString(),{expirationTtl:7776000});
+ await env.DRAFTS.put("collection:"+kind,JSON.stringify(items));
+ await env.DRAFTS.put("collection-published-at:"+kind,new Date().toISOString());
  await env.DRAFTS.delete("collection-draft:"+kind);
  await audit(env,actor,"publish-collection",kind+":"+items.length);
  return out.commit?.sha||null;
@@ -70,21 +70,27 @@ async function writeFilesAtomic(env,files,message){
  await gh(env,base+"refs/heads/"+encodeURIComponent(branch),{method:"PATCH",headers:{"content-type":"application/json"},body:JSON.stringify({sha:commit.sha,force:false})});return commit.sha;
 }
 async function publishSiteSettings(env,v,actor){
+ const previous=await siteSettings(env);
  const values={contactEmail:String(v.contactEmail||"").trim(),directEmail:String(v.directEmail||"").trim(),tagline:String(v.tagline||"").trim(),announcementEnabled:!!v.announcementEnabled,announcement:String(v.announcement||"").trim()};
  for(const email of [values.contactEmail,values.directEmail])if(email.length>254||!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email))throw Error("Enter valid contact email addresses.");
  if(!values.tagline||values.tagline.length>120||values.announcement.length>180)throw Error("Tagline or announcement is outside its character limit.");
  const files=[];
- for(const path of Object.values(FILES)){
+ for(const path of [...Object.values(FILES),"llms.txt"]){
   const old=await readFile(env,path);let html=old.content;
-  html=html.replaceAll("mailto:admin@theredsparrow.online","mailto:"+esc(values.contactEmail)).replaceAll("admin@theredsparrow.online",esc(values.contactEmail));
-  html=html.replaceAll("mailto:hammad@theredsparrow.online","mailto:"+esc(values.directEmail)).replaceAll("hammad@theredsparrow.online",esc(values.directEmail));
-  html=html.replaceAll("Independent Unity game development.",esc(values.tagline));
+  if(path==="llms.txt"){
+   html=html.replaceAll(previous.contactEmail,values.contactEmail).replaceAll(previous.directEmail,values.directEmail).replaceAll(previous.tagline,values.tagline);
+   if(html!==old.content)files.push({path,content:html});
+   continue;
+  }
+  html=html.replaceAll("mailto:"+previous.contactEmail,"mailto:"+esc(values.contactEmail)).replaceAll(previous.contactEmail,esc(values.contactEmail));
+  html=html.replaceAll("mailto:"+previous.directEmail,"mailto:"+esc(values.directEmail)).replaceAll(previous.directEmail,esc(values.directEmail));
+  html=html.replaceAll(previous.tagline,esc(values.tagline));
   const marker=/<!-- TRS-ANNOUNCEMENT:START -->[\s\S]*?<!-- TRS-ANNOUNCEMENT:END -->/g;html=html.replace(marker,"");
-  if(values.announcementEnabled&&values.announcement){const bar='<!-- TRS-ANNOUNCEMENT:START --><aside class="trs-site-announcement" role="status" style="padding:10px 16px;text-align:center;background:#272027;color:#fff;font:600 13px/1.5 system-ui,sans-serif">'+esc(values.announcement)+'</aside><!-- TRS-ANNOUNCEMENT:END -->';html=html.replace(/(<body\b[^>]*>)/i,"$1"+bar)}
+  if(values.announcementEnabled&&values.announcement){const bar='<!-- TRS-ANNOUNCEMENT:START --><aside class="trs-site-announcement" role="status">'+esc(values.announcement)+'</aside><!-- TRS-ANNOUNCEMENT:END -->';const skip=/(<a\b[^>]*class="skip-link"[^>]*>[\s\S]*?<\/a>)/i;if(skip.test(html))html=html.replace(skip,(_,anchor)=>anchor+bar);else html=html.replace(/(<body\b[^>]*>)/i,(_,body)=>body+bar)}
   if(html!==old.content)files.push({path,content:html});
  }
  const commit=files.length?await writeFilesAtomic(env,files,"Publish shared website settings from admin"):null;
- await env.DRAFTS.put("site-settings:live",JSON.stringify(values),{expirationTtl:31536000});await audit(env,actor,"publish-site-settings","Updated shared website settings");return {published:true,files:files.length,commit};
+ await env.DRAFTS.put("site-settings:live",JSON.stringify(values));await audit(env,actor,"publish-site-settings","Updated shared website settings");return {published:true,files:files.length,commit};
 }
 async function mediaUsage(env,p){
  const usedBy=[];
