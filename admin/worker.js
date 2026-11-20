@@ -67,7 +67,7 @@ const body='<img src="'+image+'" alt="'+title+'" loading="lazy"><div class="show
 return '<article class="showcase-card">'+(url?'<a href="'+url+'" target="_blank" rel="noopener">'+body+'</a>':body)+'</article>';
 }).join("");
 if(!items.length)return "<!-- ADMIN:"+kind+":START -->\n<!-- ADMIN:"+kind+":END -->";
-return '<!-- ADMIN:'+kind+':START -->\n<section class="section showcase-section"><div class="container"><div class="section-heading"><div><p class="eyebrow">'+cfg.eyebrow+'</p><h2>'+cfg.heading+'</h2></div></div><div class="showcase-grid">'+cards+'</div></div></section>\n<!-- ADMIN:'+kind+':END -->';
+return '<!-- ADMIN:'+kind+':START -->\n<section class="section showcase-section" data-trs-section="'+kind+'"><div class="container"><div class="section-heading"><div><p class="eyebrow">'+cfg.eyebrow+'</p><h2>'+cfg.heading+'</h2></div></div><div class="showcase-grid">'+cards+'</div></div></section>\n<!-- ADMIN:'+kind+':END -->';
 }
 async function gh(env,path,init={}){if(!env.GITHUB_TOKEN)throw Error("GitHub token not configured.");const r=await fetch("https://api.github.com"+path,{...init,headers:{authorization:"Bearer "+env.GITHUB_TOKEN,accept:"application/vnd.github+json","x-github-api-version":"2022-11-28","user-agent":"The-Red-Sparrow-Admin",...(init.headers||{})}});const t=await r.text();if(!r.ok)throw Error("GitHub API "+r.status+": "+t.slice(0,250));return t?JSON.parse(t):null}
 const filePath=(env,p)=>"/repos/"+env.GITHUB_OWNER+"/"+env.GITHUB_REPO+"/contents/"+p.split("/").map(encodeURIComponent).join("/");
