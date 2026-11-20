@@ -116,7 +116,8 @@
         const inFolder=inquiryFolder==="deleted"?item.status==="deleted":inquiryFolder==="archived"?item.status==="archived":inquiryFolder==="unread"?item.status==="new":inquiryFolder==="read"?item.status==="read":inquiryFolder==="inbox"?item.status!=="archived":true;
         const matches=!term||[item.name,item.email,item.subject,item.message].join(" ").toLowerCase().includes(term);
         const stamp=Date.parse(item.createdAt||"");const days=inquiryDateFilter==="today"?1:Number(inquiryDateFilter);
-        const dateOk=inquiryDateFilter==="any"||(Number.isFinite(stamp)&&(inquiryDateFilter==="today"?new Date(stamp).toDateString()===new Date().toDateString():now-stamp<=days*86400000));
+const karachiDate=value=>new Intl.DateTimeFormat("en-CA",{timeZone:"Asia/Karachi",year:"numeric",month:"2-digit",day:"2-digit"}).format(value);
+                const dateOk=inquiryDateFilter==="any"||(Number.isFinite(stamp)&&(inquiryDateFilter==="today"?karachiDate(stamp)===karachiDate(now):now-stamp<=days*86400000));
         return inFolder&&matches&&dateOk;
       }).sort((a,b)=>String(b.createdAt).localeCompare(String(a.createdAt)));
       const validIds=new Set(visible.map(x=>x.id));selectedInquiryIds=new Set([...selectedInquiryIds].filter(id=>validIds.has(id)));
