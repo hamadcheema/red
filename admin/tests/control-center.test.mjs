@@ -175,6 +175,15 @@ test("partial Media Library uploads refresh the visible library and report compl
   assert.match(connection, /\(uploaded\?uploaded\+" image\(s\) uploaded\. ":""\)/);
 });
 
+test("Media Library exposes working file-type filters and an authenticated unused-asset scan", () => {
+  assert.match(html, /id="media-type-filter"/);
+  assert.match(html, /id="media-usage-scan"/);
+  assert.match(html, /id="media-usage-report"/);
+  assert.match(features, /async function scanMediaUsage\(\)/);
+  assert.match(features, /request\("\\/media\\/usage\\?path="\+encodeURIComponent\(item\.path\)\)/);
+  assert.match(features, /unused\.length\+" unused image\(s\)/);
+});
+
 test("Media Library supports safe bulk selection and trash operations", () => {
   assert.match(features, /const selectedMediaPaths=new Set\(\)/);
   assert.match(features, /Select all visible media files/);
