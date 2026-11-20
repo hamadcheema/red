@@ -31,6 +31,23 @@
     nav.addEventListener("click",()=>{if(window.showAdminView)window.showAdminView(id);else load(id);window.closeAdminSidebar?.()});
   });
   const content=id=>$("view-"+id)?.querySelector(".control-content");
+  async function loadDashboard(){
+    const view=$("view-overview");if(!view)return;
+    let root=view.querySelector(".dashboard-live");if(!root){root=el("div","dashboard-live control-content");view.append(root)}root.replaceChildren();
+    const p=panel("Enquiry & activity overview","Live figures from your private Cloudflare KV workspace.");
+    root.append(p);
+    try{
+      const data=await call("/dashboard"),grid=el("div","inquiry-summary dashboard-metrics");
+      grid.append(card("TOTAL ENQUIRIES",String(data.inquiries?.total??0),"Active enquiries"),card("UNREAD",String(data.inquiries?.unread??0),"Awaiting review"),card("PUBLISHED PROJECTS",String(data.published?.projects??0),"Showcase projects"),card("RECENTLY DELETED",String(data.inquiries?.deleted??0),"Recoverable for 30 days"));
+      p.append(grid);
+      const head=el("div","inquiry-list-heading");head.append(el("strong","","Recent activity"),button("Open full activity log",()=>window.showAdminView?.("audit")));p.append(head);
+      const events=data.recentActivity||[];
+      if(!events.length)p.append(el("p","inquiry-empty","No activity has been recorded yet."));
+      for(const event of events){const row=el("article","notification-row");row.append(el("strong","",String(event.action||"Admin event").replace(/-/g," ")),el("p","",event.detail||""),el("small","",formatDate(event.at)+" · "+(event.email||"admin")));p.append(row)}
+      p.append(button("Open inquiry inbox",()=>window.showAdminView?.("inquiries")));
+    }catch(e){status(p,"Could not load dashboard data: "+e.message,true)}
+  }
+
   async function loadAnalytics(){
     const root=mount("view-analytics")?.querySelector(".control-content");if(!root)return;
     const p=panel("Cloudflare Web Analytics","Cloudflare is the intended analytics provider. Confirm that Web Analytics is enabled for theredsparrow.online before relying on visitor data.");
@@ -209,9 +226,9 @@
     try{const data=await call("/site-settings"),v=data.draft||data.settings||{};contact.value=v.contactEmail||contact.value;direct.value=v.directEmail||direct.value;tagline.value=v.tagline||tagline.value;enabled.checked=!!v.announcementEnabled;message.value=v.announcement||"";status(p,data.draft?"Unpublished settings draft loaded.":"Showing current published settings.")}catch(e){status(p,"Could not load website settings: "+e.message,true)}
   }
 
-  const loaders={analytics:loadAnalytics,calendar:loadCalendar,inquiries:loadInquiries,notifications:loadNotifications,health:loadHealth,preview:loadPreview,files:loadFiles,security:loadSecurity,"site-settings":loadSiteSettings};
+  const loaders={overview:loadDashboard,analytics:loadAnalytics,calendar:loadCalendar,inquiries:loadInquiries,notifications:loadNotifications,health:loadHealth,preview:loadPreview,files:loadFiles,security:loadSecurity,"site-settings":loadSiteSettings};
   const loaded=new Set();
   async function load(id){if(!loaders[id])return;loaded.delete(id);await loaders[id]();loaded.add(id)}
   window.addEventListener("trs:control-view",e=>load(e.detail));
-  window.addEventListener("trs:admin-authenticated",()=>{loaded.clear();});
+  window.addEventListener("trs:admin-authenticated",()=>{loaded.clear();loadDashboard();});
 })();
