@@ -387,9 +387,14 @@ test("page and homepage version history expose accessible loading and error feed
 });
 
 
-test("Media Library sort labels describe filename order instead of implying upload timestamps", () => {
+test("Media Library filters supported image formats and labels filename sorting accurately", () => {
+  assert.match(features, /mediaType==="all"/);
+  assert.match(features, /mediaType==="jpeg"\?\["jpg","jpeg"\]\.includes\(ext\)/);
+  assert.match(features, /media-type-filter/);
   assert.match(features, /mediaSort==="name-az"\?a\.name\.localeCompare\(b\.name\)/);
-  assert.match(html, /value="newest">Name Z–A/);
+  assert.match(html, /id="media-type-filter" aria-label="Filter media by format"/);
+  assert.match(html, /value="jpeg">JPEG images/);
+  assert.match(html, /value="name-za">Name Z–A/);
   assert.match(html, /value="name-az">Name A–Z/);
-  assert.doesNotMatch(html, /value="oldest">Oldest first/);
+  assert.doesNotMatch(html, /value="newest">/);
 });
