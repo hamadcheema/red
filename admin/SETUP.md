@@ -1,7 +1,7 @@
 # The Red Sparrow admin backend
 
 ## Authentication
-This backend uses GitHub OAuth (not Cloudflare Zero Trust). Only the GitHub account `hamadcheema` is allowed. The admin dashboard HTML is served as a static page; the API and all editing/publishing actions require a valid server-side session. The session cookie is HttpOnly, Secure and SameSite=Lax, and OAuth state is single-use.
+This backend uses GitHub OAuth (not Cloudflare Zero Trust). Only the GitHub account `hamadcheema` is allowed. The admin dashboard HTML is served as a static page; the API and all editing/publishing actions require a valid server-side session. The session cookie is HttpOnly, Secure and SameSite=Lax, and OAuth state is single-use and bound to the browser that initiated sign-in.
 
 ## 1. Create a GitHub OAuth App
 In GitHub, open Settings → Developer settings → OAuth Apps → New OAuth App.
@@ -15,6 +15,7 @@ Add these secrets to Cloudflare Worker `the-red-sparrow-admin-api`:
 - `GITHUB_OAUTH_CLIENT_ID` = OAuth App Client ID
 - `GITHUB_OAUTH_CLIENT_SECRET` = OAuth App Client Secret
 - `GITHUB_TOKEN` = fine-grained token scoped only to `hamadcheema/red`, Contents read/write, Metadata read-only.
+- `IP_RATE_LIMIT_SECRET` = a randomly generated secret used to HMAC temporary enquiry rate-limit identifiers. Do not reuse it elsewhere.
 
 ## 3. Add Worker variables
 Add these as plain-text Worker variables (not secrets):
@@ -40,15 +41,16 @@ This route handles the API only; it does not intercept the rest of the site. No 
 - Save and reset remote page and SEO drafts in Cloudflare KV; publishing synchronizes the current draft before writing to GitHub.
 - Publish SEO title, description, canonical and Open Graph/Twitter metadata on all six pages.
 - Upload PNG/JPEG/WebP/GIF images (5 MB each) to `assets/uploads/`.
+- Image uploads strip EXIF, XMP, IPTC/comment and common text metadata from supported image formats before files are committed.
 - Prevent deletion of images referenced by saved collections, page drafts, SEO drafts, published HTML pages, the stylesheet, or site metadata; if a reference scan fails, deletion is blocked.
-- View page commit history and restore a previous version by creating a new revert commit.
+- View page commit history and restore a previous version by creating a new revert commit; the Worker verifies the selected commit belongs to that file's history.
 - Audit events in KV (180-day expiry), with latest-event pagination. Audit write failures do not turn a completed GitHub operation into a false failure.
 
 ## Response security headers
-A zone-level Cloudflare response-header transform rule applies `X-Content-Type-Options: nosniff`, `Referrer-Policy: strict-origin-when-cross-origin`, `X-Frame-Options: SAMEORIGIN`, and a restrictive Permissions-Policy for camera, microphone and geolocation. A Content Security Policy is intentionally not set until every required third-party asset origin has been reviewed.
+A zone-level Cloudflare response-header transform rule applies `X-Content-Type-Options: nosniff`, `Referrer-Policy: strict-origin-when-cross-origin`, `X-Frame-Options: SAMEORIGIN`, and a restrictive Permissions-Policy for camera, microphone and geolocation. A separate Content Security Policy applies only under `/admin/`: scripts and connections are same-origin, objects are disabled, and framing is restricted to the same origin. A Cloudflare rate-limit rule blocks more than five requests to the GitHub OAuth login/callback endpoints per 10 seconds per source IP (10-second mitigation, subject to the Free plan's limits).
 
 ## Quality checks
-From the repository root, run `python scripts/validate_site.py` and `node --test admin/tests/worker.test.mjs`. GitHub Actions runs these checks and JavaScript syntax checks on every push to `main`.
+From the repository root, run `python scripts/validate_site.py` and `node --test admin/tests/worker.test.mjs`. GitHub Actions runs these checks and JavaScript syntax checks on every push to `main`. Third-party actions are pinned to verified commit SHAs.
 
 Publishing writes a normal commit to `main`; GitHub Pages then deploys it. Confirm the commit and public website after each publish.
 
