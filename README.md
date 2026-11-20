@@ -25,7 +25,7 @@ Official lightweight website for The Red Sparrow, an independent Unity-focused g
 - `admin/` — private admin interface, publishing client, Worker source and setup notes.
 - `assets/uploads/` — images uploaded through the admin Media Library.
 - `logo.svg`, `favicon.svg`, `og-image.png` — brand and social preview assets.
-- `robots.txt`, `sitemap.xml`, `llms.txt`, `ads.txt` — crawler, discovery and advertising metadata.
+- `robots.txt`, `sitemap.xml`, `llms.txt` — crawler and discovery metadata.
 - `scripts/validate_site.py` — dependency-free public-site integrity checks.
 - `admin/tests/worker.test.mjs` — Node.js regression tests for Worker safeguards.
 - `.github/workflows/quality.yml` — automated syntax, Worker and site-integrity checks.
