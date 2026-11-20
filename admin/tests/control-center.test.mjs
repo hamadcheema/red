@@ -101,6 +101,11 @@ test("Content Manager preserves unsaved collection edits during navigation and c
   assert.match(features, /loadCollection\(kind,true\)/);
 });
 
+test("in-flight collection reloads cannot overwrite edits made while the request is pending", () => {
+  assert.match(features, /await request\("\/content\?kind="\+kind\);if\(collectionDirty\[kind\]\)/);
+  assert.match(features, /collectionDirty\[kind\]=false;loadCollection\(kind,true\)/);
+});
+
 test("Content Manager draft save handles its reported failure without an unhandled rejection", () => {
   assert.match(features, /saveCollectionDraft\(kind\)\.catch\(\(\)=>\{\}\)/);
   assert.match(features, /Draft could not be saved: /);
