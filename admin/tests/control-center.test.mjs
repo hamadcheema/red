@@ -372,3 +372,11 @@ test("page and homepage version history expose accessible loading and error feed
   assert.match(connection, /selector\.disabled=true/);
   assert.match(connection, /if\(selector\.value!==slug\)return/);
 });
+
+
+test("Media Library sort labels describe filename order instead of implying upload timestamps", () => {
+  assert.match(features, /mediaSort==="name-az"\?a\.name\.localeCompare\(b\.name\)/);
+  assert.match(html, /value="newest">Name Z–A/);
+  assert.match(html, /value="name-az">Name A–Z/);
+  assert.doesNotMatch(html, /value="oldest">Oldest first/);
+});
