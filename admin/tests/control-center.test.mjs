@@ -53,6 +53,19 @@ test("homepage history restore errors are announced in the homepage history pane
   assert.match(connection, /say\(homepageHistoryList,"Could not restore homepage:/);
 });
 
+test("page and homepage version history announce loading and errors accessibly", () => {
+  assert.match(connection, /Loading page version history…/);
+  assert.match(connection, /Loading homepage version history…/);
+  assert.match(connection, /setAttribute\("role","status"\)/);
+  assert.match(connection, /setAttribute\("aria-live","polite"\)/);
+  assert.match(connection, /setAttribute\("role","alert"\)/);
+  assert.match(connection, /setAttribute\("aria-live","assertive"\)/);
+  assert.match(connection, /historyList\.setAttribute\("aria-busy","true"\)/);
+  assert.match(connection, /homepageHistoryList\.setAttribute\("aria-busy","true"\)/);
+  assert.match(connection, /historyList\.removeAttribute\("aria-busy"\)/);
+  assert.match(connection, /homepageHistoryList\.removeAttribute\("aria-busy"\)/);
+});
+
 test("editing an existing content item resolves its relative media path to the Media Library URL", () => {
   assert.match(features, /new URL\(item\.image,location\.origin\+"\/"\)\.href/);
   assert.match(features, /some\(o=>o\.value===selected\)\?selected:""/);
