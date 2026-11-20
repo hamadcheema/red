@@ -47,7 +47,7 @@
     try{
       const data=await request("/media/list");mediaItems=data.items||[];const availablePaths=new Set(mediaItems.map(item=>item.path));selectedMediaPaths.forEach(path=>{if(!availablePaths.has(path))selectedMediaPaths.delete(path)});
       const picker=$("edit-image");
-      if(picker){const selected=picker.dataset.pendingRemoteValue||picker.value;picker.replaceChildren(new Option("No image selected",""));for(const item of mediaItems){const option=new Option(item.name,item.siteUrl||item.url);option.dataset.previewUrl=item.previewUrl||item.url+"?v="+encodeURIComponent(item.name);picker.add(option)}picker.value=[...picker.options].some(o=>o.value===selected)?selected:"";if(picker.value)delete picker.dataset.pendingRemoteValue;else if(selected)picker.dataset.pendingRemoteValue=selected;picker.dispatchEvent(new Event("change",{bubbles:true}));}
+      if(picker){const selected=picker.dataset.pendingRemoteValue||picker.value;picker.replaceChildren(new Option("No image selected",""));for(const item of mediaItems){const option=new Option(item.name,item.siteUrl||item.url);option.dataset.previewUrl=item.previewUrl||item.url+"?v="+encodeURIComponent(item.name);picker.add(option)}picker.value=[...picker.options].some(o=>o.value===selected)?selected:"";if(picker.value)delete picker.dataset.pendingRemoteValue;else if(selected)picker.dataset.pendingRemoteValue=selected;picker.dispatchEvent(new Event("change",{bubbles:true}));window.dispatchEvent(new Event("trs:media-picker-ready"));}
       renderMediaLibrary();
     }catch(e){showError(grid,e)}
   }
