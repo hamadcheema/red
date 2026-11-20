@@ -57,6 +57,7 @@ Known limitations to verify:
 - [ ] Bulk media/content operations.
 - [ ] Accessibility and metadata validation.
 - [x] Homepage section visibility controls; hidden sections retain their content and can be restored.
+- [x] Centralized brand identity controls for accent colour, typography and Media Library logo.
 
 ### Phase 3 — Security and recovery
 - [ ] Detailed login/session event history.
