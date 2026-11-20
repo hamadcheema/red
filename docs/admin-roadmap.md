@@ -2,7 +2,7 @@
 
 Last reviewed: 2026-11-20
 Repository: https://github.com/hamadcheema/red
-Baseline: main commit e2eaf29ac5480c22b7b6fc2d453ca8224c29f684
+Baseline: main commit 9d8f97d16a9a870d8f34e0ad682c4c88243a8588
 
 ## Product direction
 
@@ -40,18 +40,18 @@ Known limitations to verify:
 - [ ] Verify backups and recovery procedures.
 - [ ] Establish release/rollback checklists.
 
-### Phase 1 — Admin experience
+### Phase 1 — Admin experience\n- [x] Personal activity timeline with date-range and category filters, daily/weekly event counts, and formula-safe CSV export (latest 50 audit events).
 - [x] Gmail-style inquiry workspace with Inbox, Unread and Archived folders.
 - [x] Inquiry search and message reading pane.
 - [x] Per-inquiry Gmail compose/reply action.
-- [ ] Global search across all modules.
+- [x] Universal data search across enquiries, content collections, media and recent audit activity (50-result cap; latest 500 audit entries).
 - [x] Ctrl/Cmd+K command palette for keyboard-accessible quick navigation across registered admin sections, with common aliases and descriptive matching.\n- [x] Universal data search across enquiries, projects, social previews, brand assets, media and the latest 500 activity entries (separate from navigation search); capped at 50 results per query.
 - [ ] Accessible universal confirmations and undo for safe draft actions.
 - [ ] Bulk actions and consistent empty/loading/error states.\n- [x] Authenticated CSV export for all active enquiries with spreadsheet formula-injection protection.
 
 ### Phase 2 — Content operations
-- [ ] Published-vs-draft visual comparison.
-- [ ] Rich version history and restore UX.
+- [x] Published-vs-draft visual comparison in centralized Brand Settings (live vs editing logo, accent colour and typography).
+- [ ] Rich version history and restore UX (page-level history/restore still needs a dedicated audit).
 - [ ] More robust calendar views and schedule filters.
 - [ ] Media duplicate detection and optimization.
 - [ ] Bulk media/content operations.
