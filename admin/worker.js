@@ -47,15 +47,15 @@ function cleanBrandSettings(value,current=brandDefaults){
  return result;
 }
 function applyBrandStyles(css,brand){
- css=css.replace(/#ed4b45/gi,"var(--red)").replace(/rgba\\(237,75,69,/gi,"rgba(var(--red-rgb),").replace(/#ff5b54/gi,"var(--red)");
+ css=css.replace(/#ed4b45/gi,"var(--red)").replace(/rgba\(237,75,69,/gi,"rgba(var(--red-rgb),").replace(/#ff5b54/gi,"var(--red)");
  css=css.replace(/system-ui,-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif/g,"var(--brand-font)");
- const match=css.match(/:root\\s*\\{([^}]*)\\}/);if(!match)throw new Error("Public stylesheet root variables were not found.");
+ const match=css.match(/:root\s*\{([^}]*)\}/);if(!match)throw new Error("Public stylesheet root variables were not found.");
  const rgb=brand.accentColor.slice(1).match(/.{2}/g).map(x=>parseInt(x,16)).join(",");
  let root=match[1];
- root=root.replace(/--red\\s*:[^;]+;/,"--red:"+brand.accentColor+";");
- root=root.replace(/--red-rgb\\s*:[^;]+;/,"--red-rgb:"+rgb+";");
+ root=root.replace(/--red\s*:[^;]+;/,"--red:"+brand.accentColor+";");
+ root=root.replace(/--red-rgb\s*:[^;]+;/,"--red-rgb:"+rgb+";");
  if(!root.includes("--red-rgb:"))root+=";--red-rgb:"+rgb;
- root=root.replace(/--brand-font\\s*:[^;]+;/,"--brand-font:"+brandFontStacks[brand.fontFamily]+";");
+ root=root.replace(/--brand-font\s*:[^;]+;/,"--brand-font:"+brandFontStacks[brand.fontFamily]+";");
  if(!root.includes("--brand-font:"))root+=";--brand-font:"+brandFontStacks[brand.fontFamily];
  return css.replace(match[0],":root{"+root+"}");
 }
