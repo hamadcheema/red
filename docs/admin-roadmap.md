@@ -2,7 +2,7 @@
 
 Last reviewed: 2026-11-20
 Repository: https://github.com/hamadcheema/red
-Baseline: main commit 9d8f97d16a9a870d8f34e0ad682c4c88243a8588
+Baseline: main commit 552fdd73baea082d6d4c76b8e39bc307adad3576
 
 ## Product direction
 
@@ -15,15 +15,17 @@ Already present in the repository:
 - SEO metadata editor
 - Media library, uploads, recently deleted media and usage checks
 - Showcase and brand asset collections
-- Audit log
+- Audit log and personal activity timeline
 - Scheduled publishing, retry and cancellation
 - Notifications and inquiry inbox
 - Website preview and shared site settings
-- Health checks and admin session controls
-- GitHub Actions syntax and regression tests
+- Health checks and admin session controls, including individual session revocation
+- Content Manager bulk operations and safe media move-to-trash
+- Shared accessible confirmation dialogs
+- GitHub Actions syntax, regression, HTML, link, asset, metadata and sitemap validation
 
 Known limitations to verify:
-- Inquiry list returns at most 100 messages; counts must represent all stored messages.
+- Inquiry list returns at most 100 messages per page; counts and exports must represent all stored messages.
 - Analytics module links to Cloudflare; it does not currently provide embedded traffic charts or prove analytics is enabled.
 - Current automated tests are not a substitute for authenticated browser-based mobile/desktop testing.
 - Cloudflare KV is suitable for current lightweight records, but relational business data may eventually justify D1.
@@ -40,16 +42,20 @@ Known limitations to verify:
 - [ ] Verify backups and recovery procedures.
 - [ ] Establish release/rollback checklists.
 
-### Phase 1 — Admin experience\n- [x] Daily and rolling 7-day / 30-day enquiry summaries on the executive dashboard, using Pakistan-local calendar dates for today.\n- [x] Personal activity timeline with date-range and category filters, daily/weekly event counts, and formula-safe CSV export (latest 500 audit events).
-- [x] Gmail-style inquiry workspace with Inbox, Unread and Archived folders.
+### Phase 1 — Admin experience
+- [x] Daily and rolling 7-day / 30-day enquiry summaries on the executive dashboard, using Pakistan-local calendar dates for today.
+- [x] Personal activity timeline with date-range and category filters, daily/weekly event counts, and formula-safe CSV export (latest 500 audit events).
+- [x] Inquiry workspace with Inbox, Unread and Archived folders.
 - [x] Inquiry search and message reading pane.
-- [x] Per-inquiry Gmail compose/reply action.
+- [x] Per-inquiry reply action.
 - [x] Universal data search across enquiries, content collections, media and recent audit activity (50-result cap; latest 500 audit entries).
-- [x] Ctrl/Cmd+K command palette for keyboard-accessible quick navigation across registered admin sections, with common aliases and descriptive matching.\n- [x] Universal data search across enquiries, projects, social previews, brand assets, media and the latest 500 activity entries (separate from navigation search); capped at 50 results per query.
+- [x] Ctrl/Cmd+K command palette for keyboard-accessible quick navigation across registered admin sections.
 - [x] Shared accessible confirmation dialog for destructive admin actions, including keyboard dismissal and focus handling.
 - [x] Undo removal for pending Content Manager draft items; published collection versions remain recoverable for 7 days.
 - [ ] General undo for other safe draft actions.
-- [ ] Bulk actions and consistent empty/loading/error states.\n- [x] Authenticated CSV export for all active enquiries with spreadsheet formula-injection protection.
+- [x] Bulk Content Manager publish/delete and safe Media Library move-to-trash; server-side usage checks skip referenced files.
+- [x] Authenticated CSV export for all active enquiries with spreadsheet formula-injection protection.
+- [ ] Consistent empty/loading/error states across every module.
 
 ### Phase 2 — Content operations
 - [x] Published-vs-draft visual comparison in centralized Brand Settings (live vs editing logo, accent colour and typography).
@@ -57,10 +63,9 @@ Known limitations to verify:
 - [ ] More robust calendar views and schedule filters.
 - [x] Exact duplicate-image detection during upload (Git blob SHA-1 comparison; duplicate uploads are rejected).
 - [ ] Image optimization/resizing tools.
-- [x] Bulk Content Manager publish/delete and safe Media Library move-to-trash; server-side usage checks skip referenced files.
-- [ ] Accessibility and metadata validation.
 - [x] Homepage section visibility controls; hidden sections retain their content and can be restored.
 - [x] Centralized brand identity controls for accent colour, typography and Media Library logo.
+- [ ] Accessibility and metadata validation for all uploaded assets and published content.
 
 ### Phase 3 — Security and recovery
 - [x] Successful admin login and logout events in the audit timeline (failed/expired attempts remain unrecorded).
