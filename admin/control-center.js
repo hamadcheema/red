@@ -208,7 +208,7 @@
       for(const item of filtered){const row=el("article","activity-event");const date=el("time","activity-event-date",formatDate(item.at));if(item.at)date.dateTime=item.at;const body=el("div","activity-event-body");body.append(el("strong","",String(item.action||"Admin event").replace(/-/g," ")),el("p","",item.detail||"No additional details."),el("small","",item.email||"Authorized admin"));row.append(date,body);timeline.append(row)}
     };
     [from,to,kind].forEach(input=>input.addEventListener("change",render));
-    try{const data=await call("/audit");events=(data.events||[]).filter(item=>item&&item.at).sort((a,b)=>Date.parse(b.at)-Date.parse(a.at));render();status(p,"Loaded "+events.length+" recent audit events. The timeline reflects the audit retention window.");}
+    try{const data=await call("/audit?limit=500");events=(data.events||[]).filter(item=>item&&item.at).sort((a,b)=>Date.parse(b.at)-Date.parse(a.at));render();status(p,"Loaded "+events.length+" recent audit events. The timeline reflects the audit retention window.");}
     catch(e){status(p,"Could not load activity: "+e.message,true)}
   }
   async function loadNotifications(){
