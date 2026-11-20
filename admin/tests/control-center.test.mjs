@@ -76,7 +76,7 @@ test("analytics copy does not claim Cloudflare analytics is already enabled", ()
 test("command palette supports meaningful aliases and descriptive search without claiming record search", () => {
   assert.match(admin, /const commandAliases = \{/);
   assert.match(admin, /"content-manager": \["showcases", "projects", "social previews", "brand assets"/);
-  assert.match(admin, /"inquiries": \["messages", "contact form", "customers", "leads", "inbox"\]/);
+  assert.match(admin, /inquiries: \\["messages", "contact form", "customers", "leads", "inbox"\\]/);
   assert.match(admin, /const searchable = \[item\.label, descriptions\[item\.view\]/);
   assert.match(admin, /Search admin sections/);
   assert.doesNotMatch(admin, /global data search|search all records/i);
