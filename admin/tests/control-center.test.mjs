@@ -145,7 +145,7 @@ test("centralized brand identity controls cover accent, typography and Media Lib
 test("personal activity timeline supports date and category filters plus safe CSV export", () => {
   assert.match(control, /activity: \["Personal activity timeline"/);
   assert.match(control, /async function loadActivityTimeline/);
-  assert.match(control, /call\("\/audit"\)/);
+  assert.match(control, /call\("\/audit\?limit=500"\)/);
   assert.match(control, /Activity start date/);
   assert.match(control, /Filter activity type/);
   assert.match(control, /the-red-sparrow-activity\.csv/);
