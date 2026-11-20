@@ -212,12 +212,35 @@
   let commandItems = [];
   let commandIndex = 0;
   let commandReturnFocus = null;
+  const commandAliases = {
+    overview: ["home", "dashboard", "summary", "metrics"],
+    pages: ["website", "web pages", "page editor"],
+    media: ["images", "uploads", "assets", "files"],
+    "content-manager": ["showcases", "projects", "social previews", "brand assets", "library", "manage content"],
+    "add-content": ["new project", "new showcase", "upload content", "create content"],
+    audit: ["activity", "history", "logs"],
+    seo: ["search engine", "metadata", "open graph", "social sharing"],
+    settings: ["preferences", "configuration"],
+    analytics: ["traffic", "visitors", "web analytics"],
+    calendar: ["schedule", "scheduled publishing", "publication"],
+    inquiries: ["messages", "contact form", "customers", "leads", "inbox"],
+    notifications: ["alerts", "updates"],
+    health: ["status", "uptime", "diagnostics"],
+    preview: ["website preview", "page preview"],
+    files: ["file manager", "media usage"],
+    security: ["sessions", "access", "login"],
+    "site-settings": ["contact details", "announcement", "tagline", "website configuration"]
+  };
   function renderCommandResults() {
     const query = commandInput.value.trim().toLowerCase();
     commandItems = links().map(link => ({
       view: link.dataset.view,
       label: (link.dataset.label || link.textContent || "").replace(/^[^A-Za-z0-9]+/, "").trim()
-    })).filter(item => item.view && item.label && item.label.toLowerCase().includes(query));
+    })).filter(item => {
+      if (!item.view || !item.label) return false;
+      const searchable = [item.label, descriptions[item.view] || "", ...(commandAliases[item.view] || [])].join(" ").toLowerCase();
+      return searchable.includes(query);
+    });
     commandIndex = Math.min(commandIndex, Math.max(0, commandItems.length - 1));
     commandResults.replaceChildren();
     if (!commandItems.length) {
