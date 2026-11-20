@@ -45,7 +45,7 @@ Known limitations to verify:
 - [x] Inquiry search and message reading pane.
 - [x] Per-inquiry Gmail compose/reply action.
 - [ ] Global search across all modules.
-- [x] Ctrl/Cmd+K command palette for keyboard-accessible quick navigation across registered admin sections.
+- [x] Ctrl/Cmd+K command palette for keyboard-accessible quick navigation across registered admin sections, with common aliases and descriptive matching.\n- [ ] Universal data search across enquiries, content, media and activity records (separate from navigation search).
 - [ ] Accessible universal confirmations and undo for safe draft actions.
 - [ ] Bulk actions and consistent empty/loading/error states.
 
