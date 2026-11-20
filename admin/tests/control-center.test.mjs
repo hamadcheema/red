@@ -58,6 +58,15 @@ test("editing an existing content item resolves its relative media path to the M
   assert.match(features, /some\(o=>o\.value===selected\)\?selected:""/);
 });
 
+test("page and SEO editors confirm before discarding unsaved changes when switching pages", () => {
+  assert.match(connection, /event\.isTrusted/);
+  assert.match(connection, /Discard unsaved /);
+  assert.match(connection, /event\.stopImmediatePropagation\(\)/);
+  assert.match(connection, /pageBaseline=fieldSnapshot\(pageEditorFields\)/);
+  assert.match(connection, /seoBaseline=fieldSnapshot\(seoEditorFields\)/);
+  assert.match(connection, /trs:media-picker-ready/);
+});
+
 test("Content Manager preserves unsaved collection edits during navigation and confirms destructive refresh", () => {
   assert.match(features, /collectionDirty\[kind\]&&!force/);
   assert.match(features, /Unsaved local changes are being kept/);
