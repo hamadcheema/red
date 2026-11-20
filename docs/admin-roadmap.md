@@ -22,6 +22,7 @@ Already present in the repository:
 - Health checks and admin session controls, including individual session revocation
 - Content Manager bulk operations and safe media move-to-trash
 - Unsaved-change protection for Content Manager, page editor, SEO editor and shared website settings
+- Confirmed page/SEO draft reset actions and editor locking during asynchronous saves and publishes
 - Collection loading guards that preserve edits made while requests are in flight
 - Shared accessible confirmation dialogs
 - Loading feedback across dashboard, calendar, inbox, activity, notifications, health, files, security and website settings
@@ -61,11 +62,14 @@ Known limitations to verify:
 - [x] Authenticated CSV export for all active enquiries with spreadsheet formula-injection protection.
 - [x] Protect unsaved Content Manager, page editor and SEO editor changes from accidental in-app navigation; confirm destructive refreshes.
 - [x] Preserve unsaved shared website settings on navigation, prevent edits racing with load/save/publish, and save changes before publishing.
+- [x] Confirm page/SEO draft resets and lock those editors during saves, publishing and reset operations.
 - [x] Prevent collection navigation and in-flight refreshes from overwriting local edits; reuse loaded collections and protect edit selection.
 - [x] Improve Media Library upload accessibility, normalized filename collision detection and partial-batch failure feedback.
 - [x] Advance enquiry pagination using the server-returned page size, even when duplicate records are filtered.
 - [x] Show the publishing calendar's local timezone and prevent selecting past schedule times.
 - [x] Add visible loading feedback to the data-driven Control Center modules and remove it on success or failure.
+- [x] Keep saved-logo fallback and Media Library error feedback visible in shared website settings.
+- [x] Associate publishing calendar labels with their inputs and display the browser timezone.
 - [ ] Consistent empty/loading/error states across every module.
 
 ### Phase 2 — Content operations
