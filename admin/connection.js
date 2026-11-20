@@ -38,6 +38,7 @@
       const e=document.querySelector(".environment small");
       if(e)e.textContent=s.githubConnected?"Connected to GitHub":"GitHub setup pending";
       if(pill)pill.textContent=s.githubConnected?"CONNECTED":"DRAFT";
+      window.dispatchEvent(new CustomEvent("trs:control-view",{detail:"overview"}));
       const stat=document.querySelector("#view-overview .stats-grid .stat-card:nth-child(3) .stat-word");
       if(stat)stat.textContent=s.githubConnected?"Ready":"Pending";
       if($("edit-page"))await loadRemoteDraft("page",$("edit-page").value,{title:"edit-title",description:"edit-description",heading:"edit-heading",intro:"edit-intro",image:"edit-image",imageAlt:"edit-image-alt"},ps);
