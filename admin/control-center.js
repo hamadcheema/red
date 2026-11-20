@@ -79,7 +79,16 @@
     const p=panel("Inquiry inbox","Search, filter, archive, recover and manage website enquiries.");
     const toolbar=el("div","inquiry-toolbar"),search=el("input");search.type="search";search.placeholder="Search name, email, subject or message";search.setAttribute("aria-label","Search enquiries");search.value=inquirySearch;
     const dateFilter=el("select");dateFilter.setAttribute("aria-label","Filter enquiries by date");dateFilter.innerHTML='<option value="any">Any date</option><option value="today">Today</option><option value="7">Last 7 days</option><option value="30">Last 30 days</option>';dateFilter.value=inquiryDateFilter;
-    const refresh=button("Refresh",loadInquiries);toolbar.append(search,dateFilter,refresh);p.append(toolbar);
+    const refresh=button("Refresh",loadInquiries),exportCsv=button("Export CSV",async()=>{
+      exportCsv.disabled=true;exportCsv.textContent="Exporting…";
+      try{
+        const result=await fetch("/admin-api/inquiries/export",{credentials:"include"});
+        if(!result.ok){const error=await result.json().catch(()=>({}));throw new Error(error.error||"Export failed ("+result.status+").")}
+        const blob=await result.blob(),url=URL.createObjectURL(blob),link=el("a");link.href=url;link.download="the-red-sparrow-enquiries.csv";link.hidden=true;document.body.append(link);link.click();link.remove();setTimeout(()=>URL.revokeObjectURL(url),1000);
+        status(p,"CSV export downloaded. It includes all active enquiries, including archived messages.");
+      }catch(error){status(p,"Could not export enquiries: "+error.message,true)}
+      finally{exportCsv.disabled=false;exportCsv.textContent="Export CSV"}
+    });exportCsv.className="small-button";toolbar.append(search,dateFilter,refresh,exportCsv);p.append(toolbar);
     const summary=el("div","inquiry-summary");p.append(summary);
     const bulk=el("div","inquiry-bulk-toolbar");p.append(bulk);
     const shell=el("div","inquiry-shell"),folders=el("nav","inquiry-folders"),listPane=el("section","inquiry-list-pane"),reader=el("section","inquiry-reader");
