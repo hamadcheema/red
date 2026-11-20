@@ -45,6 +45,15 @@ test("page and SEO drafts use the authenticated remote API without duplicate loc
   assert.match(features, /dataset\.pendingRemoteValue/);
 });
 
+test("admin sessions support individual revocation without exposing cookie tokens", () => {
+  assert.match(worker, /async function sessionFingerprint\(key\)/);
+  assert.match(worker, /r==="security\/revoke-session"/);
+  assert.match(worker, /sessionRef:await sessionFingerprint\(k\.name\)/);
+  assert.match(worker, /if\(key\.name==="session:"\+sid\)continue/);
+  assert.match(control, /Revoke session/);
+  assert.match(control, /call\("\/security\/revoke-session"/);
+});
+
 test("new Control Center modules have matching protected Worker routes", () => {
   for (const route of ["system/health", "preview/page", "media/usage", "security/sessions", "security/revoke-sessions", "site-settings", "publish/site-settings", "schedule", "schedule/retry", "notifications", "inquiries"]) {
     assert.ok(worker.includes('r==="' + route + '"'), "missing Worker route: " + route);
