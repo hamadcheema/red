@@ -154,4 +154,10 @@ test("personal activity timeline supports date and category filters plus safe CS
   assert.match(worker, /r==="audit"/);
 });
 
-test("executive dashboard reports accurate enquiry activity windows", () => {\n  assert.match(worker, /periods:\\{newToday,newLast7Days,newLast30Days\\}/);\n  assert.match(worker, /Asia\\/Karachi/);\n  assert.match(control, /NEW TODAY/);\n  assert.match(control, /LAST 7 DAYS/);\n  assert.match(control, /LAST 30 DAYS/);\n});\n
+test("executive dashboard reports accurate enquiry activity windows", () => {
+  assert.match(worker, /periods:\\{newToday,newLast7Days,newLast30Days\\}/);
+  assert.match(worker, /Asia\\/Karachi/);
+  assert.match(control, /NEW TODAY/);
+  assert.match(control, /LAST 7 DAYS/);
+  assert.match(control, /LAST 30 DAYS/);
+});
