@@ -84,8 +84,8 @@
       if(!acceptedMediaTypes.has(file.type)){rejected.push(file.name+": unsupported file type");continue}
       if(file.size>5242880){rejected.push(file.name+": larger than 5 MB");continue}
       if(total+file.size>20971520){rejected.push(file.name+": queue would exceed 20 MB");continue}
-      const normalizedName=safeFilename(file.name).toLowerCase();if(selectedFiles.some(item=>safeFilename(item.name).toLowerCase()===normalizedName)){rejected.push(file.name+": filename already in this queue");continue}
-      selectedFiles.push({file,name:file.name,previewUrl:URL.createObjectURL(file)});total+=file.size;
+      const candidate={file,name:file.name},normalizedName=uploadFilename(candidate).toLowerCase();if(selectedFiles.some(item=>uploadFilename(item).toLowerCase()===normalizedName)){rejected.push(file.name+": filename already in this queue after extension normalization");continue}
+      selectedFiles.push({...candidate,previewUrl:URL.createObjectURL(file)});total+=file.size;
     }
     renderUploadQueue();
     if(rejected.length)say($("media-status"),selectedFiles.length+" image(s) ready. Skipped: "+rejected.join("; "),true);
