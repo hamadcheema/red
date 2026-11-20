@@ -92,6 +92,13 @@ test("page and SEO editor baselines update after successful saves and publishing
   assert.match(connection, /const syncSeoBaseline=/);
 });
 
+test("page and SEO editors are locked during asynchronous save and publish operations", () => {
+  assert.match(connection, /pf\.inert=true/);
+  assert.match(connection, /sf\.inert=true/);
+  assert.match(connection, /finally\{pf\.inert=false/);
+  assert.match(connection, /finally\{sf\.inert=false/);
+});
+
 test("page and SEO editors confirm before discarding unsaved changes when switching pages", () => {
   assert.match(connection, /event\.isTrusted/);
   assert.match(connection, /Discard unsaved /);
