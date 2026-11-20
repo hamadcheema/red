@@ -177,6 +177,13 @@ test("admin HTML IDs remain unique and all admin scripts are loaded", () => {
   for (const script of ["admin.js", "features.js", "control-center.js", "connection.js"]) assert.ok(html.includes(script));
 });
 
+test("publishing calendar labels are explicitly associated with their controls", () => {
+  assert.match(control, /kindLabel\.htmlFor=kind\.id/);
+  assert.match(control, /dateLabel\.htmlFor=date\.id/);
+  assert.match(control, /kind\.id="schedule-collection-kind"/);
+  assert.match(control, /date\.id="schedule-publish-at"/);
+});
+
 test("publishing calendar shows its timezone and blocks past local schedule times", () => {
   assert.match(control, /date\.min=new Date\(now\.getTime\(\)-now\.getTimezoneOffset\(\)\*60000\)\.toISOString\(\)\.slice\(0,16\)/);
   assert.match(control, /resolvedOptions\(\)\.timeZone/);
