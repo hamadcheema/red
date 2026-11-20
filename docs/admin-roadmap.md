@@ -57,7 +57,7 @@ Known limitations to verify:
 - [ ] More robust calendar views and schedule filters.
 - [x] Exact duplicate-image detection during upload (Git blob SHA-1 comparison; duplicate uploads are rejected).
 - [ ] Image optimization/resizing tools.
-- [ ] Bulk media/content operations.
+- [x] Bulk Content Manager publish/delete and safe Media Library move-to-trash; server-side usage checks skip referenced files.
 - [ ] Accessibility and metadata validation.
 - [x] Homepage section visibility controls; hidden sections retain their content and can be restored.
 - [x] Centralized brand identity controls for accent colour, typography and Media Library logo.
