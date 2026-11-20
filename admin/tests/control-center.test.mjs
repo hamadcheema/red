@@ -130,4 +130,8 @@ test("centralized brand identity controls cover accent, typography and Media Lib
   assert.match(worker, /function cleanBrandSettings/);
   assert.match(worker, /function applyBrandStyles/);
   assert.match(worker, /brandFontStacks/);
+  assert.match(control, /Live brand preview/);
+  assert.match(control, /updateBrandPreview/);
+  assert.match(control, /previewImage\.src=logo\.value/);
+  assert.match(controlCss, /\.brand-preview/);
 });
