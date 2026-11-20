@@ -106,6 +106,6 @@ test("enquiry CSV export is authenticated, complete, formula-safe and excludes d
   assert.ok(worker.includes('content-disposition'));
   assert.ok(worker.includes('cache-control":"no-store"'));
   assert.match(control, /Export CSV/);
-  assert.match(control, /fetch\\("\\/admin-api\\/inquiries\\/export",\\{credentials:"include"\\}\\)/);
-  assert.match(control, /URL\\.createObjectURL/);
+  assert.ok(control.includes('fetch("/admin-api/inquiries/export",{credentials:"include"})'));
+  assert.ok(control.includes("URL.createObjectURL"));
 });
