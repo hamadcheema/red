@@ -241,7 +241,16 @@
     const logoLabel=el("label","brand-setting-row","Website logo"),logo=el("select");
     const defaultLogo=el("option","","Default site icon");defaultLogo.value="/favicon.svg";logo.append(defaultLogo);
     logoLabel.append(logo);brandField.append(logoLabel);
-    const brandNote=el("p","field-hint","Upload a logo in Media Library first, then select it here. The selected logo, accent colour and font are applied across the public website when published.");brandField.append(brandNote);form.append(brandField);
+    const brandNote=el("p","field-hint","Upload a logo in Media Library first, then select it here. The selected logo, accent colour and font are applied across the public website when published.");brandField.append(brandNote);
+    const brandPreview=el("div","brand-preview");brandPreview.setAttribute("role","group");brandPreview.setAttribute("aria-label","Live brand preview");
+    const previewImage=el("img","brand-preview-logo");previewImage.src="/favicon.svg";previewImage.alt="Selected website logo";
+    const previewContent=el("div","brand-preview-content");previewContent.append(el("span","brand-preview-kicker","LIVE BRAND PREVIEW"),el("strong","brand-preview-name","THE RED SPARROW"),el("p","brand-preview-copy","Ideas into interactive worlds."));
+    const previewAccent=el("span","brand-preview-accent","ACCENT COLOUR");
+    brandPreview.append(previewImage,previewContent,previewAccent);brandField.append(brandPreview);
+    const previewFontStacks={system:'system-ui,-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif',arial:'Arial,Helvetica,sans-serif',georgia:'Georgia,"Times New Roman",serif',trebuchet:'"Trebuchet MS",Arial,sans-serif'};
+    const updateBrandPreview=()=>{previewImage.src=logo.value||"/favicon.svg";previewImage.onerror=()=>{previewImage.onerror=null;previewImage.src="/favicon.svg"};brandPreview.style.setProperty("--preview-accent",accent.value);previewContent.style.fontFamily=previewFontStacks[font.value]||previewFontStacks.system;previewAccent.textContent=accent.value.toUpperCase()};
+    accent.addEventListener("input",updateBrandPreview);font.addEventListener("change",updateBrandPreview);logo.addEventListener("change",updateBrandPreview);
+    form.append(brandField);
     try{const media=await call("/media/list");(media.items||[]).forEach(item=>{const option=el("option","",item.name);option.value="/"+item.path;logo.append(option)})}catch{}
 
     const visibilityField=el("fieldset","section-visibility-fieldset"),legend=el("legend","","Homepage section visibility");visibilityField.append(legend);
@@ -252,7 +261,7 @@
     const save=el("button","primary-button","Save settings draft");save.type="submit";const publish=button("Publish website settings",async()=>{publish.disabled=true;try{const r=await call("/publish/site-settings",{method:"POST",body:"{}"});await loadSiteSettings();status(root,"Published shared settings to "+r.files+" website page(s).")}catch(e){status(p,e.message,true)}finally{publish.disabled=false}},"primary-button");
     form.append(save,publish);form.addEventListener("submit",async e=>{e.preventDefault();save.disabled=true;try{await call("/site-settings",{method:"POST",body:JSON.stringify({contactEmail:contact.value,directEmail:direct.value,tagline:tagline.value,announcementEnabled:enabled.checked,announcement:message.value,sectionVisibility:Object.fromEntries(Object.entries(visibilityInputs).map(([key,input])=>[key,input.checked])),brand:{accentColor:accent.value,fontFamily:font.value,logoPath:logo.value}})});status(p,"Website settings draft saved securely.");}catch(err){status(p,err.message,true)}finally{save.disabled=false}});
     p.append(form);root.append(p);
-    try{const data=await call("/site-settings"),v=data.draft||data.settings||{};contact.value=v.contactEmail||contact.value;direct.value=v.directEmail||direct.value;tagline.value=v.tagline||tagline.value;enabled.checked=!!v.announcementEnabled;message.value=v.announcement||"";accent.value=v.brand?.accentColor||"#ed4b45";font.value=v.brand?.fontFamily||"system";logo.value=v.brand?.logoPath||"/favicon.svg";Object.entries(visibilityInputs).forEach(([key,input])=>input.checked=(v.sectionVisibility||{})[key]!==false);status(p,data.draft?"Unpublished settings draft loaded.":"Showing current published settings.")}catch(e){status(p,"Could not load website settings: "+e.message,true)}
+    try{const data=await call("/site-settings"),v=data.draft||data.settings||{};contact.value=v.contactEmail||contact.value;direct.value=v.directEmail||direct.value;tagline.value=v.tagline||tagline.value;enabled.checked=!!v.announcementEnabled;message.value=v.announcement||"";accent.value=v.brand?.accentColor||"#ed4b45";font.value=v.brand?.fontFamily||"system";logo.value=v.brand?.logoPath||"/favicon.svg";updateBrandPreview();Object.entries(visibilityInputs).forEach(([key,input])=>input.checked=(v.sectionVisibility||{})[key]!==false);status(p,data.draft?"Unpublished settings draft loaded.":"Showing current published settings.")}catch(e){status(p,"Could not load website settings: "+e.message,true)}
   }
 
   const loaders={overview:loadDashboard,analytics:loadAnalytics,calendar:loadCalendar,inquiries:loadInquiries,notifications:loadNotifications,health:loadHealth,preview:loadPreview,files:loadFiles,security:loadSecurity,"site-settings":loadSiteSettings};
