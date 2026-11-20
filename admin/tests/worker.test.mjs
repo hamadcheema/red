@@ -365,3 +365,32 @@ test("scheduled cleanup permanently removes media trash after seven days", async
   assert.equal(await env.DRAFTS.get("trash:media:" + id), null);
   assert.ok(github.deleted.includes("assets/trash/" + id + "-old.jpg"));
 });
+
+
+test("GitHub OAuth login binds the state to a short-lived browser cookie", async () => {
+  const env = makeEnv();
+  env.GITHUB_OAUTH_CLIENT_ID = "test-client";
+  const request = new Request(ORIGIN + "/admin-api/auth/login");
+  const response = await worker.__run(request, env);
+  assert.equal(response.status, 302);
+  const location = new URL(response.headers.get("location"));
+  assert.equal(location.hostname, "github.com");
+  const state = location.searchParams.get("state");
+  const cookie = response.headers.get("set-cookie") || "";
+  assert.match(cookie, /^trs_oauth_browser=[a-f0-9-]{36};/);
+  const browser = cookie.match(/^trs_oauth_browser=([^;]+)/)?.[1];
+  assert.deepEqual(await env.DRAFTS.get("oauth-state:" + state, "json"), { browser });
+});
+
+test("GitHub OAuth callback rejects state copied into a different browser", async () => {
+  const env = makeEnv();
+  const state = "00000000-0000-4000-8000-000000000099";
+  await env.DRAFTS.put("oauth-state:" + state, JSON.stringify({ browser: "browser-a" }), { expirationTtl: 600 });
+  const request = new Request(ORIGIN + "/admin-api/auth/callback?state=" + state + "&code=fake-code", {
+    headers: { cookie: "trs_oauth_browser=browser-b" }
+  });
+  const response = await worker.__run(request, env);
+  assert.equal(response.status, 400);
+  assert.match(await response.text(), /restart sign-in/);
+  assert.equal(await env.DRAFTS.get("oauth-state:" + state), null);
+});
