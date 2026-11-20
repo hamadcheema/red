@@ -209,6 +209,44 @@
   commandInput.setAttribute("aria-controls", commandResults.id);
   commandDialog.append(commandTitle, commandHint, commandInput, commandResults);
   document.getElementById("admin-app")?.append(commandDialog);
+  const globalSearchButton=document.createElement("button");
+  globalSearchButton.type="button";globalSearchButton.className="button button-quiet global-search-trigger";globalSearchButton.textContent="Search records";globalSearchButton.setAttribute("aria-label","Search enquiries, content, media and activity");
+  document.querySelector(".topbar-right")?.prepend(globalSearchButton);
+  const globalSearchDialog=document.createElement("dialog");globalSearchDialog.className="global-search-dialog";globalSearchDialog.setAttribute("aria-labelledby","global-search-title");
+  const globalSearchTitle=document.createElement("h2");globalSearchTitle.id="global-search-title";globalSearchTitle.textContent="Search your workspace";
+  const globalSearchHint=document.createElement("p");globalSearchHint.className="command-palette-hint";globalSearchHint.textContent="Search enquiries, projects, social previews, brand assets, media and activity.";
+  const globalSearchInput=document.createElement("input");globalSearchInput.type="search";globalSearchInput.placeholder="Search records…";globalSearchInput.setAttribute("aria-label","Search workspace records");
+  const globalSearchResults=document.createElement("div");globalSearchResults.className="global-search-results";globalSearchResults.setAttribute("aria-live","polite");
+  globalSearchDialog.append(globalSearchTitle,globalSearchHint,globalSearchInput,globalSearchResults);document.getElementById("admin-app")?.append(globalSearchDialog);
+  let globalSearchTimer=0,globalSearchSequence=0,globalSearchReturnFocus=null;
+  function renderGlobalSearch(items,query){
+    globalSearchResults.replaceChildren();
+    if(!items.length){const empty=document.createElement("p");empty.className="command-palette-empty";empty.textContent=query.length<2?"Enter at least 2 characters.":"No matching records found.";globalSearchResults.append(empty);return}
+    items.forEach(item=>{
+      const button=document.createElement("button");button.type="button";button.className="global-search-result";
+      const heading=document.createElement("strong");heading.textContent=item.title;
+      const type=document.createElement("span");type.className="global-search-type";type.textContent=item.type;
+      const detail=document.createElement("small");detail.textContent=[item.description,item.detail].filter(Boolean).join(" · ");
+      button.append(heading,type,detail);button.addEventListener("click",()=>{globalSearchDialog.close();if(item.view)showView(item.view)});
+      globalSearchResults.append(button);
+    });
+  }
+  async function runGlobalSearch(){
+    const query=globalSearchInput.value.trim(),sequence=++globalSearchSequence;
+    if(query.length<2){renderGlobalSearch([],query);return}
+    globalSearchResults.textContent="Searching…";
+    try{
+      const response=await fetch("/admin-api/search?q="+encodeURIComponent(query),{credentials:"same-origin",headers:{"accept":"application/json"}});
+      const data=await response.json();if(sequence!==globalSearchSequence)return;
+      if(!response.ok)throw new Error(data.error||"Search failed.");
+      renderGlobalSearch(data.results||[],query);
+      if(data.truncated){const note=document.createElement("p");note.className="command-palette-empty";note.textContent="Showing the first 50 matches. Refine your search to narrow results.";globalSearchResults.append(note)}
+    }catch(error){if(sequence!==globalSearchSequence)return;globalSearchResults.textContent=error.message||"Search is unavailable."}
+  }
+  globalSearchInput.addEventListener("input",()=>{clearTimeout(globalSearchTimer);globalSearchTimer=setTimeout(runGlobalSearch,220)});
+  globalSearchButton.addEventListener("click",()=>{globalSearchReturnFocus=document.activeElement;globalSearchDialog.showModal();globalSearchInput.focus();renderGlobalSearch([],"")});
+  globalSearchDialog.addEventListener("close",()=>globalSearchReturnFocus?.focus());
+
   let commandItems = [];
   let commandIndex = 0;
   let commandReturnFocus = null;
