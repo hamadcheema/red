@@ -161,7 +161,7 @@ if(req.method==="DELETE"&&r==="inquiries"){
 if(req.method==="GET"&&r==="dashboard"){
  let cursor,keys=[];do{const page=await env.DRAFTS.list({prefix:"inquiry:",limit:1000,...(cursor?{cursor}:{})});keys.push(...page.keys);cursor=page.list_complete?null:page.cursor}while(cursor);
  const records=(await Promise.all(keys.map(k=>env.DRAFTS.get(k.name,"json")))).filter(Boolean),active=records.filter(x=>x.status!=="deleted"),deleted=records.filter(x=>x.status==="deleted");
- const [projects,social,brands,auditPage]=await Promise.all(["projects","social","brands"].map(k=>env.DRAFTS.get("collection:"+k,"json")||[]).concat([env.DRAFTS.list({prefix:"audit:",limit:100})]));
+ const [projects,social,brands,auditPage]=await Promise.all(["projects","social","brands"].map(async k=>(await env.DRAFTS.get("collection:"+k,"json"))||[]).concat([env.DRAFTS.list({prefix:"audit:",limit:100})]));
  const recentKeys=auditPage.keys.sort((a,b)=>b.name.localeCompare(a.name)).slice(0,12);
  const recent=(await Promise.all(recentKeys.map(k=>env.DRAFTS.get(k.name,"json")))).filter(Boolean).sort((a,b)=>String(b.at).localeCompare(String(a.at)));
  return response({inquiries:{total:active.length,unread:active.filter(x=>x.status==="new").length,archived:active.filter(x=>x.status==="archived").length,deleted:deleted.length},published:{projects:projects.length,social:social.length,brands:brands.length,total:projects.length+social.length+brands.length},recentActivity:recent});
