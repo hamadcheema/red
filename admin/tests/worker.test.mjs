@@ -62,7 +62,7 @@ function installGitHubMock({ pages = {}, deleted = [], updated = [] } = {}) {
       updated.push({ path, body: JSON.parse(init.body) });
       return json({ commit: { sha: "c".repeat(40) } });
     }
-    if (path.startsWith("assets/uploads/")) return deleted.includes(path) ? json({ message: "Not Found" }, 404) : json({ sha: "b".repeat(40) });
+    if (path.startsWith("assets/uploads/")) return deleted.includes(path) ? json({ message: "Not Found" }, 404) : json({ sha: "b".repeat(40), content: Buffer.from("test uploaded image").toString("base64") });
     if (path.startsWith("assets/trash/")) return json({ sha: "c".repeat(40), size: 16, content: Buffer.from("test image bytes").toString("base64") });
     const html = pages[path] ?? "<!doctype html><html><head><title>Test</title></head><body><h1>Test heading</h1><p class=\"hero-copy\">Test introduction</p></body></html>";
     return json({ sha: "a".repeat(40), content: Buffer.from(html).toString("base64") });
