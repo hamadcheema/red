@@ -181,6 +181,7 @@ test("Media Library exposes working file-type filters and an authenticated unuse
   assert.match(html, /id="media-usage-report"/);
   assert.match(features, /async function scanMediaUsage\(\)/);
   assert.ok(features.includes("/media/usage?path="));
+  assert.match(features, /media-usage-scan.*addEventListener\("click",scanMediaUsage\)/);
   assert.match(features, /unused\.length\+" unused image\(s\)/);
 });
 
