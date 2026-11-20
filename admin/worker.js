@@ -34,6 +34,34 @@ return html
 
 const collectionKinds={projects:{heading:"Game project showcases",eyebrow:"SELECTED WORK"},social:{heading:"Social media previews",eyebrow:"FROM OUR CHANNELS"},brands:{heading:"Brand assets",eyebrow:"THE BRAND"}};
 const sectionVisibilityDefaults={hero:true,intro:true,services:true,projects:true,social:true,brands:true,workflow:true,contact:true};
+const brandDefaults={accentColor:"#ed4b45",fontFamily:"system",logoPath:"/favicon.svg"};
+const brandFontStacks={system:'system-ui,-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif',arial:'Arial,Helvetica,sans-serif',georgia:'Georgia,"Times New Roman",serif',trebuchet:'"Trebuchet MS",Arial,sans-serif'};
+function cleanBrandSettings(value,current=brandDefaults){
+ const result={...brandDefaults,...(current||{})};
+ if(value!==undefined){
+  if(!value||typeof value!=="object"||Array.isArray(value))throw new HttpError(400,"Invalid brand settings.");
+  if(value.accentColor!==undefined){const color=String(value.accentColor);if(!/^#[0-9a-fA-F]{6}$/.test(color))throw new HttpError(400,"Choose a valid six-digit brand colour.");result.accentColor=color.toLowerCase()}
+  if(value.fontFamily!==undefined){const font=String(value.fontFamily);if(!Object.hasOwn(brandFontStacks,font))throw new HttpError(400,"Choose a supported brand font.");result.fontFamily=font}
+  if(value.logoPath!==undefined){const logo=String(value.logoPath);if(logo!=="/favicon.svg"&&!normalizeMediaPath(logo))throw new HttpError(400,"Choose the existing site icon or an uploaded Media Library image.");result.logoPath=logo}
+ }
+ return result;
+}
+function applyBrandStyles(css,brand){
+ const match=css.match(/:root\\s*\\{([^}]*)\\}/);if(!match)throw new Error("Public stylesheet root variables were not found.");
+ const rgb=brand.accentColor.slice(1).match(/.{2}/g).map(x=>parseInt(x,16)).join(",");
+ let root=match[1];
+ root=root.replace(/--red\\s*:[^;]+;/,"--red:"+brand.accentColor+";");
+ root=root.replace(/--red-rgb\\s*:[^;]+;/,"--red-rgb:"+rgb+";");
+ if(!root.includes("--red-rgb:"))root+=";--red-rgb:"+rgb;
+ root=root.replace(/--brand-font\\s*:[^;]+;/,"--brand-font:"+brandFontStacks[brand.fontFamily]+";");
+ if(!root.includes("--brand-font:"))root+=";--brand-font:"+brandFontStacks[brand.fontFamily];
+ css=css.replace(match[0],":root{"+root+"}");
+ css=css.replace(/system-ui,-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif/g,"var(--brand-font)");
+ css=css.replace(/#ed4b45/gi,"var(--red)").replace(/rgba\\(237,75,69,/gi,"rgba(var(--red-rgb),");
+ css=css.replace(/#ff5b54/gi,"var(--red)");
+ return css;
+}
+
 function cleanSectionVisibility(value,current=sectionVisibilityDefaults){
  const result={...sectionVisibilityDefaults,...(current||{})};
  if(value!==undefined){
@@ -102,7 +130,7 @@ async function publishCollection(env,kind,items,actor="system",options={}){
  await audit(env,actor,"publish-collection",kind+":"+items.length);
  return out.commit?.sha||null;
 }
-const defaultSiteSettings={contactEmail:"admin@theredsparrow.online",directEmail:"hammad@theredsparrow.online",tagline:"Independent Unity game development.",announcementEnabled:false,announcement:"",sectionVisibility:sectionVisibilityDefaults};
+const defaultSiteSettings={contactEmail:"admin@theredsparrow.online",directEmail:"hammad@theredsparrow.online",tagline:"Independent Unity game development.",announcementEnabled:false,announcement:"",sectionVisibility:sectionVisibilityDefaults,brand:brandDefaults};
 async function siteSettings(env){return {...defaultSiteSettings,...(await env.DRAFTS.get("site-settings:live","json")||{})}}
 async function writeFilesAtomic(env,files,message){
  const owner=env.GITHUB_OWNER,repo=env.GITHUB_REPO,branch=env.GITHUB_BRANCH||"main",base="/repos/"+owner+"/"+repo+"/git/";
@@ -116,7 +144,7 @@ async function writeFilesAtomic(env,files,message){
 }
 async function publishSiteSettings(env,v,actor){
  const previous=await siteSettings(env);
- const values={contactEmail:String(v.contactEmail||"").trim(),directEmail:String(v.directEmail||"").trim(),tagline:String(v.tagline||"").trim(),announcementEnabled:!!v.announcementEnabled,announcement:String(v.announcement||"").trim(),sectionVisibility:cleanSectionVisibility(v.sectionVisibility,previous.sectionVisibility)};
+ const values={contactEmail:String(v.contactEmail||"").trim(),directEmail:String(v.directEmail||"").trim(),tagline:String(v.tagline||"").trim(),announcementEnabled:!!v.announcementEnabled,announcement:String(v.announcement||"").trim(),sectionVisibility:cleanSectionVisibility(v.sectionVisibility,previous.sectionVisibility),brand:cleanBrandSettings(v.brand,previous.brand)};
  for(const email of [values.contactEmail,values.directEmail])if(email.length>254||!EMAIL.test(email))throw Error("Enter valid contact email addresses.");
  if(!values.tagline||values.tagline.length>120||values.announcement.length>180)throw Error("Tagline or announcement is outside its character limit.");
  const files=[];
@@ -131,10 +159,12 @@ async function publishSiteSettings(env,v,actor){
   html=html.replaceAll("mailto:"+previous.directEmail,"mailto:"+esc(values.directEmail)).replaceAll(previous.directEmail,esc(values.directEmail));
   html=html.replaceAll(previous.tagline,esc(values.tagline));
   if(path==="index.html")html=applySectionVisibility(html,values.sectionVisibility);
+  html=html.replace(/(<img class="brand-logo" src=")[^"]+(")/g,(_,before,after)=>before+esc(values.brand.logoPath)+after);
   const marker=/<!-- TRS-ANNOUNCEMENT:START -->[\s\S]*?<!-- TRS-ANNOUNCEMENT:END -->/g;html=html.replace(marker,"");
   if(values.announcementEnabled&&values.announcement){const bar='<!-- TRS-ANNOUNCEMENT:START --><aside class="trs-site-announcement" role="status">'+esc(values.announcement)+'</aside><!-- TRS-ANNOUNCEMENT:END -->';const skip=/(<a\b[^>]*class="skip-link"[^>]*>[\s\S]*?<\/a>)/i;if(skip.test(html))html=html.replace(skip,(_,anchor)=>anchor+bar);else html=html.replace(/(<body\b[^>]*>)/i,(_,body)=>body+bar)}
   if(html!==old.content)files.push({path,content:html});
  }
+ const stylesheet=await readFile(env,"styles.css"),nextStyles=applyBrandStyles(stylesheet.content,values.brand);if(nextStyles!==stylesheet.content)files.push({path:"styles.css",content:nextStyles});
  const commit=files.length?await writeFilesAtomic(env,files,"Publish shared website settings from admin"):null;
  await env.DRAFTS.put("site-settings:live",JSON.stringify(values));await audit(env,actor,"publish-site-settings","Updated shared website settings");return {published:true,files:files.length,commit};
 }
@@ -311,7 +341,7 @@ if(req.method==="GET"&&r==="site-settings"){
  return response({settings:await siteSettings(env),draft:await env.DRAFTS.get("site-settings:draft","json")||null});
 }
 if(req.method==="POST"&&r==="site-settings"){
- const b=await readJson(req),current=await siteSettings(env);let sectionVisibility;try{sectionVisibility=cleanSectionVisibility(b.sectionVisibility,current.sectionVisibility)}catch(error){return response({error:error.message},400)}const v={contactEmail:String(b.contactEmail||"").trim(),directEmail:String(b.directEmail||"").trim(),tagline:String(b.tagline||"").trim(),announcementEnabled:!!b.announcementEnabled,announcement:String(b.announcement||"").trim(),sectionVisibility};
+ const b=await readJson(req),current=await siteSettings(env);let sectionVisibility,brand;try{sectionVisibility=cleanSectionVisibility(b.sectionVisibility,current.sectionVisibility);brand=cleanBrandSettings(b.brand,current.brand)}catch(error){return response({error:error.message},400)}const v={contactEmail:String(b.contactEmail||"").trim(),directEmail:String(b.directEmail||"").trim(),tagline:String(b.tagline||"").trim(),announcementEnabled:!!b.announcementEnabled,announcement:String(b.announcement||"").trim(),sectionVisibility,brand};
  for(const email of [v.contactEmail,v.directEmail])if(email.length>254||!EMAIL.test(email))return response({error:"Enter valid contact email addresses."},400);
  if(!v.tagline||v.tagline.length>120||v.announcement.length>180)return response({error:"Tagline or announcement is outside its character limit."},400);
  await env.DRAFTS.put("site-settings:draft",JSON.stringify(v),{expirationTtl:7776000});await audit(env,who.login,"save-site-settings","Website settings draft");return response({saved:true,settings:v});
