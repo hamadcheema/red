@@ -341,6 +341,7 @@ if(req.method==="GET"&&r==="site-settings"){
 if(req.method==="POST"&&r==="site-settings"){
  const b=await readJson(req),current=await siteSettings(env);let sectionVisibility,brand;try{sectionVisibility=cleanSectionVisibility(b.sectionVisibility,current.sectionVisibility);brand=cleanBrandSettings(b.brand,current.brand)}catch(error){return response({error:error.message},400)}const v={contactEmail:String(b.contactEmail||"").trim(),directEmail:String(b.directEmail||"").trim(),tagline:String(b.tagline||"").trim(),announcementEnabled:!!b.announcementEnabled,announcement:String(b.announcement||"").trim(),sectionVisibility,brand};
  for(const email of [v.contactEmail,v.directEmail])if(email.length>254||!EMAIL.test(email))return response({error:"Enter valid contact email addresses."},400);
+ if(brand.logoPath!=="/favicon.svg"){const mediaPath=normalizeMediaPath(brand.logoPath);if(!mediaPath)return response({error:"Choose an uploaded logo from Media Library."},400);try{await readFile(env,mediaPath)}catch{return response({error:"The selected logo is no longer in Media Library."},400)}}
  if(!v.tagline||v.tagline.length>120||v.announcement.length>180)return response({error:"Tagline or announcement is outside its character limit."},400);
  await env.DRAFTS.put("site-settings:draft",JSON.stringify(v),{expirationTtl:7776000});await audit(env,who.login,"save-site-settings","Website settings draft");return response({saved:true,settings:v});
 }
