@@ -446,3 +446,29 @@ test("media uploads remove PNG EXIF and text metadata before committing", async 
   assert.equal(saved.includes(Buffer.from("private note")), false);
   assert.equal(saved.includes(Buffer.from("IDAT")), true);
 });
+
+
+test("public enquiries store an HMAC of the visitor IP instead of a plain hash", async () => {
+  const env = makeEnv();
+  const request = new Request(ORIGIN + "/admin-api/inquiries", {
+    method: "POST",
+    headers: {
+      origin: ORIGIN,
+      "cf-connecting-ip": "203.0.113.44",
+      "content-type": "application/json"
+    },
+    body: JSON.stringify({
+      consent: true,
+      name: "Test Visitor",
+      email: "visitor@example.com",
+      subject: "Website question",
+      message: "This is a test enquiry for the website."
+    })
+  });
+  const response = await worker.__run(request, env);
+  assert.equal(response.status, 201);
+  const keys = [...env.DRAFTS.values.keys()].filter(key => key.startsWith("inquiry-rate:"));
+  assert.equal(keys.length, 1);
+  assert.match(keys[0], /^inquiry-rate:[a-f0-9]{64}:\\d{4}-\\d{2}-\\d{2}$/);
+  assert.equal(keys[0].includes("203.0.113.44"), false);
+});
