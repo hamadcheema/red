@@ -58,6 +58,13 @@ test("editing an existing content item resolves its relative media path to the M
   assert.match(features, /some\(o=>o\.value===selected\)\?selected:""/);
 });
 
+test("website settings preserve local edits and save them before publishing", () => {
+  assert.match(control, /Unsaved website settings are being kept/);
+  assert.match(control, /form\.addEventListener\("input",\(\)=>\{window\.trsSiteSettingsDirty=true\}\)/);
+  assert.match(control, /if\(window\.trsSiteSettingsDirty\)await saveSettingsDraft\(\)/);
+  assert.match(control, /window\.trsSiteSettingsDirty=false/);
+});
+
 test("page and SEO editor baselines update after successful saves and publishing", () => {
   assert.match(connection, /syncPageBaseline\(\)/);
   assert.match(connection, /syncSeoBaseline\(\)/);
