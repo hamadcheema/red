@@ -58,6 +58,11 @@ test("admin HTML IDs remain unique and all admin scripts are loaded", () => {
   for (const script of ["admin.js", "features.js", "control-center.js", "connection.js"]) assert.ok(html.includes(script));
 });
 
+test("inquiry Today filter uses Pakistan local calendar date", () => {
+  assert.match(control, /timeZone:"Asia\/Karachi"/);
+  assert.match(control, /karachiDate\(stamp\)===karachiDate\(now\)/);
+});
+
 test("inquiry inbox provides Gmail-style folders, search, responsive reading and Gmail reply links", () => {
   assert.match(control, /inquiryFolder/);
   assert.match(control, /Search name, email, subject or message/);
