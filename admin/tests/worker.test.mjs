@@ -380,6 +380,22 @@ test("scheduled cleanup permanently removes media trash after seven days", async
 });
 
 
+test("mutating admin API requests reject missing or foreign Origin headers", async () => {
+  const env = makeEnv();
+  for (const origin of [null, "https://untrusted.example"]) {
+    const headers = { "content-type": "application/json", cookie: "trs_admin_session=" + SESSION };
+    if (origin) headers.origin = origin;
+    const request = new Request(ORIGIN + "/admin-api/site-settings", {
+      method: "POST",
+      headers,
+      body: "{}"
+    });
+    const response = await worker.__run(request, env);
+    assert.equal(response.status, 403);
+    assert.match((await response.json()).error, /origin not allowed/i);
+  }
+});
+
 test("GitHub OAuth login binds the state to a short-lived browser cookie", async () => {
   const env = makeEnv();
   env.GITHUB_OAUTH_CLIENT_ID = "test-client";
