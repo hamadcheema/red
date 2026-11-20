@@ -73,7 +73,7 @@
     }catch(e){status(list,"Could not load schedule: "+e.message,true)}
     root.append(list);
   }
-  let inquiryItems=[],deletedInquiryItems=[],inquiryData={total:0,unread:0,archived:0},inquiryFolder="inbox",selectedInquiryId=null,inquirySearch="",inquiryDateFilter="any",selectedInquiryIds=new Set();
+  let inquiryItems=[],deletedInquiryItems=[],inquiryData={total:0,unread:0,archived:0},deletedInquiryTotal=0,inquiryHasMore=false,deletedHasMore=false,inquiryOffset=0,deletedOffset=0,inquiryFolder="inbox",selectedInquiryId=null,inquirySearch="",inquiryDateFilter="any",selectedInquiryIds=new Set();
   async function loadInquiries(){
     const root=mount("view-inquiries")?.querySelector(".control-content");if(!root)return;
     const p=panel("Inquiry inbox","Search, filter, archive, recover and manage website enquiries.");
@@ -88,15 +88,15 @@
     search.addEventListener("input",()=>{inquirySearch=search.value;renderInbox()});
     dateFilter.addEventListener("change",()=>{inquiryDateFilter=dateFilter.value;renderInbox()});
     try{
-      const [active,deleted]=await Promise.all([call("/inquiries"),call("/inquiries/deleted")]);
-      inquiryData=active;inquiryItems=active.items||[];deletedInquiryItems=deleted.items||[];
+      const [active,deleted]=await Promise.all([call("/inquiries?offset=0&limit=100"),call("/inquiries/deleted?offset=0&limit=100")]);
+      inquiryData=active;inquiryItems=active.items||[];deletedInquiryItems=deleted.items||[];deletedInquiryTotal=deleted.total||0;inquiryOffset=inquiryItems.length;deletedOffset=deletedInquiryItems.length;inquiryHasMore=!!active.hasMore;deletedHasMore=!!deleted.hasMore;
       const pool=inquiryFolder==="deleted"?deletedInquiryItems:inquiryItems;
       if(!selectedInquiryId||!pool.some(x=>x.id===selectedInquiryId))selectedInquiryId=pool[0]?.id||null;
       renderInbox();
     }catch(e){status(p,"Could not load enquiries: "+e.message,true)}
     function renderInbox(){
       const unread=inquiryItems.filter(x=>x.status==="new").length,archived=inquiryItems.filter(x=>x.status==="archived").length;
-      summary.replaceChildren(card("TOTAL",String(inquiryData.total??inquiryItems.length),"Active enquiries"),card("UNREAD",String(inquiryData.unread??unread),"Awaiting review"),card("ARCHIVED",String(inquiryData.archived??archived),"Filed enquiries"),card("RECENTLY DELETED",String(deletedInquiryItems.length),"Recoverable for 30 days"));
+      summary.replaceChildren(card("TOTAL",String(inquiryData.total??inquiryItems.length),"Active enquiries"),card("UNREAD",String(inquiryData.unread??unread),"Awaiting review"),card("ARCHIVED",String(inquiryData.archived??archived),"Filed enquiries"),card("RECENTLY DELETED",String(deletedInquiryTotal),"Recoverable for 30 days"));
       const folderDefs=[["inbox","Inbox",inquiryItems.filter(x=>x.status!=="archived"&&x.status!=="deleted").length],["unread","Unread",unread],["read","Read",inquiryItems.filter(x=>x.status==="read").length],["archived","Archived",archived],["deleted","Recently deleted",deletedInquiryItems.length]];
       folders.replaceChildren();
       for(const [id,label,count] of folderDefs){const f=button(label+"  "+count,()=>{inquiryFolder=id;selectedInquiryId=null;selectedInquiryIds.clear();renderInbox()}, "inquiry-folder"+(inquiryFolder===id?" active":""));f.setAttribute("aria-current",inquiryFolder===id?"page":"false");folders.append(f)}
@@ -111,7 +111,7 @@
       const validIds=new Set(visible.map(x=>x.id));selectedInquiryIds=new Set([...selectedInquiryIds].filter(id=>validIds.has(id)));
       listPane.replaceChildren();
       const listHeading=el("div","inquiry-list-heading");const selectAll=el("input");selectAll.type="checkbox";selectAll.setAttribute("aria-label","Select all visible enquiries");selectAll.checked=visible.length>0&&visible.every(x=>selectedInquiryIds.has(x.id));selectAll.addEventListener("change",()=>{if(selectAll.checked)visible.forEach(x=>selectedInquiryIds.add(x.id));else visible.forEach(x=>selectedInquiryIds.delete(x.id));renderInbox()});
-      listHeading.append(selectAll,el("strong","","Messages"),el("small","",visible.length+" shown · latest 100 available"));listPane.append(listHeading);
+      listHeading.append(selectAll,el("strong","","Messages"),el("small","",visible.length+" shown · "+(inquiryFolder==="deleted"?deletedInquiryItems.length+"/"+deletedInquiryTotal:inquiryItems.length+"/"+(inquiryData.total??inquiryItems.length))+" loaded"));listPane.append(listHeading);
       if(!visible.length)listPane.append(el("p","inquiry-empty",term?"No messages match your search.":"This folder is empty."));
       for(const item of visible){
         const row=el("div","inquiry-select-row"),check=el("input");check.type="checkbox";check.checked=selectedInquiryIds.has(item.id);check.setAttribute("aria-label","Select enquiry from "+(item.name||"visitor"));check.addEventListener("change",()=>{if(check.checked)selectedInquiryIds.add(item.id);else selectedInquiryIds.delete(item.id);renderBulk()});
@@ -120,6 +120,8 @@
         open.append(top,el("span","inquiry-subject",item.subject||"Website enquiry"),el("span","inquiry-snippet",String(item.message||"").replace(/\\s+/g," ").slice(0,115)));
         row.append(check,open);listPane.append(row);
       }
+      const more=inquiryFolder==="deleted"?deletedHasMore:inquiryHasMore;
+      if(more)listPane.append(button("Load older enquiries",async()=>{const isDeleted=inquiryFolder==="deleted",offset=isDeleted?deletedOffset:inquiryOffset;try{const data=await call((isDeleted?"/inquiries/deleted":"/inquiries")+"?offset="+offset+"&limit=100");const target=isDeleted?deletedInquiryItems:inquiryItems,seen=new Set(target.map(x=>x.id));target.push(...(data.items||[]).filter(x=>!seen.has(x.id)));if(isDeleted){deletedOffset=target.length;deletedHasMore=!!data.hasMore;deletedInquiryTotal=data.total||deletedInquiryTotal}else{inquiryOffset=target.length;inquiryHasMore=!!data.hasMore;inquiryData=data}renderInbox()}catch(e){status(p,"Could not load older enquiries: "+e.message,true)}}));
       renderBulk();renderReader();shell.classList.toggle("has-selection",!!selectedInquiryId);
     }
     function renderBulk(){

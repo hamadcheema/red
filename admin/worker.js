@@ -5,16 +5,16 @@ const response=(data,status=200,headers={})=>new Response(JSON.stringify(data),{
 const esc=s=>String(s??"").replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
 function enc(s){const b=new TextEncoder().encode(s);let x="";for(let i=0;i<b.length;i+=8192)x+=String.fromCharCode(...b.subarray(i,i+8192));return btoa(x)}
 function dec(s){return new TextDecoder().decode(Uint8Array.from(atob(s.replace(/\s/g,"")),c=>c.charCodeAt(0)))}
-function meta(html,attr,key,value){const tags=html.match(/<meta\b[^>]*>/gi)||[];const old=tags.find(t=>t.includes(attr+'="'+key+'"'));const tag='<meta '+attr+'="'+key+'" content="'+esc(value)+'">';return old?html.replace(old,tag):html.replace(/<\/head>/i,"  "+tag+"\n</head>")}
-function link(html,rel,value){const tags=html.match(/<link\b[^>]*>/gi)||[];const old=tags.find(t=>/rel="canonical"/i.test(t));const tag='<link rel="'+rel+'" href="'+esc(value)+'">';return old?html.replace(old,tag):html.replace(/<\/head>/i,"  "+tag+"\n</head>")}
-function seoPatch(html,v){for(const [x,max,label] of [[v.title,70,"title"],[v.description,180,"description"],[v.ogTitle||v.title,70,"social title"],[v.ogDescription||v.description,200,"social description"],[v.ogImageAlt||"",200,"social image description"]])if((!x&&label!=="social image description")||String(x).length>max)throw Error("Invalid "+label+".");for(const x of [v.canonical,v.ogImage]){const u=new URL(x);if(u.protocol!=="https:"||u.hostname!=="theredsparrow.online"||u.username||u.password)throw Error("URLs must use HTTPS on theredsparrow.online.")}html=html.replace(/<title>[\s\S]*?<\/title>/i,"<title>"+esc(v.title)+"</title>");html=meta(html,"name","description",v.description);html=link(html,"canonical",v.canonical);for(const [a,k,val] of [["property","og:title",v.ogTitle||v.title],["property","og:description",v.ogDescription||v.description],["property","og:url",v.canonical],["property","og:image",v.ogImage],["name","twitter:title",v.ogTitle||v.title],["name","twitter:description",v.ogDescription||v.description],["name","twitter:image",v.ogImage],["property","og:image:alt",v.ogImageAlt||v.ogTitle||v.title],["name","twitter:image:alt",v.ogImageAlt||v.ogTitle||v.title]])html=meta(html,a,k,val);return html}
+function meta(html,attr,key,value){const tags=html.match(/<meta\b[^>]*>/gi)||[];const old=tags.find(t=>t.includes(attr+'="'+key+'"'));const tag='<meta '+attr+'="'+key+'" content="'+esc(value)+'">';return old?html.replace(old,()=>tag):html.replace(/<\/head>/i,()=>"  "+tag+"\n</head>")}
+function link(html,rel,value){const tags=html.match(/<link\b[^>]*>/gi)||[];const old=tags.find(t=>/rel="canonical"/i.test(t));const tag='<link rel="'+rel+'" href="'+esc(value)+'">';return old?html.replace(old,()=>tag):html.replace(/<\/head>/i,()=>"  "+tag+"\n</head>")}
+function seoPatch(html,v){for(const [x,max,label] of [[v.title,70,"title"],[v.description,180,"description"],[v.ogTitle||v.title,70,"social title"],[v.ogDescription||v.description,200,"social description"],[v.ogImageAlt||"",200,"social image description"]])if((!x&&label!=="social image description")||String(x).length>max)throw Error("Invalid "+label+".");for(const x of [v.canonical,v.ogImage]){const u=new URL(x);if(u.protocol!=="https:"||u.hostname!=="theredsparrow.online"||u.username||u.password)throw Error("URLs must use HTTPS on theredsparrow.online.")}html=html.replace(/<title>[\s\S]*?<\/title>/i,()=>"<title>"+esc(v.title)+"</title>");html=meta(html,"name","description",v.description);html=link(html,"canonical",v.canonical);for(const [a,k,val] of [["property","og:title",v.ogTitle||v.title],["property","og:description",v.ogDescription||v.description],["property","og:url",v.canonical],["property","og:image",v.ogImage],["name","twitter:title",v.ogTitle||v.title],["name","twitter:description",v.ogDescription||v.description],["name","twitter:image",v.ogImage],["property","og:image:alt",v.ogImageAlt||v.ogTitle||v.title],["name","twitter:image:alt",v.ogImageAlt||v.ogTitle||v.title]])html=meta(html,a,k,val);return html}
 function headingMarkup(value){return String(value).split(/\r?\n/).map(line=>esc(line).replace(/\*\*(.+?)\*\*/g,"<strong>$1</strong>").replace(/\*(.+?)\*/g,"<em>$1</em>")).join("<br>")}
 function pagePatch(html,v){
 for(const [x,max,optional] of [[v.title,70,false],[v.description,180,false],[v.heading,100,false],[v.intro,500,false],[v.imageAlt||"",160,true]])if((!optional&&!x)||String(x).length>max)throw Error("Complete all fields within their character limits.");
-html=html.replace(/<title>[\s\S]*?<\/title>/i,"<title>"+esc(v.title)+"</title>");
+html=html.replace(/<title>[\s\S]*?<\/title>/i,()=>"<title>"+esc(v.title)+"</title>");
 html=meta(html,"name","description",v.description);
-html=html.replace(/(<h1\b[^>]*>)[\s\S]*?(<\/h1>)/i,"$1"+headingMarkup(v.heading)+"$2");
-html=html.replace(/(<p\s+class="hero-copy"[^>]*>)[\s\S]*?(<\/p>)/i,"$1"+esc(v.intro)+"$2");
+html=html.replace(/(<h1\b[^>]*>)[\s\S]*?(<\/h1>)/i,(_,open,close)=>open+headingMarkup(v.heading)+close);
+html=html.replace(/(<p\s+class="hero-copy"[^>]*>)[\s\S]*?(<\/p>)/i,(_,open,close)=>open+esc(v.intro)+close);
 const marker=/<figure class="admin-page-image">[\s\S]*?<\/figure>/i;
 const image=String(v.imageUrl||"").trim();
 let markup="";
@@ -53,32 +53,38 @@ async function publishCollection(env,kind,items,actor="system"){
  const out=await writeFile(env,path,next,old.sha,"Publish "+kind+" collection from "+actor);
  await env.DRAFTS.put("collection:"+kind,JSON.stringify(items),{expirationTtl:7776000});
  await env.DRAFTS.put("collection-published-at:"+kind,new Date().toISOString(),{expirationTtl:7776000});
+ await env.DRAFTS.delete("collection-draft:"+kind);
  await audit(env,actor,"publish-collection",kind+":"+items.length);
  return out.commit?.sha||null;
 }
 const defaultSiteSettings={contactEmail:"admin@theredsparrow.online",directEmail:"hammad@theredsparrow.online",tagline:"Independent Unity game development.",announcementEnabled:false,announcement:""};
 async function siteSettings(env){return {...defaultSiteSettings,...(await env.DRAFTS.get("site-settings:live","json")||{})}}
+async function writeFilesAtomic(env,files,message){
+ const owner=env.GITHUB_OWNER,repo=env.GITHUB_REPO,branch=env.GITHUB_BRANCH||"main",base="/repos/"+owner+"/"+repo+"/git/";
+ const refPath=base+"ref/heads/"+encodeURIComponent(branch),ref=await gh(env,refPath),parentSha=ref?.object?.sha;if(!parentSha)throw Error("Could not resolve the publishing branch.");
+ const parent=await gh(env,base+"commits/"+parentSha),baseTree=parent?.tree?.sha;if(!baseTree)throw Error("Could not read the current repository tree.");
+ const blobs=await Promise.all(files.map(async file=>{const blob=await gh(env,base+"blobs",{method:"POST",headers:{"content-type":"application/json"},body:JSON.stringify({content:file.content,encoding:"utf-8"})});return {path:file.path,mode:"100644",type:"blob",sha:blob.sha}}));
+ const tree=await gh(env,base+"trees",{method:"POST",headers:{"content-type":"application/json"},body:JSON.stringify({base_tree:baseTree,tree:blobs})});
+ const commit=await gh(env,base+"commits",{method:"POST",headers:{"content-type":"application/json"},body:JSON.stringify({message,tree:tree.sha,parents:[parentSha]})});
+ const latest=await gh(env,refPath);if(latest?.object?.sha!==parentSha)throw Error("The repository changed during publishing. Nothing was overwritten; please retry.");
+ await gh(env,base+"refs/heads/"+encodeURIComponent(branch),{method:"PATCH",headers:{"content-type":"application/json"},body:JSON.stringify({sha:commit.sha,force:false})});return commit.sha;
+}
 async function publishSiteSettings(env,v,actor){
  const values={contactEmail:String(v.contactEmail||"").trim(),directEmail:String(v.directEmail||"").trim(),tagline:String(v.tagline||"").trim(),announcementEnabled:!!v.announcementEnabled,announcement:String(v.announcement||"").trim()};
  for(const email of [values.contactEmail,values.directEmail])if(email.length>254||!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email))throw Error("Enter valid contact email addresses.");
  if(!values.tagline||values.tagline.length>120||values.announcement.length>180)throw Error("Tagline or announcement is outside its character limit.");
- const files=Object.values(FILES),commits=[];
- for(const path of files){
+ const files=[];
+ for(const path of Object.values(FILES)){
   const old=await readFile(env,path);let html=old.content;
   html=html.replaceAll("mailto:admin@theredsparrow.online","mailto:"+esc(values.contactEmail)).replaceAll("admin@theredsparrow.online",esc(values.contactEmail));
   html=html.replaceAll("mailto:hammad@theredsparrow.online","mailto:"+esc(values.directEmail)).replaceAll("hammad@theredsparrow.online",esc(values.directEmail));
   html=html.replaceAll("Independent Unity game development.",esc(values.tagline));
-  const marker=/<!-- TRS-ANNOUNCEMENT:START -->[\s\S]*?<!-- TRS-ANNOUNCEMENT:END -->/g;
-  html=html.replace(marker,"");
-  if(values.announcementEnabled&&values.announcement){
-   const bar='<!-- TRS-ANNOUNCEMENT:START --><aside class="trs-site-announcement" role="status" style="padding:10px 16px;text-align:center;background:#272027;color:#fff;font:600 13px/1.5 system-ui,sans-serif">'+esc(values.announcement)+'</aside><!-- TRS-ANNOUNCEMENT:END -->';
-   html=html.replace(/(<body\b[^>]*>)/i,"$1"+bar);
-  }
-  if(html!==old.content){const out=await writeFile(env,path,html,old.sha,"Publish website settings from admin");commits.push(out.commit?.sha||null)}
+  const marker=/<!-- TRS-ANNOUNCEMENT:START -->[\s\S]*?<!-- TRS-ANNOUNCEMENT:END -->/g;html=html.replace(marker,"");
+  if(values.announcementEnabled&&values.announcement){const bar='<!-- TRS-ANNOUNCEMENT:START --><aside class="trs-site-announcement" role="status" style="padding:10px 16px;text-align:center;background:#272027;color:#fff;font:600 13px/1.5 system-ui,sans-serif">'+esc(values.announcement)+'</aside><!-- TRS-ANNOUNCEMENT:END -->';html=html.replace(/(<body\b[^>]*>)/i,"$1"+bar)}
+  if(html!==old.content)files.push({path,content:html});
  }
- await env.DRAFTS.put("site-settings:live",JSON.stringify(values),{expirationTtl:31536000});
- await audit(env,actor,"publish-site-settings","Updated shared website settings");
- return {published:true,files:commits.length,commits};
+ const commit=files.length?await writeFilesAtomic(env,files,"Publish shared website settings from admin"):null;
+ await env.DRAFTS.put("site-settings:live",JSON.stringify(values),{expirationTtl:31536000});await audit(env,actor,"publish-site-settings","Updated shared website settings");return {published:true,files:files.length,commit};
 }
 async function mediaUsage(env,p){
  const usedBy=[];
@@ -117,13 +123,14 @@ const who=await session(req,env);if(!who)return response({error:"Please sign in 
 if(req.method==="GET"&&r==="inquiries"){
  let cursor,keys=[];do{const page=await env.DRAFTS.list({prefix:"inquiry:",limit:1000,...(cursor?{cursor}:{})});keys.push(...page.keys);cursor=page.list_complete?null:page.cursor}while(cursor);
  const all=(await Promise.all(keys.map(k=>env.DRAFTS.get(k.name,"json")))).filter(x=>x&&x.status!=="deleted").sort((a,b)=>String(b.createdAt).localeCompare(String(a.createdAt)));
- const items=all.slice(0,100);
- return response({items,total:all.length,unread:all.filter(x=>x.status==="new").length,archived:all.filter(x=>x.status==="archived").length});
+ const limit=Math.min(100,Math.max(1,Math.floor(Number(u.searchParams.get("limit"))||100))),offset=Math.max(0,Math.floor(Number(u.searchParams.get("offset"))||0)),items=all.slice(offset,offset+limit);
+ return response({items,total:all.length,offset,limit,hasMore:offset+items.length<all.length,unread:all.filter(x=>x.status==="new").length,archived:all.filter(x=>x.status==="archived").length});
 }
 if(req.method==="GET"&&r==="inquiries/deleted"){
  let cursor,keys=[];do{const page=await env.DRAFTS.list({prefix:"inquiry:",limit:1000,...(cursor?{cursor}:{})});keys.push(...page.keys);cursor=page.list_complete?null:page.cursor}while(cursor);
  const all=(await Promise.all(keys.map(k=>env.DRAFTS.get(k.name,"json")))).filter(x=>x&&x.status==="deleted").sort((a,b)=>String(b.deletedAt).localeCompare(String(a.deletedAt)));
- return response({items:all.slice(0,100),total:all.length});
+ const limit=Math.min(100,Math.max(1,Math.floor(Number(u.searchParams.get("limit"))||100))),offset=Math.max(0,Math.floor(Number(u.searchParams.get("offset"))||0)),items=all.slice(offset,offset+limit);
+ return response({items,total:all.length,offset,limit,hasMore:offset+items.length<all.length});
 }
 if(req.method==="POST"&&r==="inquiries/update"){
  const b=await req.json(),id=String(b.id||""),state=String(b.state||"");if(!/^[a-f0-9-]{36}$/i.test(id)||!["read","archived"].includes(state))return response({error:"Invalid enquiry update."},400);
@@ -167,10 +174,9 @@ if(req.method==="GET"&&r==="dashboard"){
  return response({inquiries:{total:active.length,unread:active.filter(x=>x.status==="new").length,archived:active.filter(x=>x.status==="archived").length,deleted:deleted.length},published:{projects:projects.length,social:social.length,brands:brands.length,total:projects.length+social.length+brands.length},recentActivity:recent});
 }
 if(req.method==="GET"&&r==="notifications"){
- const [inquiries,scheduled,auditPage]=await Promise.all([
-  env.DRAFTS.list({prefix:"inquiry:",limit:100}),env.DRAFTS.list({prefix:"scheduled:",limit:100}),env.DRAFTS.list({prefix:"audit:",limit:100})
- ]);
- const all=await Promise.all(inquiries.keys.map(k=>env.DRAFTS.get(k.name,"json"))),events=await Promise.all(auditPage.keys.map(k=>env.DRAFTS.get(k.name,"json"))),jobs=await Promise.all(scheduled.keys.map(k=>env.DRAFTS.get(k.name,"json")));
+ const listAll=async prefix=>{let cursor,keys=[];do{const page=await env.DRAFTS.list({prefix,limit:1000,...(cursor?{cursor}:{})});keys.push(...page.keys);cursor=page.list_complete?null:page.cursor}while(cursor);return keys};
+ const [inquiryKeys,scheduledKeys,auditKeys]=await Promise.all(["inquiry:","scheduled:","audit:"].map(listAll));
+ const all=await Promise.all(inquiryKeys.map(k=>env.DRAFTS.get(k.name,"json"))),events=await Promise.all(auditKeys.map(k=>env.DRAFTS.get(k.name,"json"))),jobs=await Promise.all(scheduledKeys.map(k=>env.DRAFTS.get(k.name,"json")));
  const items=[];
  all.filter(x=>x&&x.status==="new").forEach(x=>items.push({title:"New website enquiry",detail:x.subject+" · "+x.name,at:x.createdAt,href:"/admin/#inquiries"}));
  jobs.filter(x=>x&&x.status==="scheduled").forEach(x=>items.push({title:"Scheduled publication",detail:x.kind+" collection is due "+new Date(x.scheduledAt).toLocaleString(),at:x.createdAt,href:"/admin/#calendar"}));
@@ -227,7 +233,7 @@ if(req.method==="POST"&&r==="schedule"){
  const b=await req.json(),kind=String(b.kind||""),scheduledAt=Date.parse(String(b.scheduledAt||""));if(!collectionKinds[kind]||!Number.isFinite(scheduledAt)||scheduledAt<Date.now()+120000||scheduledAt>Date.now()+7776000000)return response({error:"Choose a valid collection and a time at least 2 minutes and no more than 90 days away."},400);
  const items=await env.DRAFTS.get("collection-draft:"+kind,"json")||await env.DRAFTS.get("collection:"+kind,"json")||[];if(!Array.isArray(items)||!items.length)return response({error:"Save at least one item in this collection before scheduling it."},400);
  const id=crypto.randomUUID(),job={id,kind,items,scheduledAt:new Date(scheduledAt).toISOString(),createdAt:new Date().toISOString(),createdBy:who.login,status:"scheduled"};
- await env.DRAFTS.put("scheduled:"+scheduledAt+":"+id,JSON.stringify(job),{expirationTtl:7776000});await audit(env,who.login,"schedule-publication",kind+":"+job.scheduledAt);return response({scheduled:true,id,scheduledAt:job.scheduledAt});
+ await env.DRAFTS.put("scheduled:"+scheduledAt+":"+id,JSON.stringify(job),{expirationTtl:91*86400});await audit(env,who.login,"schedule-publication",kind+":"+job.scheduledAt);return response({scheduled:true,id,scheduledAt:job.scheduledAt});
 }
 if(req.method==="DELETE"&&r==="schedule"){
  const id=u.searchParams.get("id")||"";if(!/^[a-f0-9-]{36}$/i.test(id))return response({error:"Invalid schedule ID."},400);
@@ -237,7 +243,7 @@ if(req.method==="DELETE"&&r==="schedule"){
 if(req.method==="POST"&&r==="schedule/retry"){
  const b=await req.json(),id=String(b.id||"");if(!/^[a-f0-9-]{36}$/i.test(id))return response({error:"Invalid schedule ID."},400);
  let cursor,keys=[];do{const page=await env.DRAFTS.list({prefix:"scheduled:",limit:1000,...(cursor?{cursor}:{})});keys.push(...page.keys);cursor=page.list_complete?null:page.cursor}while(cursor);
- for(const key of keys){const job=await env.DRAFTS.get(key.name,"json");if(job?.id!==id)continue;if(job.status!=="failed")return response({error:"Only failed publications can be retried."},409);job.status="scheduled";job.scheduledAt=new Date(Date.now()+120000).toISOString();job.retriedAt=new Date().toISOString();delete job.error;delete job.processingAt;await env.DRAFTS.put(key.name,JSON.stringify(job),{expirationTtl:7776000});await audit(env,who.login,"retry-scheduled-publication",job.kind);return response({scheduled:true,scheduledAt:job.scheduledAt})}
+ for(const key of keys){const job=await env.DRAFTS.get(key.name,"json");if(job?.id!==id)continue;if(job.status!=="failed")return response({error:"Only failed publications can be retried."},409);job.status="scheduled";job.scheduledAt=new Date(Date.now()+120000).toISOString();job.retriedAt=new Date().toISOString();delete job.error;delete job.processingAt;await env.DRAFTS.put(key.name,JSON.stringify(job),{expirationTtl:91*86400});await audit(env,who.login,"retry-scheduled-publication",job.kind);return response({scheduled:true,scheduledAt:job.scheduledAt})}
  return response({error:"Scheduled publication not found."},404);
 }
 
@@ -254,7 +260,7 @@ if(req.method==="POST"&&r==="media/upload"){const b=await req.json(),name=String
 if(req.method==="POST"&&r==="media/delete"){const b=await req.json(),p=normalizeMediaPath(b.path);if(!p)return response({error:"Invalid media path."},400);const usedBy=[];for(const kind of Object.keys(collectionKinds)){for(const key of ["collection:"+kind,"collection-draft:"+kind]){const items=await env.DRAFTS.get(key,"json")||[];if(items.some(item=>normalizeMediaPath(item.image)===p))usedBy.push(kind+" collection")}}for(const slug of ["home","about","services","contact"]){const draft=await env.DRAFTS.get("draft:page:"+slug,"json");if(draft&&normalizeMediaPath(draft.image)===p)usedBy.push(slug+" page draft")}for(const slug of ["home","about","services","contact","privacy","terms"]){const draft=await env.DRAFTS.get("draft:seo:"+slug,"json");if(draft&&normalizeMediaPath(draft.ogImage)===p)usedBy.push(slug+" SEO draft")}const pages=await Promise.all([...Object.values(FILES),"styles.css","og-image.svg","llms.txt"].map(async path=>({path,content:(await readFile(env,path)).content})));for(const page of pages){if(page.content.includes("/"+p)||page.content.includes(encodeURI("/"+p)))usedBy.push(page.path+" published page")}if(usedBy.length)return response({error:"This image is still referenced by: "+[...new Set(usedBy)].join(", ")+". Remove or replace those references before deleting."},409);const current=await gh(env,filePath(env,p));if(!current||!current.sha)return response({error:"Media file not found."},404);const out=await gh(env,filePath(env,p),{method:"DELETE",headers:{"content-type":"application/json"},body:JSON.stringify({message:"Delete unused media asset from admin",sha:current.sha,branch:env.GITHUB_BRANCH||"main"})});await audit(env,who.login,"delete-media",p);return response({deleted:true,path:p,commit:out.commit?.sha||null})}
 if(req.method==="GET"&&r==="content"){const kind=u.searchParams.get("kind")||"";if(!collectionKinds[kind])return response({error:"Invalid content collection."},400);const publishedItems=await env.DRAFTS.get("collection:"+kind,"json")||[],draft=await env.DRAFTS.get("collection-draft:"+kind,"json");return response({items:draft||publishedItems,publishedItems,draft:!!draft,publishedAt:await env.DRAFTS.get("collection-published-at:"+kind)})}
 if(req.method==="POST"&&r==="content"){const b=await req.json(),kind=String(b.kind||"");if(!collectionKinds[kind]||!Array.isArray(b.items)||b.items.length>30)return response({error:"Invalid content collection."},400);const items=[];for(const raw of b.items){const title=String(raw.title||"").trim(),description=String(raw.description||"").trim(),image=String(raw.image||"").trim(),url=String(raw.url||"").trim();if(!title||title.length>80||!description||description.length>300)return response({error:"Each item needs a title (80 characters max) and description (300 characters max)."},400);let parsed;try{parsed=new URL(image)}catch{return response({error:"Choose an image from the Media Library."},400)}if(parsed.origin!==ORIGIN||!parsed.pathname.startsWith("/assets/uploads/")||! /\.(png|jpe?g|webp|gif)$/i.test(parsed.pathname))return response({error:"Images must come from assets/uploads in the Media Library."},400);if(url){let target;try{target=new URL(url)}catch{return response({error:"Links must be valid HTTPS URLs."},400)}if(target.protocol!=="https:")return response({error:"Links must use HTTPS."},400)}items.push({title,description,image:parsed.pathname,url})}await env.DRAFTS.put("collection-draft:"+kind,JSON.stringify(items),{expirationTtl:7776000});await audit(env,who.login,"save-collection",kind+":"+items.length);return response({saved:true,count:items.length})}
-if(req.method==="POST"&&r==="publish/content"){const b=await req.json(),kind=String(b.kind||"");if(!collectionKinds[kind])return response({error:"Invalid content collection."},400);const items=await env.DRAFTS.get("collection-draft:"+kind,"json")||await env.DRAFTS.get("collection:"+kind,"json")||[],path="index.html",old=await readFile(env,path),start="<!-- ADMIN:"+kind+":START -->",end="<!-- ADMIN:"+kind+":END -->",begin=old.content.indexOf(start),finish=old.content.indexOf(end,begin);if(begin<0||finish<0)return response({error:"Homepage content markers are missing. Please contact the administrator."},500);const next=old.content.slice(0,begin)+collectionMarkup(kind,items)+old.content.slice(finish+end.length),out=await writeFile(env,path,next,old.sha,"Publish "+kind+" collection from admin");try{await env.DRAFTS.put("collection:"+kind,JSON.stringify(items),{expirationTtl:7776000});await env.DRAFTS.put("collection-published-at:"+kind,new Date().toISOString(),{expirationTtl:7776000})}catch(error){console.error("Published collection snapshot update failed:",error?.message||error)}await audit(env,who.login,"publish-collection",kind+":"+items.length);return response({published:true,count:items.length,commit:out.commit?.sha||null})}
+if(req.method==="POST"&&r==="publish/content"){const b=await req.json(),kind=String(b.kind||"");if(!collectionKinds[kind])return response({error:"Invalid content collection."},400);const items=await env.DRAFTS.get("collection-draft:"+kind,"json")||await env.DRAFTS.get("collection:"+kind,"json")||[];const commit=await publishCollection(env,kind,items,who.login);return response({published:true,count:items.length,commit})}
 if(req.method==="GET"&&r==="history"){const p=u.searchParams.get("path")||"";if(!Object.values(FILES).includes(p))return response({error:"Path not allowed."},400);const c=await gh(env,"/repos/"+env.GITHUB_OWNER+"/"+env.GITHUB_REPO+"/commits?path="+encodeURIComponent(p)+"&per_page=12");return response({history:c.map(x=>({sha:x.sha,message:x.commit.message,date:x.commit.author?.date||x.commit.committer?.date}))})}
 if(req.method==="POST"&&r==="rollback"){const b=await req.json(),p=String(b.path||""),sha=String(b.sha||"");if(!Object.values(FILES).includes(p)||!/^[a-f0-9]{40}$/.test(sha))return response({error:"Invalid rollback request."},400);const previous=await readFile(env,p,sha),current=await readFile(env,p),out=await writeFile(env,p,previous.content,current.sha,"Restore "+p+" from "+sha.slice(0,7));await audit(env,who.login,"rollback",p+":"+sha);return response({restored:true,commit:out.commit?.sha||null})}
 return response({error:"Not found."},404)}
