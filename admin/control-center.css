@@ -95,3 +95,16 @@
 .brand-preview-copy{margin:0;color:var(--preview-accent,var(--red));font-size:16px;font-weight:700;line-height:1.35;overflow-wrap:anywhere}
 .brand-preview-accent{margin-left:auto;flex:0 0 auto;padding:6px 9px;border:1px solid var(--preview-accent,var(--red));border-radius:6px;color:var(--preview-accent,var(--red));font-size:9px;font-weight:700;letter-spacing:1px}
 @media(max-width:600px){.brand-preview{align-items:flex-start;flex-wrap:wrap}.brand-preview-accent{margin-left:62px}}
+
+
+.brand-comparison{grid-column:1/-1;display:grid;gap:10px;padding:14px;border:1px solid var(--line);border-radius:12px;background:var(--panel)}
+.brand-comparison h3{margin:0;font-size:13px;color:var(--text)}
+.brand-comparison>.field-hint{margin:0}
+.brand-comparison-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:10px}
+.brand-comparison-card{display:grid;grid-template-columns:44px minmax(0,1fr);align-items:center;gap:8px;padding:10px;border:1px solid var(--line);border-radius:9px;min-width:0}
+.brand-comparison-label{grid-column:1/-1;font-size:11px;color:var(--text)}
+.brand-comparison-logo{width:44px;height:44px;object-fit:contain;border-radius:8px;background:var(--panel2)}
+.brand-comparison-meta{display:grid;gap:6px;min-width:0;font-size:10px;color:var(--muted);overflow-wrap:anywhere}
+.brand-comparison-colour{display:block;width:100%;max-width:100px;height:10px;border:1px solid var(--line);border-radius:20px}
+.brand-comparison-font{font-weight:600;color:var(--text)}
+@media(max-width:600px){.brand-comparison-grid{grid-template-columns:1fr}}
