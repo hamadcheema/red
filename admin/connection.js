@@ -113,7 +113,6 @@
   if(input&&chooseButton)chooseButton.addEventListener("click",event=>{event.preventDefault();event.stopPropagation();input.click()});
   if(input&&dropZone){
     dropZone.addEventListener("click",event=>{if(event.target!==chooseButton&&!chooseButton?.contains(event.target))input.click()});
-    dropZone.addEventListener("keydown",event=>{if(event.target===dropZone&&(event.key==="Enter"||event.key===" ")){event.preventDefault();input.click()}});
     ["dragenter","dragover"].forEach(type=>dropZone.addEventListener(type,event=>{event.preventDefault();event.stopPropagation();dropZone.classList.add("drag-over");if(event.dataTransfer)event.dataTransfer.dropEffect="copy"}));
     ["dragleave","dragend"].forEach(type=>dropZone.addEventListener(type,event=>{event.preventDefault();if(!dropZone.contains(event.relatedTarget))dropZone.classList.remove("drag-over")}));
     dropZone.addEventListener("drop",event=>{event.preventDefault();event.stopPropagation();dropZone.classList.remove("drag-over");if(event.dataTransfer?.files?.length)rememberFiles([...event.dataTransfer.files])});
