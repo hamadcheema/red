@@ -409,3 +409,40 @@ test("rollback rejects a commit that is not in the selected file history", async
   assert.match(result.error, /verified history/);
   assert.deepEqual(github.updated, []);
 });
+
+
+test("media uploads remove PNG EXIF and text metadata before committing", async () => {
+  const chunk = (name, data = Buffer.alloc(0)) => {
+    const length = Buffer.alloc(4);
+    length.writeUInt32BE(data.length);
+    return Buffer.concat([length, Buffer.from(name), data, Buffer.alloc(4)]);
+  };
+  const png = Buffer.concat([
+    Buffer.from([137, 80, 78, 71, 13, 10, 26, 10]),
+    chunk("IHDR", Buffer.alloc(13)),
+    chunk("eXIf", Buffer.from("GPS location metadata")),
+    chunk("tEXt", Buffer.from("Comment\\0private note")),
+    chunk("IDAT", Buffer.from([1, 2, 3])),
+    chunk("IEND")
+  ]);
+  const github = installGitHubMock();
+  const env = makeEnv();
+  const response = await call("/media/upload", {
+    method: "POST",
+    body: {
+      name: "metadata-test.png",
+      type: "image/png",
+      base64: png.toString("base64")
+    }
+  }, env);
+  const result = await response.json();
+  assert.equal(response.status, 200);
+  assert.equal(result.uploaded, true);
+  const upload = github.updated.find(item => item.path.startsWith("assets/uploads/"));
+  assert.ok(upload);
+  const saved = Buffer.from(upload.body.content, "base64");
+  assert.equal(saved.includes(Buffer.from("eXIf")), false);
+  assert.equal(saved.includes(Buffer.from("GPS location metadata")), false);
+  assert.equal(saved.includes(Buffer.from("private note")), false);
+  assert.equal(saved.includes(Buffer.from("IDAT")), true);
+});
