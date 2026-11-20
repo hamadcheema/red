@@ -61,7 +61,8 @@ function installGitHubMock({ pages = {}, deleted = [], updated = [] } = {}) {
       updated.push({ path, body: JSON.parse(init.body) });
       return json({ commit: { sha: "c".repeat(40) } });
     }
-    if (path.startsWith("assets/uploads/")) return json({ sha: "b".repeat(40) });
+    if (path.startsWith("assets/uploads/")) return deleted.includes(path) ? json({ message: "Not Found" }, 404) : json({ sha: "b".repeat(40) });
+    if (path.startsWith("assets/trash/")) return json({ sha: "c".repeat(40), size: 16, content: Buffer.from("test image bytes").toString("base64") });
     const html = pages[path] ?? "<!doctype html><html><head><title>Test</title></head><body><h1>Test heading</h1><p class=\"hero-copy\">Test introduction</p></body></html>";
     return json({ sha: "a".repeat(40), content: Buffer.from(html).toString("base64") });
   };
@@ -317,4 +318,26 @@ test("content endpoint reports whether the saved draft differs from published co
   const result = await response.json();
   assert.equal(response.status, 200);
   assert.equal(result.draftChanged, true);
+});
+
+
+test("unused media can be moved to trash and restored", async () => {
+  const github = installGitHubMock();
+  const env = makeEnv();
+  const deleted = await call("/media/delete", { method: "POST", body: { path: "assets/uploads/unused.jpg" } }, env);
+  const deletedResult = await deleted.json();
+  assert.equal(deleted.status, 200);
+  assert.equal(deletedResult.trashed, true);
+  const trashResponse = await call("/media/trash", {}, env);
+  const trash = await trashResponse.json();
+  assert.equal(trash.items.length, 1);
+  assert.equal(trash.items[0].path, "assets/uploads/unused.jpg");
+  const restored = await call("/media/restore", { method: "POST", body: { id: trash.items[0].id } }, env);
+  const restoredResult = await restored.json();
+  assert.equal(restored.status, 200);
+  assert.equal(restoredResult.restored, true);
+  assert.ok(github.updated.some(x => x.path === "assets/trash/" + trash.items[0].id + "-unused.jpg"));
+  assert.ok(github.updated.some(x => x.path === "assets/uploads/unused.jpg"));
+  assert.ok(github.deleted.includes("assets/trash/" + trash.items[0].id + "-unused.jpg"));
+  assert.equal((await env.DRAFTS.get("trash:media:" + trash.items[0].id)), null);
 });
