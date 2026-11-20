@@ -59,8 +59,8 @@ test("editing an existing content item resolves its relative media path to the M
 });
 
 test("page and SEO editor baselines update after successful saves and publishing", () => {
-  assert.match(connection, /syncPageBaseline\\(\\)/);
-  assert.match(connection, /syncSeoBaseline\\(\\)/);
+  assert.match(connection, /syncPageBaseline\(\)/);
+  assert.match(connection, /syncSeoBaseline\(\)/);
   assert.match(connection, /const syncPageBaseline=/);
   assert.match(connection, /const syncSeoBaseline=/);
 });
