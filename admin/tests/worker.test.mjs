@@ -522,3 +522,40 @@ test("brand settings reject unsafe colours, fonts and external logo URLs", async
     assert.equal(response.status, 400);
   }
 });
+
+test("inquiry CSV export includes every active record and safely quotes spreadsheet values", async () => {
+  const records = Object.fromEntries(Array.from({ length: 105 }, (_, index) => {
+    const id = String(index).padStart(3, "0");
+    return ["inquiry:" + id, {
+      id, name: index === 0 ? "=1+1" : "Customer " + id,
+      email: "customer" + id + "@example.com",
+      subject: 'Quoted, "subject"',
+      message: "First line\nSecond line",
+      status: index === 1 ? "archived" : "new",
+      createdAt: new Date(Date.UTC(2026, 0, 1, 0, index)).toISOString()
+    }];
+  }));
+  records["inquiry:deleted"] = { id: "deleted", name: "Deleted", email: "deleted@example.com", subject: "Deleted", message: "Do not export", status: "deleted", createdAt: "2026-01-01T00:00:00.000Z" };
+  const env = makeEnv(records);
+  const response = await call("/inquiries/export", {}, env);
+  assert.equal(response.status, 200);
+  assert.match(response.headers.get("content-type"), /text\/csv; charset=utf-8/i);
+  assert.match(response.headers.get("content-disposition"), /attachment; filename="the-red-sparrow-enquiries\.csv"/);
+  assert.equal(response.headers.get("cache-control"), "no-store");
+  const csv = await response.text();
+  assert.ok(csv.startsWith("\uFEFFid,name,email,subject,message,status,createdAt,updatedAt\r\n"));
+  assert.ok(csv.includes('"\'=1+1"'), "formula-like cells are prefixed with an apostrophe");
+  assert.ok(csv.includes('"Quoted, ""subject"""'), "quotes and commas are escaped");
+  assert.ok(csv.includes('"First line\nSecond line"'), "embedded newlines remain inside a quoted cell");
+  assert.ok(csv.includes('"archived"'), "archived enquiries are included");
+  assert.equal(csv.includes("Do not export"), false, "deleted enquiries are excluded");
+  assert.equal(csv.split("\r\n").length - 1, 106, "all 105 enquiries plus the header are exported");
+  assert.equal(csv.includes("203.0.113."), false, "visitor IP data is not exported");
+});
+
+test("inquiry CSV export requires an authenticated admin session", async () => {
+  const env = makeEnv();
+  env.DRAFTS.values.delete("session:" + SESSION);
+  const response = await call("/inquiries/export", {}, env);
+  assert.equal(response.status, 401);
+});
