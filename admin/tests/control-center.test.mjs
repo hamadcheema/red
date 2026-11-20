@@ -45,6 +45,10 @@ test("page and SEO drafts use the authenticated remote API without duplicate loc
   assert.match(features, /dataset\.pendingRemoteValue/);
 });
 
+test("homepage history restore errors are announced in the homepage history panel", () => {
+  assert.match(connection, /say\(homepageHistoryList,"Could not restore homepage:/);
+});
+
 test("Media Library supports safe bulk selection and trash operations", () => {
   assert.match(features, /const selectedMediaPaths=new Set\(\)/);
   assert.match(features, /Select all visible media files/);
