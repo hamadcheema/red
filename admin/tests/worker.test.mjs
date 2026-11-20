@@ -38,8 +38,16 @@ const json = (value, status = 200) => new Response(JSON.stringify(value), {
 });
 
 function installGitHubMock({ pages = {}, deleted = [], updated = [] } = {}) {
+  const atomic = { trees: [], commits: [], refs: [] };
   globalThis.fetch = async (input, init = {}) => {
     const url = new URL(input);
+    const pathname = url.pathname;
+    if (pathname.endsWith("/git/ref/heads/main")) return json({ object: { sha: "a".repeat(40) } });
+    if (pathname.endsWith("/git/commits/" + "a".repeat(40))) return json({ tree: { sha: "b".repeat(40) } });
+    if (pathname.endsWith("/git/blobs") && init.method === "POST") return json({ sha: "b".repeat(40) });
+    if (pathname.endsWith("/git/trees") && init.method === "POST") { atomic.trees.push(JSON.parse(init.body)); return json({ sha: "c".repeat(40) }); }
+    if (pathname.endsWith("/git/commits") && init.method === "POST") { atomic.commits.push(JSON.parse(init.body)); return json({ sha: "d".repeat(40) }); }
+    if (pathname.endsWith("/git/refs/heads/main") && init.method === "PATCH") { atomic.refs.push(JSON.parse(init.body)); return json({ object: { sha: "d".repeat(40) } }); }
     const prefix = "/repos/hamadcheema/red/contents/";
     const path = decodeURIComponent(url.pathname.slice(prefix.length));
     if (init.method === "DELETE") {
@@ -54,7 +62,7 @@ function installGitHubMock({ pages = {}, deleted = [], updated = [] } = {}) {
     const html = pages[path] ?? "<!doctype html><html><head><title>Test</title></head><body><h1>Test heading</h1><p class=\"hero-copy\">Test introduction</p></body></html>";
     return json({ sha: "a".repeat(40), content: Buffer.from(html).toString("base64") });
   };
-  return { deleted, updated };
+  return { deleted, updated, atomic };
 }
 
 function makeEnv(values = {}, options = {}) {
@@ -233,4 +241,56 @@ test("inquiry listing reports all stored counts while returning only the latest 
   assert.equal(result.total, 105);
   assert.equal(result.unread, 53);
   assert.equal(result.items.length, 100);
+});
+
+
+test("site settings publish all changed public pages in one atomic Git commit", async () => {
+  const page = '<!doctype html><html><head><title>Test</title></head><body><a href="mailto:admin@theredsparrow.online">admin@theredsparrow.online</a><a href="mailto:hammad@theredsparrow.online">hammad@theredsparrow.online</a><p>Independent Unity game development.</p></body></html>';
+  const pages = Object.fromEntries(["index.html", "about.html", "services.html", "contact.html", "privacy.html", "terms.html"].map(path => [path, page]));
+  const github = installGitHubMock({ pages });
+  const env = makeEnv();
+  const settings = {
+    contactEmail: "admin@theredsparrow.online",
+    directEmail: "hammad@theredsparrow.online",
+    tagline: "Independent interactive game development.",
+    announcementEnabled: true,
+    announcement: "New work is coming soon."
+  };
+  const saved = await call("/site-settings", { method: "POST", body: settings }, env);
+  assert.equal(saved.status, 200);
+  const published = await call("/publish/site-settings", { method: "POST", body: {} }, env);
+  const result = await published.json();
+  assert.equal(published.status, 200);
+  assert.equal(result.files, 6);
+  assert.equal(github.atomic.trees.length, 1);
+  assert.equal(github.atomic.trees[0].tree.length, 6);
+  assert.equal(github.atomic.commits.length, 1);
+  assert.equal(github.atomic.refs.length, 1);
+  assert.equal(await env.DRAFTS.get("site-settings:draft", "json"), null);
+});
+
+test("publishing a collection clears its stale draft snapshot", async () => {
+  const items = [{ title: "Published game", description: "A published showcase", image: ORIGIN + "/assets/uploads/game.jpg", url: "" }];
+  const index = '<!doctype html><html><head></head><body><!-- ADMIN:projects:START --><!-- ADMIN:projects:END --><!-- ADMIN:social:START --><!-- ADMIN:social:END --><!-- ADMIN:brands:START --><!-- ADMIN:brands:END --></body></html>';
+  installGitHubMock({ pages: { "index.html": index } });
+  const env = makeEnv({ "collection-draft:projects": items });
+  const response = await call("/publish/content", { method: "POST", body: { kind: "projects" } }, env);
+  assert.equal(response.status, 200);
+  assert.equal(await env.DRAFTS.get("collection-draft:projects", "json"), null);
+  assert.deepEqual(await env.DRAFTS.get("collection:projects", "json"), items);
+});
+
+test("inquiry pagination returns older records without losing total counts", async () => {
+  const values = Object.fromEntries(Array.from({ length: 105 }, (_, i) => {
+    const id = "00000000-0000-4000-8000-" + String(i).padStart(12, "0");
+    return ["inquiry:" + id, { id, name: "Visitor " + i, email: "visitor" + i + "@example.com", subject: "Question " + i, message: "A sufficiently long enquiry message.", createdAt: new Date(1700000000000 + i * 1000).toISOString(), status: "read" }];
+  }));
+  const env = makeEnv(values);
+  const response = await call("/inquiries?offset=100&limit=100", {}, env);
+  const result = await response.json();
+  assert.equal(response.status, 200);
+  assert.equal(result.total, 105);
+  assert.equal(result.offset, 100);
+  assert.equal(result.items.length, 5);
+  assert.equal(result.hasMore, false);
 });
