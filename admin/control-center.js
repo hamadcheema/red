@@ -39,7 +39,7 @@
     root.append(p);
     try{
       const data=await call("/dashboard"),grid=el("div","inquiry-summary dashboard-metrics");
-      grid.append(card("TOTAL ENQUIRIES",String(data.inquiries?.total??0),"Active enquiries"),card("UNREAD",String(data.inquiries?.unread??0),"Awaiting review"),card("PUBLISHED PROJECTS",String(data.published?.projects??0),"Showcase projects"),card("RECENTLY DELETED",String(data.inquiries?.deleted??0),"Recoverable for 30 days"));
+      grid.append(card("TOTAL ENQUIRIES",String(data.inquiries?.total??0),"Active enquiries"),card("UNREAD",String(data.inquiries?.unread??0),"Awaiting review"),card("PUBLISHED PROJECTS",String(data.published?.projects??0),"Showcase projects"),card("RECENTLY DELETED",String(data.inquiries?.deleted??0),"Recoverable for 30 days"));\n      grid.append(card("NEW TODAY",String(data.periods?.newToday??0),"Enquiries received today · Pakistan time"),card("LAST 7 DAYS",String(data.periods?.newLast7Days??0),"New enquiries · rolling 7 days"),card("LAST 30 DAYS",String(data.periods?.newLast30Days??0),"New enquiries · rolling 30 days"));
       p.append(grid);
       const head=el("div","inquiry-list-heading");head.append(el("strong","","Recent activity"),button("Open full activity log",()=>window.showAdminView?.("audit")));p.append(head);
       const events=data.recentActivity||[];
