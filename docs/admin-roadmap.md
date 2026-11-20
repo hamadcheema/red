@@ -27,6 +27,8 @@ Already present in the repository:
 - Shared accessible confirmation dialogs
 - Loading feedback across dashboard, calendar, inbox, activity, notifications, health, files, security and website settings
 - Accessible Media Library upload controls, normalized filename collision checks and partial-upload recovery feedback
+- Media Library format filtering (JPEG, PNG, WebP, GIF), accurate filename sorting and read-only unused-asset usage scan
+- Accessible page and homepage version-history loading, busy and error announcements
 - GitHub Actions syntax, regression, HTML, link, asset, metadata and sitemap validation
 
 Known limitations to verify:
@@ -65,6 +67,8 @@ Known limitations to verify:
 - [x] Confirm page/SEO draft resets and lock those editors during saves, publishing and reset operations.
 - [x] Prevent collection navigation and in-flight refreshes from overwriting local edits; reuse loaded collections and protect edit selection.
 - [x] Improve Media Library upload accessibility, normalized filename collision detection and partial-batch failure feedback.
+- [x] Add Media Library image-format filtering, accurate filename sort labels and a read-only usage scan for potentially unused assets.
+- [x] Announce page and homepage version-history loading and errors accessibly, with explicit busy states.
 - [x] Advance enquiry pagination using the server-returned page size, even when duplicate records are filtered.
 - [x] Show the publishing calendar's local timezone and prevent selecting past schedule times.
 - [x] Add visible loading feedback to the data-driven Control Center modules and remove it on success or failure.
