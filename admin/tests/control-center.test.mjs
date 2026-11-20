@@ -76,6 +76,12 @@ test("website settings retain the saved logo when Media Library lookup fails or 
   assert.match(control, /currently saved/);
 });
 
+test("website settings keep Media Library warnings visible after loading saved settings", () => {
+  assert.match(control, /let mediaWarning=""/);
+  assert.match(control, /\+\(mediaWarning\?" "\+mediaWarning:""\)/);
+  assert.match(control, /!!mediaWarning/);
+});
+
 test("website settings preserve local edits and save them before publishing", () => {
   assert.match(control, /Unsaved website settings are being kept/);
   assert.match(control, /form\.addEventListener\("input",\(\)=>\{window\.trsSiteSettingsDirty=true\}\)/);
