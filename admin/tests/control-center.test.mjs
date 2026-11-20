@@ -45,6 +45,17 @@ test("page and SEO drafts use the authenticated remote API without duplicate loc
   assert.match(features, /dataset\.pendingRemoteValue/);
 });
 
+test("destructive admin actions use the shared accessible confirmation dialog", () => {
+  assert.match(admin, /window\.trsConfirm = \(message, options = \{\}\) => new Promise/);
+  assert.match(admin, /dialog\.showModal\(\)/);
+  assert.match(admin, /aria-labelledby/);
+  assert.match(admin, /dialog\.returnValue === "confirm"/);
+  assert.doesNotMatch(control, /!confirm\(/);
+  assert.doesNotMatch(features, /!confirm\(/);
+  assert.match(controlCss, /\.admin-confirm-dialog::backdrop/);
+  assert.match(controlCss, /\.admin-confirm-dialog button:focus-visible/);
+});
+
 test("admin sessions support individual revocation without exposing cookie tokens", () => {
   assert.match(worker, /async function sessionFingerprint\(key\)/);
   assert.match(worker, /r==="security\/revoke-session"/);
