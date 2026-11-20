@@ -41,6 +41,17 @@
       info.append(name,meta,link,remove);card.append(art,info);grid.append(card);
     }
   }
+  async function scanMediaUsage(){
+    const report=$("media-usage-report"),button=$("media-usage-scan");if(!report||!button)return;
+    button.disabled=true;button.textContent="Scanning…";report.replaceChildren();
+    const heading=document.createElement("p");heading.className="editor-footnote";heading.setAttribute("role","status");heading.setAttribute("aria-live","polite");heading.textContent="Checking where each uploaded image is referenced…";report.append(heading);
+    const unused=[],used=[],failed=[];
+    for(const item of mediaItems){try{const result=await request("/media/usage?path="+encodeURIComponent(item.path));(result.usedBy||[]).length?used.push(item):unused.push(item)}catch(error){failed.push(item.name+": "+error.message)}}
+    report.replaceChildren();const summary=document.createElement("p");summary.className="editor-footnote";summary.textContent=unused.length+" unused image(s) · "+used.length+" referenced image(s)"+(failed.length?" · "+failed.length+" could not be checked":"");report.append(summary);
+    if(unused.length){const title=document.createElement("strong");title.textContent="No references found";report.append(title);const list=document.createElement("ul");for(const item of unused){const li=document.createElement("li");li.textContent=item.name+" · "+(item.size/1024).toFixed(1)+" KB";list.append(li)}report.append(list)}
+    if(failed.length){const errors=document.createElement("p");errors.className="editor-footnote";errors.textContent="Not classified: "+failed.slice(0,5).join("; ")+(failed.length>5?"…":"");report.append(errors)}
+    button.disabled=false;button.textContent="Scan usage again";
+  }
   async function loadMedia(){
     const grid=$("media-library-grid");if(!grid)return;
     grid.replaceChildren();const loading=document.createElement("p");loading.className="editor-footnote";loading.textContent="Loading uploaded images…";grid.append(loading);
