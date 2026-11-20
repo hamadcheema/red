@@ -56,6 +56,7 @@ Known limitations to verify:
 - [ ] Media duplicate detection and optimization.
 - [ ] Bulk media/content operations.
 - [ ] Accessibility and metadata validation.
+- [x] Homepage section visibility controls; hidden sections retain their content and can be restored.
 
 ### Phase 3 — Security and recovery
 - [ ] Detailed login/session event history.
