@@ -45,10 +45,10 @@ function cleanSectionVisibility(value,current=sectionVisibilityDefaults){
  }
  return result;
 }
-function applySectionVisibility(html,visibility){
+function applySectionVisibility(html,visibility,requireAll=true){
  for(const [key,visible] of Object.entries(visibility)){
   const marker='data-trs-section="'+key+'"',at=html.indexOf(marker);
-  if(at<0){if(["hero","intro","services","workflow","contact"].includes(key))throw new Error("Website section marker is missing: "+key);continue}
+  if(at<0){if(requireAll&&["hero","intro","services","workflow","contact"].includes(key))throw new Error("Website section marker is missing: "+key);continue}
   const start=html.lastIndexOf("<section",at),end=html.indexOf(">",at);
   if(start<0||end<0)throw new Error("Invalid website section marker: "+key);
   let tag=html.slice(start,end+1);
@@ -93,7 +93,7 @@ async function publishCollection(env,kind,items,actor="system",options={}){
  const previousItems=await env.DRAFTS.get("collection:"+kind,"json")||[];
  const path="index.html",old=await readFile(env,path),start="<!-- ADMIN:"+kind+":START -->",end="<!-- ADMIN:"+kind+":END -->",begin=old.content.indexOf(start),finish=old.content.indexOf(end,begin);
  if(begin<0||finish<0)throw Error("Homepage content markers are missing.");
- const next=applySectionVisibility(old.content.slice(0,begin)+collectionMarkup(kind,items)+old.content.slice(finish+end.length), (await siteSettings(env)).sectionVisibility);
+ const next=applySectionVisibility(old.content.slice(0,begin)+collectionMarkup(kind,items)+old.content.slice(finish+end.length), (await siteSettings(env)).sectionVisibility,false);
  const out=await writeFile(env,path,next,old.sha,"Publish "+kind+" collection from "+actor);
  if(Array.isArray(previousItems)&&previousItems.length&&JSON.stringify(previousItems)!==JSON.stringify(items)){const id=crypto.randomUUID(),snapshot={id,kind,items:previousItems,count:previousItems.length,deletedAt:new Date().toISOString()};await env.DRAFTS.put("trash:content:"+id,JSON.stringify(snapshot),{expirationTtl:604800})}
  await env.DRAFTS.put("collection:"+kind,JSON.stringify(items));
