@@ -53,7 +53,8 @@ Known limitations to verify:
 - [x] Published-vs-draft visual comparison in centralized Brand Settings (live vs editing logo, accent colour and typography).
 - [ ] Rich version history and restore UX (page-level history/restore still needs a dedicated audit).
 - [ ] More robust calendar views and schedule filters.
-- [ ] Media duplicate detection and optimization.
+- [x] Exact duplicate-image detection during upload (Git blob SHA-1 comparison; duplicate uploads are rejected).
+- [ ] Image optimization/resizing tools.
 - [ ] Bulk media/content operations.
 - [ ] Accessibility and metadata validation.
 - [x] Homepage section visibility controls; hidden sections retain their content and can be restored.
