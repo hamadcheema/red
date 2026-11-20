@@ -116,7 +116,7 @@
       actions.append(reply);
       if(item.status!=="archived")actions.append(button("Archive",()=>updateInquiry(id,"archived",p)));
       else actions.append(button("Restore to inbox",()=>updateInquiry(id,"read",p)));
-      actions.append(button("Delete",async()=>{if(!confirm("Permanently delete this enquiry?"))return;try{await call("/inquiries?id="+encodeURIComponent(id),{method:"DELETE"});inquiryItems=inquiryItems.filter(x=>x.id!==id);selectedInquiryId=null;renderInbox()}catch(e){status(p,e.message,true)}}));
+      actions.append(button("Delete",async()=>{if(!confirm("Permanently delete this enquiry?"))return;try{await call("/inquiries?id="+encodeURIComponent(id),{method:"DELETE"});selectedInquiryId=null;await loadInquiries();status(root,"Enquiry permanently deleted.")}catch(e){status(p,e.message,true)}}));
       const head=el("div","inquiry-reader-heading");head.append(el("h3","",item.subject||"Website enquiry"),el("span",item.status==="new"?"status-new":"status-read",item.status==="new"?"UNREAD":item.status.toUpperCase()));
       const sender=el("div","inquiry-sender-details");const avatar=el("span","inquiry-avatar",(item.name||"V").trim().charAt(0).toUpperCase());const meta=el("div");meta.append(el("strong","",item.name||"Website visitor"),el("a","",item.email||"No sender email"));if(item.email){const emailLink=meta.querySelector("a");emailLink.href="mailto:"+item.email}meta.append(el("small","",formatDate(item.createdAt)));sender.append(avatar,meta);
       const message=el("div","inquiry-reader-body",item.message||"");
@@ -124,8 +124,12 @@
     }
   }
   async function updateInquiry(id,state,root){
-    try{await call("/inquiries/update",{method:"POST",body:JSON.stringify({id,state})});const item=inquiryItems.find(x=>x.id===id);if(item)item.status=state;const data=await call("/inquiries");inquiryItems=data.items||[];renderCurrentInquiryView()}
-    catch(e){status(root,e.message,true)}
+    try{
+      await call("/inquiries/update",{method:"POST",body:JSON.stringify({id,state})});
+      if(state==="archived"||(state==="read"&&inquiryFolder==="archived"))selectedInquiryId=null;
+      await loadInquiries();
+      status($("view-inquiries")?.querySelector(".control-content")||root,state==="archived"?"Enquiry archived.":inquiryFolder==="archived"?"Enquiry restored to Inbox.":"Enquiry marked as read.");
+    }catch(e){status(root,e.message,true)}
   }
   function renderCurrentInquiryView(){const active=$("view-inquiries")?.querySelector(".control-content");if(active)loadInquiries()}
 
