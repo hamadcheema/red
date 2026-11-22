@@ -308,3 +308,39 @@ body::after{
   .motion-ready [data-motion=reveal],.motion-ready [data-motion=stagger]>*{opacity:1!important;transform:none!important;transition:none!important}
   .motion-canvas{display:none}
 }
+
+
+/* Mobile header height fix — keep navigation in normal document flow */
+@media(max-width:800px){
+  .site-header{
+    height:auto!important;
+    min-height:0;
+    position:sticky;
+    top:0;
+  }
+  .site-header .nav-wrap{
+    height:auto;
+    min-height:0;
+    padding:17px 0;
+    align-items:flex-start;
+    flex-direction:column;
+    gap:14px;
+  }
+  .site-header nav{
+    position:static;
+    display:flex;
+    width:100%;
+    min-height:24px;
+    align-items:center;
+    justify-content:space-between;
+    gap:12px;
+    margin:0;
+  }
+  .site-header nav a{
+    display:inline-flex;
+    align-items:center;
+    min-height:24px;
+    line-height:1.4;
+    white-space:nowrap;
+  }
+}
