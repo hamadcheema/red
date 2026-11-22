@@ -344,3 +344,80 @@ body::after{
     white-space:nowrap;
   }
 }
+
+
+/* CINEMATIC SCROLL EXPERIENCE — reference-inspired motion pass */
+:root{
+  --trs-gold:#d9b46a;
+  --trs-gold-soft:rgba(217,180,106,.18);
+}
+body::before{
+  background:
+    radial-gradient(ellipse at var(--motion-x) var(--motion-y),rgba(217,180,106,.12),transparent 32%),
+    radial-gradient(ellipse at 12% 80%,rgba(138,141,147,.055),transparent 38%),
+    linear-gradient(135deg,#090a0d 0%,#101116 52%,#090a0d 100%);
+}
+.hero{
+  isolation:isolate;
+  background:
+    radial-gradient(ellipse at 76% 46%,rgba(200,16,46,.18),transparent 29%),
+    radial-gradient(ellipse at 18% 8%,rgba(217,180,106,.13),transparent 30%),
+    linear-gradient(115deg,#090a0d 30%,#111319 100%);
+}
+.hero::before{
+  width:min(70vw,850px);
+  background:conic-gradient(from 20deg,transparent 0 17%,rgba(217,180,106,.12) 24%,transparent 34%,rgba(255,255,255,.055) 48%,transparent 63%,rgba(200,16,46,.14) 78%,transparent 88%);
+  filter:blur(2px);
+}
+.hero::after{
+  border-color:rgba(217,180,106,.18);
+  box-shadow:0 0 0 42px rgba(255,255,255,.018),0 0 0 92px rgba(217,180,106,.025),inset 0 0 90px rgba(217,180,106,.055);
+}
+.hero h1,.page-hero h1{
+  animation:trs-title-arrive 1.15s cubic-bezier(.18,.72,.2,1) both;
+}
+.hero .eyebrow{animation:trs-rise .8s .08s both}
+.hero .hero-copy{animation:trs-rise .9s .2s both}
+.hero .hero-actions{animation:trs-rise .9s .32s both}
+.hero .hero-note{animation:trs-rise .9s .48s both}
+.hero h1 em,.page-hero h1 em,h2 em{
+  background:linear-gradient(105deg,#f0d59a 0%,#d9b46a 48%,#e22b49 100%);
+  -webkit-background-clip:text;background-clip:text;color:transparent;
+}
+.hero-orbit{border-color:rgba(217,180,106,.24)}
+.orbit-two{border-color:rgba(217,180,106,.22)}
+.hero-spark{color:var(--trs-gold);text-shadow:0 0 36px rgba(217,180,106,.65)}
+.motion-progress{
+  background:linear-gradient(90deg,#8f0b22,#c8102e,#d9b46a);
+  box-shadow:0 0 16px rgba(217,180,106,.38)
+}
+.service-card,.showcase-card,.contact-card{
+  transform-style:preserve-3d;
+  will-change:transform;
+}
+.service-card::after,.showcase-card::after{
+  content:"";position:absolute;inset:0;pointer-events:none;opacity:0;
+  background:linear-gradient(120deg,transparent 20%,rgba(217,180,106,.08) 48%,transparent 72%);
+  transform:translateX(-110%);transition:transform .8s ease,opacity .3s ease;
+}
+.service-card:hover::after,.showcase-card:hover::after{opacity:1;transform:translateX(110%)}
+.section .eyebrow{color:var(--trs-gold)}
+.service-icon{color:var(--trs-gold);border-color:rgba(217,180,106,.28);background:rgba(217,180,106,.07)}
+.card-number{color:var(--trs-gold)}
+.service-card:hover,.showcase-card:hover{border-color:rgba(217,180,106,.42)}
+.under-link span,.text-link span{color:var(--trs-gold)}
+@keyframes trs-title-arrive{
+  from{opacity:0;transform:translate3d(0,34px,0);filter:blur(8px)}
+  to{opacity:1;transform:translate3d(0,0,0);filter:blur(0)}
+}
+@keyframes trs-rise{
+  from{opacity:0;transform:translate3d(0,18px,0)}
+  to{opacity:1;transform:translate3d(0,0,0)}
+}
+@media(max-width:800px){
+  .hero::before{opacity:.65}
+  .hero::after{border-color:rgba(217,180,106,.14)}
+}
+@media(prefers-reduced-motion:reduce){
+  .hero h1,.page-hero h1,.hero .eyebrow,.hero .hero-copy,.hero .hero-actions,.hero .hero-note{animation:none!important}
+}
