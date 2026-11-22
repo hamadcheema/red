@@ -31,6 +31,25 @@
     });
   },{passive:true});
   const hero=document.querySelector(".hero");
+  // Subtle pointer depth on desktop; cards remain fully usable on touch screens.
+  if(window.matchMedia("(hover:hover) and (pointer:fine)").matches){
+    document.querySelectorAll(".service-card,.showcase-card,.contact-card").forEach(card=>{
+      let frame=0;
+      card.addEventListener("pointermove",event=>{
+        if(frame)return;
+        frame=requestAnimationFrame(()=>{
+          const r=card.getBoundingClientRect();
+          const x=(event.clientX-r.left)/r.width-.5;
+          const y=(event.clientY-r.top)/r.height-.5;
+          card.style.transform="perspective(900px) rotateX("+(-y*3.2)+"deg) rotateY("+(x*3.2)+"deg) translateY(-5px)";
+          frame=0;
+        });
+      },{passive:true});
+      card.addEventListener("pointerleave",()=>{
+        card.style.transform="";
+      },{passive:true});
+    });
+  }
   if(hero&&window.matchMedia("(hover:hover) and (pointer:fine)").matches){
     let heroFrame=0;
     hero.addEventListener("pointermove",event=>{
